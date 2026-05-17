@@ -610,4 +610,5 @@ if __name__ == "__main__":
     print(f"\n{'='*55}")
     print(f"回測結果：{result['end_reason']}")
     print(f"結束日期：{result['end_date']}")
-    print(f"最終本�
+    print(f"最終本金：NT${result['final_bankroll']:,.0f}")
+    print(f"報告路徑：{result['report_path']}")
