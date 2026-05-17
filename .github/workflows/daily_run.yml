@@ -1,0 +1,112 @@
+name: 運彩AI — 每日分析與報告
+
+on:
+  schedule:
+    # UTC 14:00 = 台灣時間 22:00
+    - cron: '0 14 * * *'
+  workflow_dispatch:
+    inputs:
+      report_date:
+        description: '指定日期 (YYYY-MM-DD)，留空使用今日'
+        required: false
+        default: ''
+      dry_run:
+        description: '乾跑模式（只分析不下注，不更新 bankroll）'
+        required: false
+        default: 'false'
+
+env:
+  ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+  TZ: Asia/Taipei
+
+jobs:
+  daily-analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 需要完整歷史以計算 Elo
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Chrome for Selenium（運彩官網備援）
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Determine report date
+        id: date
+        run: |
+          if [ -n "${{ github.event.inputs.report_date }}" ]; then
+            echo "date=${{ github.event.inputs.report_date }}" >> $GITHUB_OUTPUT
+          else
+            echo "date=$(TZ=Asia/Taipei date '+%Y-%m-%d')" >> $GITHUB_OUTPUT
+          fi
+          echo "yesterday=$(TZ=Asia/Taipei date -d 'yesterday' '+%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      # ── P9：整合測試（快速驗證模型未崩潰）──────────────
+      - name: Integration tests
+        run: python scripts/test_integration.py
+        continue-on-error: false   # 測試失敗則中止整個 workflow
+
+      # ── P8：結算昨日成績 ────────────────────────────────
+      - name: Settle yesterday results
+        run: python scripts/settle.py ${{ steps.date.outputs.yesterday }}
+        continue-on-error: true    # 昨日結算失敗不中斷今日分析
+
+      # ── P2：抓取今日數據 ────────────────────────────────
+      - name: Fetch NBA data
+        run: python scripts/fetch_nba.py ${{ steps.date.outputs.date }}
+        continue-on-error: false
+
+      - name: Fetch MLB data
+        run: python scripts/fetch_mlb.py ${{ steps.date.outputs.date }}
+        continue-on-error: false
+
+      - name: Fetch odds
+        run: |
+          python scripts/fetch_odds.py NBA ${{ steps.date.outputs.date }}
+          python scripts/fetch_odds.py MLB ${{ steps.date.outputs.date }}
+        continue-on-error: false
+
+      # ── P4 + P7：分析 + 報告 ────────────────────────────
+      - name: Run analysis engine
+        run: python scripts/run_daily.py ${{ steps.date.outputs.date }}
+        env:
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+
+      # ── Commit ──────────────────────────────────────────
+      - name: Commit & push reports
+        run: |
+          git config --global user.name  "Sports AI Bot"
+          git config --global user.email "bot@users.noreply.github.com"
+          git add reports/ docs/ data/bankroll.json data/performance.json \
+                  data/live/ data/nba/ data/mlb/ data/odds/
+          git diff --staged --quiet || git commit -m "📊 每日報告 ${{ steps.date.outputs.date }}"
+          git push
+
+      - name: Report summary
+        run: |
+          echo "### 今日報告完成" >> $GITHUB_STEP_SUMMARY
+          echo "日期：${{ steps.date.outputs.date }}" >> $GITHUB_STEP_SUMMARY
+          python -c "
+          import json, pathlib
+          bk = json.loads(pathlib.Path('data/bankroll.json').read_text())
+          init = bk['initial']
+          cur  = bk['current']
+          roi  = (cur - init) / init * 100
+          print(f'本金：NT\${cur:,.0f}（ROI {roi:+.1f}%）')
+          " >> $GITHUB_STEP_SUMMARY

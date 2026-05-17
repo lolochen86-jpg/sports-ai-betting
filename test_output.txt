@@ -1,0 +1,16 @@
+
+============================================================
+  ��X���յ��G�G39 �q�L / 2 ����
+============================================================
+2026-05-18 07:34:25 [WARNING] analyze: NBA NYK@BOS �ƾڤ����G['team_id', 'team_abbr', 'ortg', 'drtg', 'netrtg', 'pace', 'home_win_pct_l10', 'season_win_pct']
+2026-05-18 07:34:25 [WARNING] analyze: NBA NYK@BOS �ƾڤ����G['team_id', 'team_abbr', 'ortg', 'drtg', 'netrtg', 'pace', 'home_win_pct_l10', 'season_win_pct']
+2026-05-18 07:34:25 [WARNING] analyze: NBA NYK@BOS �ƾڤ����G['team_id', 'team_abbr', 'ortg', 'drtg', 'netrtg', 'pace', 'home_win_pct_l10', 'season_win_pct']
+2026-05-18 07:34:25 [WARNING] analyze: NBA IND@MIL �ƾڤ����G['team_id', 'team_abbr', 'ortg', 'drtg', 'netrtg', 'pace', 'home_win_pct_l10', 'season_win_pct']
+2026-05-18 07:34:25 [WARNING] analyze: NBA NYK@BOS �ƾڤ����G['team_id', 'team_abbr', 'ortg', 'drtg', 'netrtg', 'pace', 'home_win_pct_l10', 'season_win_pct']
+Traceback (most recent call last):
+  File "E:\�B�m��M\scripts\test_integration.py", line 580, in <module>
+    exit_code = print_results()
+  File "E:\�B�m��M\scripts\test_integration.py", line 565, in print_results
+    print(f"{icon} {name}")
+    ~~~~~^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'cp950' codec can't encode character '\u2705' in position 2: illegal multibyte sequence

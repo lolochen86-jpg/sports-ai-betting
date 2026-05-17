@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>運彩AI分析師</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3e;
+    --text: #e2e8f0; --muted: #718096; --accent: #63b3ed;
+    --green: #48bb78; --red: #fc8181; --yellow: #f6e05e;
+    --purple: #b794f4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.6; padding: 1rem; }
+  .container { max-width: 900px; margin: 0 auto; }
+
+  header { padding: 2rem 0 1rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem; }
+  .site-title { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+  .site-sub { color: var(--muted); font-size: 0.9rem; margin-top: 0.25rem; }
+
+  h2 { font-size: 1.05rem; color: var(--accent); margin: 2rem 0 1rem; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom: 2rem; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+  .stat-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-value { font-size: 1.3rem; font-weight: 700; }
+  .green { color: var(--green); } .red { color: var(--red); }
+  .accent { color: var(--accent); } .purple { color: var(--purple); }
+
+  .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin-bottom: 2rem; }
+  .chart-wrap h3 { font-size: 0.875rem; color: var(--muted); margin-bottom: 1rem; }
+
+  .report-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .report-item { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: var(--text); transition: border-color 0.15s; }
+  .report-item:hover { border-color: var(--accent); }
+  .report-date { font-size: 0.875rem; }
+  .report-arrow { color: var(--muted); }
+
+  .badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin-left: 0.5rem; }
+  .badge-today { background: rgba(99,179,237,0.15); color: var(--accent); }
+
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="site-title">運彩AI分析師</div>
+    <div class="site-sub">NBA · MLB · 數據驅動 · 每日 22:00 更新</div>
+  </header>
+
+  <h2>📊 整體績效</h2>
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-label">目前本金</div>
+      <div class="stat-value accent">NT${{ "{:,.0f}".format(stats.current) }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">累積報酬率</div>
+      <div class="stat-value {% if stats.roi >= 0 %}green{% else %}red{% endif %}">
+        {% if stats.roi >= 0 %}+{% endif %}{{ "{:.1f}".format(stats.roi) }}%
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">最大回撤</div>
+      <div class="stat-value {% if stats.drawdown > 20 %}red{% else %}yellow{% endif %}">
+        -{{ "{:.1f}".format(stats.drawdown) }}%
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">總下注次數</div>
+      <div class="stat-value">{{ perf.total_bets }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">單關命中率</div>
+      <div class="stat-value">
+        {% if perf.single_bets > 0 %}{{ "{:.1f}".format(perf.single_wins / perf.single_bets * 100) }}%
+        {% else %}—{% endif %}
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">串關命中率</div>
+      <div class="stat-value purple">
+        {% if perf.parlay_bets > 0 %}{{ "{:.1f}".format(perf.parlay_wins / perf.parlay_bets * 100) }}%
+        {% else %}—{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- 本金曲線圖 -->
+  <div class="chart-wrap">
+    <h3>本金曲線（最近 30 天）</h3>
+    <canvas id="bankrollChart" height="80"></canvas>
+  </div>
+
+  <!-- 最近報告 -->
+  <h2>📅 近期報告</h2>
+  <div class="report-list">
+    {% for rdate in recent_reports %}
+    <a href="{{ rdate }}.html" class="report-item">
+      <span class="report-date">
+        {{ rdate }}
+        {% if rdate == today %}<span class="badge badge-today">今日</span>{% endif %}
+      </span>
+      <span class="report-arrow">→</span>
+    </a>
+    {% endfor %}
+  </div>
+
+  <footer>
+    數據來源：NBA Stats API · MLB Stats API · 台灣運彩 / Pinnacle<br>
+    起始本金 NT$3,000 · 1/4 分數凱利 · 本站不構成投資建議
+  </footer>
+</div>
+
+<script>
+const raw = {{ chart_data }};
+const ctx = document.getElementById('bankrollChart').getContext('2d');
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: raw.labels,
+    datasets: [{
+      label: '本金 (NT$)',
+      data: raw.values,
+      borderColor: '#63b3ed',
+      backgroundColor: 'rgba(99,179,237,0.08)',
+      borderWidth: 2,
+      pointRadius: 3,
+      pointBackgroundColor: '#63b3ed',
+      fill: true,
+      tension: 0.3,
+    }, {
+      label: '起始本金',
+      data: raw.labels.map(() => raw.initial),
+      borderColor: 'rgba(113,128,150,0.4)',
+      borderDash: [4, 4],
+      borderWidth: 1,
+      pointRadius: 0,
+      fill: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { labels: { color: '#718096', font: { size: 11 } } },
+      tooltip: {
+        callbacks: {
+          label: ctx => `NT$${ctx.parsed.y.toLocaleString()}`
+        }
+      }
+    },
+    scales: {
+      x: { ticks: { color: '#718096', font: { size: 10 } }, grid: { color: '#2a2d3e' } },
+      y: {
+        ticks: { color: '#718096', font: { size: 10 }, callback: v => `$${v.toLocaleString()}` },
+        grid: { color: '#2a2d3e' }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
