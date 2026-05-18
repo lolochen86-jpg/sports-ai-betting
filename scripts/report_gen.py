@@ -381,7 +381,8 @@ def write_daily_report(d: date, md_str: str, html_str: str) -> tuple[Path, Path]
     return md_path, html_path
 
 
-def update_index_html(perf: dict, bankroll: dict) -> Path:
+def update_index_html(perf: dict, bankroll: dict,
+                      today_strategies: list | None = None) -> Path:
     """更新 GitHub Pages 首頁 index.html。"""
     env      = _make_jinja_env()
     stats    = bankroll_stats(bankroll)
@@ -400,11 +401,73 @@ def update_index_html(perf: dict, bankroll: dict) -> Path:
         chart_data=json.dumps(chart_d),
         recent_reports=recent_reports,
         today=today_tw().isoformat(),
+        today_strategies=today_strategies or [],
     )
     idx_path = DOCS_DIR / "index.html"
     idx_path.write_text(html, encoding="utf-8")
     logger.info("首頁 index.html 已更新")
     return idx_path
+
+
+# ── 從磁碟載入已儲存的三策略計劃 ─────────────────────────
+def _load_plans_from_disk(d: date) -> dict:
+    """
+    從 data/live/plan_{date}_{slug}.json 讀取三策略計劃，
+    轉換為 _build_context 能接受的輕量 dict 格式（非 DailyPlan dataclass）。
+    """
+    from utils import DATA_DIR
+    LIVE_DIR = DATA_DIR / "live"
+    slugs = ["conservative", "aggressive", "underdog"]
+    plans_out = {}
+    for slug in slugs:
+        path = LIVE_DIR / f"plan_{d.isoformat()}_{slug}.json"
+        if not json_exists(path):
+            plans_out[slug] = None
+            continue
+        raw = load_json(path)
+        # 包成簡單 namespace 讓 _build_context 可存取
+        plans_out[slug] = _DictPlan(raw)
+    return plans_out
+
+
+class _DictPlan:
+    """將 plan JSON dict 包裝成 _build_context 可存取的物件。"""
+    def __init__(self, d: dict):
+        self._d = d
+        self.bankroll = d.get("bankroll", 3000.0)
+
+        class _Pick:
+            def __init__(self, p):
+                self.sport      = p.get("sport", "")
+                self.home_team  = p.get("home_team", "")
+                self.away_team  = p.get("away_team", "")
+                self.bet_label  = p.get("bet_label", "")
+                self.bet_side   = p.get("bet_side", "home")
+                self.odds       = float(p.get("odds", 0))
+                self.true_prob  = float(p.get("true_prob", 0))
+                self.edge       = float(p.get("edge", 0))
+                self.grade      = p.get("grade", "C")
+                self._kf        = float(p.get("kelly_frac", 0))
+            def bet_amount(self, bankroll):
+                return round(self._kf * bankroll)
+            def data_card(self, bankroll):
+                return ""
+
+        class _Parlay:
+            def __init__(self, p, bankroll):
+                self._bankroll  = bankroll
+                self.parlay_odds= float(p.get("parlay_odds", 0))
+                self.true_prob  = float(p.get("true_prob", 0))
+                self.parlay_ev  = float(p.get("parlay_ev", 0))
+                self._kf        = float(p.get("kelly_frac", 0))
+                legs_raw = p.get("legs", [])
+                self.legs = [_Pick(lg) for lg in legs_raw]
+                self.label = "·".join(lg.bet_label for lg in self.legs)
+            def bet_amount(self, bankroll):
+                return round(self._kf * bankroll)
+
+        self.single_picks = [_Pick(p) for p in d.get("single_picks", [])]
+        self.parlays      = [_Parlay(p, self.bankroll) for p in d.get("parlays", [])]
 
 
 # ── 主流程 ────────────────────────────────────────────────
@@ -414,11 +477,13 @@ def run(plan=None, plans: dict | None = None, report_date: date | str | None = N
     plans: dict 含三策略 {"conservative": DailyPlan, "aggressive": DailyPlan, "underdog": DailyPlan}
     plan:  單一 DailyPlan（向下相容舊呼叫方式）
     """
-    # 向下相容：若只傳 plan，包成 plans dict
-    if plans is None:
-        plans = {"conservative": plan, "aggressive": None, "underdog": None}
-
     d         = parse_date(report_date) if report_date else today_tw()
+
+    # 若無傳入 plans，嘗試從 live 目錄載入已儲存的計劃 JSON
+    if plans is None and plan is None:
+        plans = _load_plans_from_disk(d)
+    elif plans is None:
+        plans = {"conservative": plan, "aggressive": None, "underdog": None}
     yesterday = d - timedelta(days=1)
 
     logger.info(f"===== 報告生成：{d} =====")
@@ -444,7 +509,9 @@ def run(plan=None, plans: dict | None = None, report_date: date | str | None = N
 
     # 5. 寫入檔案
     md_path, html_path = write_daily_report(d, md_str, html_str)
-    idx_path = update_index_html(perf, bankroll)
+    # 把今日三策略摘要傳給首頁
+    ctx_strategies = _build_context(d, plan, results, bankroll_stats(bankroll), perf, plans=plans).get("strategies")
+    idx_path = update_index_html(perf, bankroll, today_strategies=ctx_strategies)
 
     stats = bankroll_stats(bankroll)
     logger.info(f"本金：NT${stats['current']:,.0f}（ROI {stats['roi']:+.1f}%）")

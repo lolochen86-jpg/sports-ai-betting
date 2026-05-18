@@ -9,24 +9,28 @@
     --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3e;
     --text: #e2e8f0; --muted: #718096; --accent: #63b3ed;
     --green: #48bb78; --red: #fc8181; --yellow: #f6e05e;
-    --purple: #b794f4;
+    --purple: #b794f4; --orange: #f6ad55;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.6; padding: 1rem; }
   .container { max-width: 900px; margin: 0 auto; }
   h1 { font-size: 1.5rem; color: var(--accent); padding: 1rem 0 0.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
-  h2 { font-size: 1.1rem; color: var(--accent); margin: 1.5rem 0 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
-  .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.25rem; }
+  h2 { font-size: 1.05rem; color: var(--accent); margin: 1.5rem 0 0.75rem; }
 
-  /* Cards */
-  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .back-link { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; display: inline-block; }
+
+  /* Stat cards */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem 1rem; }
-  .card-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.2rem; }
-  .card-value { font-size: 1.2rem; font-weight: 600; }
-  .card-value.green  { color: var(--green); }
-  .card-value.red    { color: var(--red); }
-  .card-value.yellow { color: var(--yellow); }
-  .card-value.accent { color: var(--accent); }
+  .card-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .card-value { font-size: 1.2rem; font-weight: 700; }
+  .green  { color: var(--green); }
+  .red    { color: var(--red); }
+  .yellow { color: var(--yellow); }
+  .accent { color: var(--accent); }
+  .purple { color: var(--purple); }
 
   /* Tables */
   table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin-bottom: 1rem; }
@@ -35,8 +39,8 @@
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: rgba(255,255,255,0.03); }
 
-  /* Result badges */
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 600; }
   .badge-win  { background: rgba(72,187,120,0.15); color: var(--green); }
   .badge-loss { background: rgba(252,129,129,0.15); color: var(--red); }
   .badge-void { background: rgba(113,128,150,0.15); color: var(--muted); }
@@ -44,42 +48,85 @@
   .badge-B    { background: rgba(183,148,244,0.15); color: var(--purple); }
   .badge-C    { background: rgba(246,224,94,0.15); color: var(--yellow); }
 
+  /* ── Strategy Tabs ───────────────────────────── */
+  .tab-bar {
+    display: flex; gap: 0; margin-bottom: 1.25rem;
+    border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  }
+  .tab-btn {
+    flex: 1; padding: 0.6rem 0.5rem; border: none; cursor: pointer;
+    font-size: 0.82rem; font-weight: 600; font-family: inherit;
+    background: var(--surface); color: var(--muted);
+    border-right: 1px solid var(--border); transition: all 0.15s;
+    display: flex; flex-direction: column; align-items: center; gap: 0.1rem;
+  }
+  .tab-btn:last-child { border-right: none; }
+  .tab-btn.active { background: var(--bg); color: var(--text); }
+  .tab-btn.active.tab-conservative { box-shadow: inset 0 -3px 0 var(--accent); color: var(--accent); }
+  .tab-btn.active.tab-aggressive   { box-shadow: inset 0 -3px 0 var(--red);    color: var(--red); }
+  .tab-btn.active.tab-underdog     { box-shadow: inset 0 -3px 0 var(--purple); color: var(--purple); }
+  .tab-sub { font-size: 0.68rem; font-weight: 400; color: var(--muted); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
   /* Pick cards */
-  .pick-list { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; }
+  .pick-list { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; }
   .pick-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
-  .pick-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-  .pick-title { font-weight: 600; color: var(--text); }
-  .pick-matchup { font-size: 0.8rem; color: var(--muted); }
+  .pick-card.conservative { border-left: 3px solid var(--accent); }
+  .pick-card.aggressive   { border-left: 3px solid var(--red); }
+  .pick-card.underdog     { border-left: 3px solid var(--purple); }
+  .pick-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+  .pick-title   { font-weight: 700; font-size: 1rem; }
+  .pick-matchup { font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; }
+  .pick-amount  { font-size: 1.05rem; font-weight: 700; color: var(--green); }
+  .pick-potential { font-size: 0.72rem; color: var(--muted); text-align: right; }
   .pick-stats { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
-  .pick-stat { font-size: 0.8rem; }
+  .pick-stat  { font-size: 0.8rem; }
   .pick-stat-label { color: var(--muted); }
   .pick-stat-value { color: var(--text); font-weight: 500; }
-  .pick-amount { font-size: 1rem; font-weight: 700; color: var(--green); }
-  .edge-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 0.5rem; }
-  .edge-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.3s; }
+  .edge-bar  { height: 4px; background: var(--border); border-radius: 2px; margin-top: 0.6rem; }
+  .edge-fill { height: 100%; border-radius: 2px; }
+  .edge-fill.conservative { background: var(--accent); }
+  .edge-fill.aggressive   { background: var(--red); }
+  .edge-fill.underdog     { background: var(--purple); }
 
-  /* Parlay */
-  .parlay-card { background: var(--surface); border: 1px solid var(--purple); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
+  /* Parlay card */
+  .parlay-card { border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
+  .parlay-card.conservative { background: var(--surface); border: 1px solid var(--accent); }
+  .parlay-card.aggressive   { background: var(--surface); border: 1px solid var(--red); }
+  .parlay-card.underdog     { background: var(--surface); border: 1px solid var(--purple); }
   .parlay-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
-  .parlay-legs { display: flex; flex-direction: column; gap: 0.25rem; }
-  .parlay-leg { font-size: 0.8rem; color: var(--muted); display: flex; gap: 0.5rem; }
+  .parlay-label-text { font-weight: 600; font-size: 0.9rem; }
+  .parlay-ev { font-size: 0.78rem; color: var(--muted); margin-top: 0.1rem; }
+  .parlay-amount { font-size: 1rem; font-weight: 700; }
+  .parlay-amount.conservative { color: var(--accent); }
+  .parlay-amount.aggressive   { color: var(--red); }
+  .parlay-amount.underdog     { color: var(--purple); }
+  .parlay-legs { display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.5rem; }
+  .parlay-leg { font-size: 0.8rem; color: var(--muted); display: flex; gap: 0.5rem; align-items: center; }
   .parlay-leg::before { content: "└"; }
 
-  /* Data card */
-  details { margin-top: 0.5rem; }
-  summary { cursor: pointer; font-size: 0.8rem; color: var(--accent); user-select: none; }
-  pre { background: #0a0c14; border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; font-size: 0.75rem; overflow-x: auto; margin-top: 0.5rem; white-space: pre-wrap; color: var(--muted); }
+  /* Summary bar */
+  .summary-bar {
+    margin-top: 1rem; padding: 0.75rem 1rem;
+    background: var(--surface); border-radius: 8px;
+    font-size: 0.875rem; display: flex; justify-content: space-between; align-items: center;
+  }
 
   /* No picks */
   .no-picks { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2rem; text-align: center; color: var(--muted); }
 
-  /* Footer */
-  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--muted); text-align: center; }
+  details { margin-top: 0.5rem; }
+  summary { cursor: pointer; font-size: 0.78rem; color: var(--accent); user-select: none; }
+  pre { background: #0a0c14; border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; font-size: 0.72rem; overflow-x: auto; margin-top: 0.5rem; white-space: pre-wrap; color: var(--muted); }
+
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.72rem; color: var(--muted); text-align: center; line-height: 1.8; }
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="subtitle">運彩AI分析師</div>
+  <a href="index.html" class="back-link">← 返回首頁</a>
   <h1>2026-05-18 下注明細</h1>
 
   <!-- 資金狀況 -->
@@ -87,390 +134,361 @@
   <div class="card-grid">
     <div class="card">
       <div class="card-label">目前本金</div>
-      <div class="card-value accent">NT$1,695</div>
+      <div class="card-value accent">NT$3,000</div>
     </div>
     <div class="card">
       <div class="card-label">昨日盈虧</div>
-      <div class="card-value red">
-        NT$-435
+      <div class="card-value green">
+        +NT$0
       </div>
     </div>
     <div class="card">
       <div class="card-label">累積報酬率</div>
-      <div class="card-value red">
-        -43.5%
+      <div class="card-value green">
+        +0.0%
       </div>
     </div>
     <div class="card">
       <div class="card-label">距高點回撤</div>
-      <div class="card-value red">
-        -43.5%
+      <div class="card-value green">
+        -0.0%
       </div>
     </div>
     <div class="card">
       <div class="card-label">單關命中率</div>
-      <div class="card-value">50.0%</div>
+      <div class="card-value">0.0%</div>
     </div>
     <div class="card">
       <div class="card-label">串關命中率</div>
-      <div class="card-value">0.0%</div>
+      <div class="card-value purple">0.0%</div>
     </div>
   </div>
 
   <!-- 昨日成績 -->
   <h2>✅ 昨日成績（2026-05-17）</h2>
   
-  <table>
-    <thead>
-      <tr><th>#</th><th>下注方向</th><th>球種</th><th>賠率</th><th>下注額</th><th>結果</th><th>盈虧</th></tr>
-    </thead>
-    <tbody>
-      
-      <tr>
-        <td>1</td>
-        <td>小熊 勝</td>
-        <td>MLB</td>
-        <td>1.72</td>
-        <td>NT$170</td>
-        <td>
-          <span class="badge badge-loss">❌ 未中</span>
-          
-        </td>
-        <td class="" style="color:var(--red)">
-          NT$-170
-        </td>
-      </tr>
-      
-      <tr>
-        <td>2</td>
-        <td>ATH 勝</td>
-        <td>MLB</td>
-        <td>1.87</td>
-        <td>NT$70</td>
-        <td>
-          <span class="badge badge-loss">❌ 未中</span>
-          
-        </td>
-        <td class="" style="color:var(--red)">
-          NT$-70
-        </td>
-      </tr>
-      
-      <tr>
-        <td>3</td>
-        <td>藍鳥 勝</td>
-        <td>MLB</td>
-        <td>1.75</td>
-        <td>NT$70</td>
-        <td>
-          <span class="badge badge-win">✅ 命中</span>
-          
-        </td>
-        <td class="" style="color:var(--green)">
-          +NT$53
-        </td>
-      </tr>
-      
-      <tr>
-        <td>4</td>
-        <td>費城人 勝</td>
-        <td>MLB</td>
-        <td>2.04</td>
-        <td>NT$50</td>
-        <td>
-          <span class="badge badge-win">✅ 命中</span>
-          
-        </td>
-        <td class="" style="color:var(--green)">
-          +NT$52
-        </td>
-      </tr>
-      
-      <tr>
-        <td>5</td>
-        <td>2-串（小熊 勝、ATH 勝）</td>
-        <td>PARLAY</td>
-        <td>3.20</td>
-        <td>NT$50</td>
-        <td>
-          <span class="badge badge-loss">❌ 未中</span>
-          
-        </td>
-        <td class="" style="color:var(--red)">
-          NT$-50
-        </td>
-      </tr>
-      
-      <tr>
-        <td>6</td>
-        <td>2-串（小熊 勝、費城人 勝）</td>
-        <td>PARLAY</td>
-        <td>3.50</td>
-        <td>NT$50</td>
-        <td>
-          <span class="badge badge-loss">❌ 未中</span>
-          
-        </td>
-        <td class="" style="color:var(--red)">
-          NT$-50
-        </td>
-      </tr>
-      
-      <tr>
-        <td>7</td>
-        <td>2-串（小熊 勝、藍鳥 勝）</td>
-        <td>PARLAY</td>
-        <td>3.01</td>
-        <td>NT$50</td>
-        <td>
-          <span class="badge badge-loss">❌ 未中</span>
-          
-        </td>
-        <td class="" style="color:var(--red)">
-          NT$-50
-        </td>
-      </tr>
-      
-      <tr>
-        <td>8</td>
-        <td>3-串（小熊 勝、ATH 勝、費城人 勝）</td>
-        <td>PARLAY</td>
-        <td>6.54</td>
-        <td>NT$30</td>
-        <td>
-          <span class="badge badge-loss">❌ 未中</span>
-          
-        </td>
-        <td class="" style="color:var(--red)">
-          NT$-30
-        </td>
-      </tr>
-      
-      <tr>
-        <td>9</td>
-        <td>3-串（小熊 勝、ATH 勝、藍鳥 勝）</td>
-        <td>PARLAY</td>
-        <td>5.62</td>
-        <td>NT$30</td>
-        <td>
-          <span class="badge badge-loss">❌ 未中</span>
-          
-        </td>
-        <td class="" style="color:var(--red)">
-          NT$-30
-        </td>
-      </tr>
-      
-      <tr>
-        <td>10</td>
-        <td>3-串（小熊 勝、ATH 勝、大都會 勝）</td>
-        <td>PARLAY</td>
-        <td>6.15</td>
-        <td>NT$30</td>
-        <td>
-          <span class="badge badge-loss">❌ 未中</span>
-          
-        </td>
-        <td class="" style="color:var(--red)">
-          NT$-30
-        </td>
-      </tr>
-      
-      <tr>
-        <td>11</td>
-        <td>4-串（小熊 勝、ATH 勝、藍鳥 勝、費城人 勝）</td>
-        <td>PARLAY</td>
-        <td>11.47</td>
-        <td>NT$20</td>
-        <td>
-          <span class="badge badge-loss">❌ 未中</span>
-          
-        </td>
-        <td class="" style="color:var(--red)">
-          NT$-20
-        </td>
-      </tr>
-      
-      <tr>
-        <td>12</td>
-        <td>4-串（小熊 勝、ATH 勝、費城人 勝、大都會 勝）</td>
-        <td>PARLAY</td>
-        <td>12.56</td>
-        <td>NT$20</td>
-        <td>
-          <span class="badge badge-loss">❌ 未中</span>
-          
-        </td>
-        <td class="" style="color:var(--red)">
-          NT$-20
-        </td>
-      </tr>
-      
-      <tr>
-        <td>13</td>
-        <td>4-串（小熊 勝、ATH 勝、費城人 勝、太空人 勝）</td>
-        <td>PARLAY</td>
-        <td>12.40</td>
-        <td>NT$20</td>
-        <td>
-          <span class="badge badge-loss">❌ 未中</span>
-          
-        </td>
-        <td class="" style="color:var(--red)">
-          NT$-20
-        </td>
-      </tr>
-      
-    </tbody>
-  </table>
-  <p style="font-size:0.85rem;color:var(--muted)">
-    合計：投入 NT$660，
-    命中 2/13，
-    盈虧 <strong style="color:var(--red)">
-    NT$-435</strong>
-  </p>
+  <p style="color:var(--muted);font-size:0.875rem">昨日無下注記錄（起始日）。</p>
   
 
-  <!-- 今日下注 -->
-  <h2>🎯 今日下注明細（2026-05-18）</h2>
+  <!-- 今日三策略下注 -->
+  <h2>🎯 今日下注計劃（2026-05-18）</h2>
 
   
-
-  
-  <div class="pick-list">
+  <!-- Tab buttons -->
+  <div class="tab-bar">
     
-    <div class="pick-card">
-      <div class="pick-header">
+    
+    
+    <button class="tab-btn tab-conservative active"
+            onclick="switchTab(0, this)">
+      🛡️ 穩健型
+      <span class="tab-sub">
+        2單+1串 · NT$299
+        
+      </span>
+    </button>
+    
+    <button class="tab-btn tab-aggressive "
+            onclick="switchTab(1, this)">
+      ⚔️ 激進型
+      <span class="tab-sub">
+        2單+2串 · NT$394
+        
+      </span>
+    </button>
+    
+    <button class="tab-btn tab-underdog "
+            onclick="switchTab(2, this)">
+      🎯 冷門獵人型
+      <span class="tab-sub">
+        1單 · NT$104
+        
+      </span>
+    </button>
+    
+  </div>
+
+  <!-- Tab panels -->
+  
+  
+  <div class="tab-panel active" id="panel-0">
+
+    
+    <!-- Single picks -->
+    
+    <div class="pick-list">
+      
+      <div class="pick-card conservative">
+        <div class="pick-header">
+          <div>
+            <div class="pick-title">馬林魚 勝</div>
+            <div class="pick-matchup">ATL@MIA · MLB</div>
+          </div>
+          <div style="text-align:right">
+            <div class="pick-amount">NT$156</div>
+            <div class="pick-potential">潛在 +NT$140</div>
+          </div>
+        </div>
+        <div class="pick-stats">
+          <div class="pick-stat"><span class="pick-stat-label">賠率 </span><span class="pick-stat-value">1.90</span></div>
+          <div class="pick-stat"><span class="pick-stat-label">勝率 </span><span class="pick-stat-value">62.5%</span></div>
+          <div class="pick-stat"><span class="pick-stat-label">Edge </span><span class="pick-stat-value" style="color:var(--green)">+12.3%</span></div>
+          <div class="pick-stat"><span class="badge badge-A">A 級</span></div>
+        </div>
+        <div class="edge-bar"><div class="edge-fill conservative" style="width:61.39498443350044%"></div></div>
+        
+      </div>
+      
+      <div class="pick-card conservative">
+        <div class="pick-header">
+          <div>
+            <div class="pick-title">皇家 勝</div>
+            <div class="pick-matchup">BOS@KC · MLB</div>
+          </div>
+          <div style="text-align:right">
+            <div class="pick-amount">NT$98</div>
+            <div class="pick-potential">潛在 +NT$91</div>
+          </div>
+        </div>
+        <div class="pick-stats">
+          <div class="pick-stat"><span class="pick-stat-label">賠率 </span><span class="pick-stat-value">1.93</span></div>
+          <div class="pick-stat"><span class="pick-stat-label">勝率 </span><span class="pick-stat-value">58.2%</span></div>
+          <div class="pick-stat"><span class="pick-stat-label">Edge </span><span class="pick-stat-value" style="color:var(--green)">+8.7%</span></div>
+          <div class="pick-stat"><span class="badge badge-A">A 級</span></div>
+        </div>
+        <div class="edge-bar"><div class="edge-fill conservative" style="width:43.529621507179094%"></div></div>
+        
+      </div>
+      
+    </div>
+    
+
+    <!-- Parlays -->
+    
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem">🔗 串關</p>
+    
+    <div class="parlay-card conservative">
+      <div class="parlay-header">
         <div>
-          <div class="pick-title">馬林魚 勝</div>
-          <div class="pick-matchup">ATL@MIA · MLB</div>
+          <div class="parlay-label-text">馬林魚 勝·皇家 勝</div>
+          <div class="parlay-ev">總賠率 3.66 · EV +33.1%</div>
         </div>
         <div style="text-align:right">
-          <div class="pick-amount">NT$90</div>
-          <div style="font-size:0.75rem;color:var(--muted)">潛在 +NT$81</div>
+          <div class="parlay-amount conservative">NT$45</div>
+          <div class="pick-potential">潛在 +NT$120</div>
         </div>
       </div>
-      <div class="pick-stats">
-        <div class="pick-stat"><span class="pick-stat-label">賠率 </span><span class="pick-stat-value">1.90</span></div>
-        <div class="pick-stat"><span class="pick-stat-label">勝率 </span><span class="pick-stat-value">62.5%</span></div>
-        <div class="pick-stat"><span class="pick-stat-label">Edge </span><span class="pick-stat-value" style="color:var(--green)">+12.3%</span></div>
-        <div class="pick-stat"><span class="badge badge-A">A 級</span></div>
+      <div class="parlay-legs">
+        
+        <div class="parlay-leg">
+          <span style="color:var(--text)">馬林魚 勝</span>
+          <span>@1.90</span>
+          
+        </div>
+        
+        <div class="parlay-leg">
+          <span style="color:var(--text)">皇家 勝</span>
+          <span>@1.93</span>
+          
+        </div>
+        
       </div>
-      <div class="edge-bar"><div class="edge-fill" style="width:61.39498443350044%"></div></div>
-      <details><summary>查看完整數據卡</summary><pre>【數據卡 — ATL@MIA，下注 馬林魚 勝】
-
-原始數據：（詳見 raw_data）
-
-模型計算：
-  基礎勝率:     64.8%
-  打線品質調整: -1.0%
-  球場因素調整: -0.0%
-  牛棚調整:     -1.2%
-  最終估算勝率: 62.5%
-
-賠率分析：
-  運彩賠率:     1.90
-  隱含勝率(去莊): 50.3%
-  Edge:         +12.3%  ← 通過 4% 門檻
-
-凱利計算：
-  b=0.90, p=0.625, q=0.375
-  Full Kelly:   20.8%
-  分數Kelly(25%): 5.2%
-  當日本金:     NT$1,695
-  建議注碼:     NT$90
-  信心等級:     A 級</pre></details>
     </div>
     
-    <div class="pick-card">
-      <div class="pick-header">
+    
+
+    <div class="summary-bar">
+      <span>穩健型：2 單關 + 1 串關</span>
+      <strong style="color:var(--accent)">總下注 NT$299</strong>
+    </div>
+    
+
+  </div>
+  
+  
+  <div class="tab-panel " id="panel-1">
+
+    
+    <!-- Single picks -->
+    
+    <div class="pick-list">
+      
+      <div class="pick-card aggressive">
+        <div class="pick-header">
+          <div>
+            <div class="pick-title">藍鳥 勝</div>
+            <div class="pick-matchup">TOR@NYY · MLB</div>
+          </div>
+          <div style="text-align:right">
+            <div class="pick-amount">NT$138</div>
+            <div class="pick-potential">潛在 +NT$229</div>
+          </div>
+        </div>
+        <div class="pick-stats">
+          <div class="pick-stat"><span class="pick-stat-label">賠率 </span><span class="pick-stat-value">2.66</span></div>
+          <div class="pick-stat"><span class="pick-stat-label">勝率 </span><span class="pick-stat-value">52.0%</span></div>
+          <div class="pick-stat"><span class="pick-stat-label">Edge </span><span class="pick-stat-value" style="color:var(--green)">+16.1%</span></div>
+          <div class="pick-stat"><span class="badge badge-A">A 級</span></div>
+        </div>
+        <div class="edge-bar"><div class="edge-fill aggressive" style="width:80.59702141681552%"></div></div>
+        
+      </div>
+      
+      <div class="pick-card aggressive">
+        <div class="pick-header">
+          <div>
+            <div class="pick-title">馬林魚 勝</div>
+            <div class="pick-matchup">ATL@MIA · MLB</div>
+          </div>
+          <div style="text-align:right">
+            <div class="pick-amount">NT$125</div>
+            <div class="pick-potential">潛在 +NT$112</div>
+          </div>
+        </div>
+        <div class="pick-stats">
+          <div class="pick-stat"><span class="pick-stat-label">賠率 </span><span class="pick-stat-value">1.90</span></div>
+          <div class="pick-stat"><span class="pick-stat-label">勝率 </span><span class="pick-stat-value">62.5%</span></div>
+          <div class="pick-stat"><span class="pick-stat-label">Edge </span><span class="pick-stat-value" style="color:var(--green)">+12.3%</span></div>
+          <div class="pick-stat"><span class="badge badge-A">A 級</span></div>
+        </div>
+        <div class="edge-bar"><div class="edge-fill aggressive" style="width:61.39498443350044%"></div></div>
+        
+      </div>
+      
+    </div>
+    
+
+    <!-- Parlays -->
+    
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem">🔗 串關</p>
+    
+    <div class="parlay-card aggressive">
+      <div class="parlay-header">
         <div>
-          <div class="pick-title">皇家 勝</div>
-          <div class="pick-matchup">BOS@KC · MLB</div>
+          <div class="parlay-label-text">藍鳥 勝·馬林魚 勝</div>
+          <div class="parlay-ev">總賠率 5.05 · EV +64.0%</div>
         </div>
         <div style="text-align:right">
-          <div class="pick-amount">NT$60</div>
-          <div style="font-size:0.75rem;color:var(--muted)">潛在 +NT$56</div>
+          <div class="parlay-amount aggressive">NT$71</div>
+          <div class="pick-potential">潛在 +NT$287</div>
         </div>
       </div>
-      <div class="pick-stats">
-        <div class="pick-stat"><span class="pick-stat-label">賠率 </span><span class="pick-stat-value">1.93</span></div>
-        <div class="pick-stat"><span class="pick-stat-label">勝率 </span><span class="pick-stat-value">58.2%</span></div>
-        <div class="pick-stat"><span class="pick-stat-label">Edge </span><span class="pick-stat-value" style="color:var(--green)">+8.7%</span></div>
-        <div class="pick-stat"><span class="badge badge-A">A 級</span></div>
+      <div class="parlay-legs">
+        
+        <div class="parlay-leg">
+          <span style="color:var(--text)">藍鳥 勝</span>
+          <span>@2.66</span>
+          
+        </div>
+        
+        <div class="parlay-leg">
+          <span style="color:var(--text)">馬林魚 勝</span>
+          <span>@1.90</span>
+          
+        </div>
+        
       </div>
-      <div class="edge-bar"><div class="edge-fill" style="width:43.529621507179094%"></div></div>
-      <details><summary>查看完整數據卡</summary><pre>【數據卡 — BOS@KC，下注 皇家 勝】
-
-原始數據：（詳見 raw_data）
-
-模型計算：
-  基礎勝率:     57.5%
-  打線品質調整: +0.5%
-  球場因素調整: -0.1%
-  牛棚調整:     +0.2%
-  最終估算勝率: 58.2%
-
-賠率分析：
-  運彩賠率:     1.93
-  隱含勝率(去莊): 49.5%
-  Edge:         +8.7%  ← 通過 4% 門檻
-
-凱利計算：
-  b=0.93, p=0.582, q=0.418
-  Full Kelly:   13.1%
-  分數Kelly(25%): 3.3%
-  當日本金:     NT$1,695
-  建議注碼:     NT$60
-  信心等級:     A 級</pre></details>
     </div>
     
+    <div class="parlay-card aggressive">
+      <div class="parlay-header">
+        <div>
+          <div class="parlay-label-text">藍鳥 勝·皇家 勝</div>
+          <div class="parlay-ev">總賠率 5.13 · EV +55.0%</div>
+        </div>
+        <div style="text-align:right">
+          <div class="parlay-amount aggressive">NT$60</div>
+          <div class="pick-potential">潛在 +NT$248</div>
+        </div>
+      </div>
+      <div class="parlay-legs">
+        
+        <div class="parlay-leg">
+          <span style="color:var(--text)">藍鳥 勝</span>
+          <span>@2.66</span>
+          
+        </div>
+        
+        <div class="parlay-leg">
+          <span style="color:var(--text)">皇家 勝</span>
+          <span>@1.93</span>
+          
+        </div>
+        
+      </div>
+    </div>
+    
+    
+
+    <div class="summary-bar">
+      <span>激進型：2 單關 + 2 串關</span>
+      <strong style="color:var(--accent)">總下注 NT$394</strong>
+    </div>
+    
+
+  </div>
+  
+  
+  <div class="tab-panel " id="panel-2">
+
+    
+    <!-- Single picks -->
+    
+    <div class="pick-list">
+      
+      <div class="pick-card underdog">
+        <div class="pick-header">
+          <div>
+            <div class="pick-title">藍鳥 勝</div>
+            <div class="pick-matchup">TOR@NYY · MLB</div>
+          </div>
+          <div style="text-align:right">
+            <div class="pick-amount">NT$104</div>
+            <div class="pick-potential">潛在 +NT$173</div>
+          </div>
+        </div>
+        <div class="pick-stats">
+          <div class="pick-stat"><span class="pick-stat-label">賠率 </span><span class="pick-stat-value">2.66</span></div>
+          <div class="pick-stat"><span class="pick-stat-label">勝率 </span><span class="pick-stat-value">52.0%</span></div>
+          <div class="pick-stat"><span class="pick-stat-label">Edge </span><span class="pick-stat-value" style="color:var(--green)">+16.1%</span></div>
+          <div class="pick-stat"><span class="badge badge-A">A 級</span></div>
+        </div>
+        <div class="edge-bar"><div class="edge-fill underdog" style="width:80.59702141681552%"></div></div>
+        
+      </div>
+      
+    </div>
+    
+
+    <!-- Parlays -->
+    
+
+    <div class="summary-bar">
+      <span>冷門獵人型：1 單關</span>
+      <strong style="color:var(--accent)">總下注 NT$104</strong>
+    </div>
+    
+
   </div>
   
 
-  
-  <h2 style="margin-top:1rem">🔗 串關</h2>
-  
-  <div class="parlay-card">
-    <div class="parlay-header">
-      <div>
-        <div style="font-weight:600">2-串（馬林魚 勝、皇家 勝）</div>
-        <div style="font-size:0.8rem;color:var(--muted)">總賠率 3.66 · EV 33.1%</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:1rem;font-weight:700;color:var(--purple)">NT$30</div>
-        <div style="font-size:0.75rem;color:var(--muted)">潛在 +NT$80</div>
-      </div>
-    </div>
-    <div class="parlay-legs">
-      
-      <div class="parlay-leg">
-        <span style="color:var(--text)">馬林魚 勝</span>
-        <span style="color:var(--muted)">@1.90</span>
-        <span style="color:var(--muted)">ATL@MIA</span>
-      </div>
-      
-      <div class="parlay-leg">
-        <span style="color:var(--text)">皇家 勝</span>
-        <span style="color:var(--muted)">@1.93</span>
-        <span style="color:var(--muted)">BOS@KC</span>
-      </div>
-      
-    </div>
-  </div>
-  
-  
-
-  <div style="margin-top:1rem;padding:0.75rem 1rem;background:var(--surface);border-radius:8px;font-size:0.875rem">
-    今日合計下注：<strong style="color:var(--accent)">NT$180</strong>
-  </div>
   
 
   <footer>
+    <a href="index.html">← 返回首頁</a><br><br>
     數據來源：NBA Stats API · MLB Stats API · 台灣運彩 / Pinnacle<br>
     模型：Elo+效率差（NBA）· 先發FIP對決（MLB）· ¼ 分數凱利<br>
     每日 22:00（台灣時間）自動更新 · 本報告不構成投資建議
   </footer>
 </div>
+
+<script>
+function switchTab(idx, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + idx).classList.add('active');
+}
+</script>
 </body>
 </html>

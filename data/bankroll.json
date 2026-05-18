@@ -1,14 +1,11 @@
 {
   "initial": 3000.0,
-  "current": 2130.0,
+  "current": 3000.0,
   "peak": 3000.0,
-  "target": 12000.0,
-  "ruin_threshold": 10.0,
-  "status": "active",
   "start_date": "2026-05-18",
   "history": [
     {
-      "date": "2026-05-18",
+      "date": "2026-05-17",
       "open": 3000.0,
       "close": 3000.0,
       "pnl": 0,
@@ -17,16 +14,9 @@
     {
       "date": "2026-05-17",
       "open": 3000.0,
-      "close": 2565.0,
-      "pnl": -435.0,
-      "bets": 13
-    },
-    {
-      "date": "2026-05-17",
-      "open": 2565.0,
-      "close": 2130.0,
-      "pnl": -435.0,
-      "bets": 13
+      "close": 3000.0,
+      "pnl": 0,
+      "bets": 0
     }
   ]
 }

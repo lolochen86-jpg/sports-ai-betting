@@ -9,24 +9,28 @@
     --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3e;
     --text: #e2e8f0; --muted: #718096; --accent: #63b3ed;
     --green: #48bb78; --red: #fc8181; --yellow: #f6e05e;
-    --purple: #b794f4;
+    --purple: #b794f4; --orange: #f6ad55;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.6; padding: 1rem; }
   .container { max-width: 900px; margin: 0 auto; }
   h1 { font-size: 1.5rem; color: var(--accent); padding: 1rem 0 0.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
-  h2 { font-size: 1.1rem; color: var(--accent); margin: 1.5rem 0 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
-  .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.25rem; }
+  h2 { font-size: 1.05rem; color: var(--accent); margin: 1.5rem 0 0.75rem; }
 
-  /* Cards */
-  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .back-link { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; display: inline-block; }
+
+  /* Stat cards */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem 1rem; }
-  .card-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.2rem; }
-  .card-value { font-size: 1.2rem; font-weight: 600; }
-  .card-value.green  { color: var(--green); }
-  .card-value.red    { color: var(--red); }
-  .card-value.yellow { color: var(--yellow); }
-  .card-value.accent { color: var(--accent); }
+  .card-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .card-value { font-size: 1.2rem; font-weight: 700; }
+  .green  { color: var(--green); }
+  .red    { color: var(--red); }
+  .yellow { color: var(--yellow); }
+  .accent { color: var(--accent); }
+  .purple { color: var(--purple); }
 
   /* Tables */
   table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin-bottom: 1rem; }
@@ -35,8 +39,8 @@
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: rgba(255,255,255,0.03); }
 
-  /* Result badges */
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 600; }
   .badge-win  { background: rgba(72,187,120,0.15); color: var(--green); }
   .badge-loss { background: rgba(252,129,129,0.15); color: var(--red); }
   .badge-void { background: rgba(113,128,150,0.15); color: var(--muted); }
@@ -44,42 +48,85 @@
   .badge-B    { background: rgba(183,148,244,0.15); color: var(--purple); }
   .badge-C    { background: rgba(246,224,94,0.15); color: var(--yellow); }
 
+  /* ── Strategy Tabs ───────────────────────────── */
+  .tab-bar {
+    display: flex; gap: 0; margin-bottom: 1.25rem;
+    border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  }
+  .tab-btn {
+    flex: 1; padding: 0.6rem 0.5rem; border: none; cursor: pointer;
+    font-size: 0.82rem; font-weight: 600; font-family: inherit;
+    background: var(--surface); color: var(--muted);
+    border-right: 1px solid var(--border); transition: all 0.15s;
+    display: flex; flex-direction: column; align-items: center; gap: 0.1rem;
+  }
+  .tab-btn:last-child { border-right: none; }
+  .tab-btn.active { background: var(--bg); color: var(--text); }
+  .tab-btn.active.tab-conservative { box-shadow: inset 0 -3px 0 var(--accent); color: var(--accent); }
+  .tab-btn.active.tab-aggressive   { box-shadow: inset 0 -3px 0 var(--red);    color: var(--red); }
+  .tab-btn.active.tab-underdog     { box-shadow: inset 0 -3px 0 var(--purple); color: var(--purple); }
+  .tab-sub { font-size: 0.68rem; font-weight: 400; color: var(--muted); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
   /* Pick cards */
-  .pick-list { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; }
+  .pick-list { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; }
   .pick-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
-  .pick-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-  .pick-title { font-weight: 600; color: var(--text); }
-  .pick-matchup { font-size: 0.8rem; color: var(--muted); }
+  .pick-card.conservative { border-left: 3px solid var(--accent); }
+  .pick-card.aggressive   { border-left: 3px solid var(--red); }
+  .pick-card.underdog     { border-left: 3px solid var(--purple); }
+  .pick-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+  .pick-title   { font-weight: 700; font-size: 1rem; }
+  .pick-matchup { font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; }
+  .pick-amount  { font-size: 1.05rem; font-weight: 700; color: var(--green); }
+  .pick-potential { font-size: 0.72rem; color: var(--muted); text-align: right; }
   .pick-stats { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
-  .pick-stat { font-size: 0.8rem; }
+  .pick-stat  { font-size: 0.8rem; }
   .pick-stat-label { color: var(--muted); }
   .pick-stat-value { color: var(--text); font-weight: 500; }
-  .pick-amount { font-size: 1rem; font-weight: 700; color: var(--green); }
-  .edge-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 0.5rem; }
-  .edge-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.3s; }
+  .edge-bar  { height: 4px; background: var(--border); border-radius: 2px; margin-top: 0.6rem; }
+  .edge-fill { height: 100%; border-radius: 2px; }
+  .edge-fill.conservative { background: var(--accent); }
+  .edge-fill.aggressive   { background: var(--red); }
+  .edge-fill.underdog     { background: var(--purple); }
 
-  /* Parlay */
-  .parlay-card { background: var(--surface); border: 1px solid var(--purple); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
+  /* Parlay card */
+  .parlay-card { border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
+  .parlay-card.conservative { background: var(--surface); border: 1px solid var(--accent); }
+  .parlay-card.aggressive   { background: var(--surface); border: 1px solid var(--red); }
+  .parlay-card.underdog     { background: var(--surface); border: 1px solid var(--purple); }
   .parlay-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
-  .parlay-legs { display: flex; flex-direction: column; gap: 0.25rem; }
-  .parlay-leg { font-size: 0.8rem; color: var(--muted); display: flex; gap: 0.5rem; }
+  .parlay-label-text { font-weight: 600; font-size: 0.9rem; }
+  .parlay-ev { font-size: 0.78rem; color: var(--muted); margin-top: 0.1rem; }
+  .parlay-amount { font-size: 1rem; font-weight: 700; }
+  .parlay-amount.conservative { color: var(--accent); }
+  .parlay-amount.aggressive   { color: var(--red); }
+  .parlay-amount.underdog     { color: var(--purple); }
+  .parlay-legs { display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.5rem; }
+  .parlay-leg { font-size: 0.8rem; color: var(--muted); display: flex; gap: 0.5rem; align-items: center; }
   .parlay-leg::before { content: "└"; }
 
-  /* Data card */
-  details { margin-top: 0.5rem; }
-  summary { cursor: pointer; font-size: 0.8rem; color: var(--accent); user-select: none; }
-  pre { background: #0a0c14; border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; font-size: 0.75rem; overflow-x: auto; margin-top: 0.5rem; white-space: pre-wrap; color: var(--muted); }
+  /* Summary bar */
+  .summary-bar {
+    margin-top: 1rem; padding: 0.75rem 1rem;
+    background: var(--surface); border-radius: 8px;
+    font-size: 0.875rem; display: flex; justify-content: space-between; align-items: center;
+  }
 
   /* No picks */
   .no-picks { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2rem; text-align: center; color: var(--muted); }
 
-  /* Footer */
-  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--muted); text-align: center; }
+  details { margin-top: 0.5rem; }
+  summary { cursor: pointer; font-size: 0.78rem; color: var(--accent); user-select: none; }
+  pre { background: #0a0c14; border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; font-size: 0.72rem; overflow-x: auto; margin-top: 0.5rem; white-space: pre-wrap; color: var(--muted); }
+
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.72rem; color: var(--muted); text-align: center; line-height: 1.8; }
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="subtitle">運彩AI分析師</div>
+  <a href="index.html" class="back-link">← 返回首頁</a>
   <h1>{{ report_date }} 下注明細</h1>
 
   <!-- 資金狀況 -->
@@ -113,7 +160,7 @@
     </div>
     <div class="card">
       <div class="card-label">串關命中率</div>
-      <div class="card-value">{{ "{:.1f}".format(win_rate_parlay) }}%</div>
+      <div class="card-value purple">{{ "{:.1f}".format(win_rate_parlay) }}%</div>
     </div>
   </div>
 
@@ -137,7 +184,7 @@
           {% elif r.result == "LOSS" %}<span class="badge badge-loss">❌ 未中</span>
           {% else %}<span class="badge badge-void">⚪ 取消</span>{% endif %}
         </td>
-        <td class="{% if r.pnl | float >= 0 %}" style="color:var(--green){% else %}" style="color:var(--red){% endif %}">
+        <td style="color:{% if r.pnl | float >= 0 %}var(--green){% else %}var(--red){% endif %}">
           {% if r.pnl | float >= 0 %}+{% endif %}NT${{ "{:,.0f}".format(r.pnl | float) }}
         </td>
       </tr>
@@ -151,83 +198,133 @@
     {% if yesterday_pnl >= 0 %}+{% endif %}NT${{ "{:,.0f}".format(yesterday_pnl) }}</strong>
   </p>
   {% else %}
-  <p style="color:var(--muted);font-size:0.875rem">昨日無下注記錄。</p>
+  <p style="color:var(--muted);font-size:0.875rem">昨日無下注記錄（起始日）。</p>
   {% endif %}
 
-  <!-- 今日下注 -->
-  <h2>🎯 今日下注明細（{{ report_date }}）</h2>
+  <!-- 今日三策略下注 -->
+  <h2>🎯 今日下注計劃（{{ report_date }}）</h2>
 
-  {% if no_picks %}
-  <div class="no-picks">
-    <p style="font-size:1.1rem;margin-bottom:0.5rem">今日無符合門檻的選場</p>
-    <p>所有賽事 Edge &lt; 4% 或數據不足，今日空手。</p>
-  </div>
-  {% else %}
-
-  {% if singles %}
-  <div class="pick-list">
-    {% for s in singles %}
-    <div class="pick-card">
-      <div class="pick-header">
-        <div>
-          <div class="pick-title">{{ s.label }}</div>
-          <div class="pick-matchup">{{ s.matchup }} · {{ s.sport }}</div>
-        </div>
-        <div style="text-align:right">
-          <div class="pick-amount">NT${{ "{:,.0f}".format(s.amount) }}</div>
-          <div style="font-size:0.75rem;color:var(--muted)">潛在 +NT${{ "{:,.0f}".format(s.potential) }}</div>
-        </div>
-      </div>
-      <div class="pick-stats">
-        <div class="pick-stat"><span class="pick-stat-label">賠率 </span><span class="pick-stat-value">{{ "{:.2f}".format(s.odds) }}</span></div>
-        <div class="pick-stat"><span class="pick-stat-label">勝率 </span><span class="pick-stat-value">{{ "{:.1f}".format(s.true_prob * 100) }}%</span></div>
-        <div class="pick-stat"><span class="pick-stat-label">Edge </span><span class="pick-stat-value" style="color:var(--green)">+{{ "{:.1f}".format(s.edge * 100) }}%</span></div>
-        <div class="pick-stat"><span class="badge badge-{{ s.grade }}">{{ s.grade }} 級</span></div>
-      </div>
-      <div class="edge-bar"><div class="edge-fill" style="width:{{ [s.edge * 500, 100] | min }}%"></div></div>
-      <details><summary>查看完整數據卡</summary><pre>{{ s.data_card }}</pre></details>
-    </div>
+  {% if strategies %}
+  <!-- Tab buttons -->
+  <div class="tab-bar">
+    {% set slugs = ['conservative', 'aggressive', 'underdog'] %}
+    {% set icons = ['🛡️', '⚔️', '🎯'] %}
+    {% for st in strategies %}
+    <button class="tab-btn tab-{{ slugs[loop.index0] }} {% if loop.first %}active{% endif %}"
+            onclick="switchTab({{ loop.index0 }}, this)">
+      {{ icons[loop.index0] }} {{ st.name }}
+      <span class="tab-sub">
+        {% if st.no_picks %}今日空手
+        {% else %}{{ st.singles | length }}單{{ "+" ~ (st.parlays | length) ~ "串" if st.parlays else "" }} · NT${{ "{:,.0f}".format(st.total) }}
+        {% endif %}
+      </span>
+    </button>
     {% endfor %}
   </div>
-  {% endif %}
 
-  {% if parlays %}
-  <h2 style="margin-top:1rem">🔗 串關</h2>
-  {% for p in parlays %}
-  <div class="parlay-card">
-    <div class="parlay-header">
-      <div>
-        <div style="font-weight:600">{{ p.label }}</div>
-        <div style="font-size:0.8rem;color:var(--muted)">總賠率 {{ "{:.2f}".format(p.parlay_odds) }} · EV {{ "{:.1f}".format(p.parlay_ev * 100) }}%</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:1rem;font-weight:700;color:var(--purple)">NT${{ "{:,.0f}".format(p.amount) }}</div>
-        <div style="font-size:0.75rem;color:var(--muted)">潛在 +NT${{ "{:,.0f}".format(p.potential) }}</div>
-      </div>
+  <!-- Tab panels -->
+  {% for st in strategies %}
+  {% set slug = slugs[loop.index0] %}
+  <div class="tab-panel {% if loop.first %}active{% endif %}" id="panel-{{ loop.index0 }}">
+
+    {% if st.no_picks %}
+    <div class="no-picks">
+      <p style="font-size:1.05rem;margin-bottom:0.5rem">今日無符合門檻的選場</p>
+      <p>所有賽事 Edge 未達此策略門檻，今日空手。</p>
     </div>
-    <div class="parlay-legs">
-      {% for leg in p.legs %}
-      <div class="parlay-leg">
-        <span style="color:var(--text)">{{ leg.label }}</span>
-        <span style="color:var(--muted)">@{{ "{:.2f}".format(leg.odds) }}</span>
-        <span style="color:var(--muted)">{{ leg.matchup }}</span>
+
+    {% else %}
+    <!-- Single picks -->
+    {% if st.singles %}
+    <div class="pick-list">
+      {% for s in st.singles %}
+      <div class="pick-card {{ slug }}">
+        <div class="pick-header">
+          <div>
+            <div class="pick-title">{{ s.label }}</div>
+            <div class="pick-matchup">{{ s.matchup }} · {{ s.sport }}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="pick-amount">NT${{ "{:,.0f}".format(s.amount) }}</div>
+            <div class="pick-potential">潛在 +NT${{ "{:,.0f}".format(s.potential) }}</div>
+          </div>
+        </div>
+        <div class="pick-stats">
+          <div class="pick-stat"><span class="pick-stat-label">賠率 </span><span class="pick-stat-value">{{ "{:.2f}".format(s.odds) }}</span></div>
+          <div class="pick-stat"><span class="pick-stat-label">勝率 </span><span class="pick-stat-value">{{ "{:.1f}".format(s.true_prob * 100) }}%</span></div>
+          <div class="pick-stat"><span class="pick-stat-label">Edge </span><span class="pick-stat-value" style="color:var(--green)">+{{ "{:.1f}".format(s.edge * 100) }}%</span></div>
+          <div class="pick-stat"><span class="badge badge-{{ s.grade }}">{{ s.grade }} 級</span></div>
+        </div>
+        <div class="edge-bar"><div class="edge-fill {{ slug }}" style="width:{{ [s.edge * 500, 100] | min }}%"></div></div>
+        {% if s.data_card is defined %}
+        <details><summary>查看完整數據卡</summary><pre>{{ s.data_card }}</pre></details>
+        {% endif %}
       </div>
       {% endfor %}
     </div>
+    {% endif %}
+
+    <!-- Parlays -->
+    {% if st.parlays %}
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem">🔗 串關</p>
+    {% for p in st.parlays %}
+    <div class="parlay-card {{ slug }}">
+      <div class="parlay-header">
+        <div>
+          <div class="parlay-label-text">{{ p.label }}</div>
+          <div class="parlay-ev">總賠率 {{ "{:.2f}".format(p.parlay_odds) }} · EV +{{ "{:.1f}".format(p.parlay_ev * 100) }}%</div>
+        </div>
+        <div style="text-align:right">
+          <div class="parlay-amount {{ slug }}">NT${{ "{:,.0f}".format(p.amount) }}</div>
+          <div class="pick-potential">潛在 +NT${{ "{:,.0f}".format(p.potential) }}</div>
+        </div>
+      </div>
+      <div class="parlay-legs">
+        {% for leg in p.legs %}
+        <div class="parlay-leg">
+          <span style="color:var(--text)">{{ leg.label }}</span>
+          <span>@{{ "{:.2f}".format(leg.odds) }}</span>
+          {% if leg.matchup is defined %}<span>{{ leg.matchup }}</span>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="summary-bar">
+      <span>{{ st.name }}：{{ st.singles | length }} 單關{% if st.parlays %} + {{ st.parlays | length }} 串關{% endif %}</span>
+      <strong style="color:var(--accent)">總下注 NT${{ "{:,.0f}".format(st.total) }}</strong>
+    </div>
+    {% endif %}
+
   </div>
   {% endfor %}
-  {% endif %}
 
-  <div style="margin-top:1rem;padding:0.75rem 1rem;background:var(--surface);border-radius:8px;font-size:0.875rem">
-    今日合計下注：<strong style="color:var(--accent)">NT${{ "{:,.0f}".format(total_today) }}</strong>
+  {% else %}
+  <!-- Fallback: no strategies data (legacy) -->
+  {% if no_picks %}
+  <div class="no-picks">
+    <p>今日無符合門檻的選場。</p>
   </div>
+  {% endif %}
   {% endif %}
 
   <footer>
+    <a href="index.html">← 返回首頁</a><br><br>
     數據來源：NBA Stats API · MLB Stats API · 台灣運彩 / Pinnacle<br>
     模型：Elo+效率差（NBA）· 先發FIP對決（MLB）· ¼ 分數凱利<br>
     每日 22:00（台灣時間）自動更新 · 本報告不構成投資建議
   </footer>
 </div>
+
+<script>
+function switchTab(idx, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + idx).classList.add('active');
+}
+</script>
 </body>
 </html>
