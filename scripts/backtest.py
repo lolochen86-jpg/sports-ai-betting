@@ -405,6 +405,7 @@ def generate_report(
         "RUIN":    "本金歸零（破產）",
         "TARGET":  f"本金突破 NT${_TARGET:,.0f}（達標）",
         "NATURAL": "數據截止（自然結束）",
+        "ERROR":   "執行中發生錯誤（部分結果）",
     }.get(end_reason, end_reason)
 
     # 月份分拆
@@ -595,7 +596,7 @@ def generate_report(
 
 {"✅ **回撤控制良好**：最大回撤僅 " + f"{max_dd:.1f}%" + "，資金管理穩健。" if max_dd < 15 else "⚠️ **回撤偏大**：建議降低凱利係數或增加保留比例。"}
 
-{"⚠️ **下注頻率偏低**：僅 " + f"{bet_freq:.0f}%" + " 天有下注，可考慮放寬 Edge 門檻至 3.5%。" if bet_freq < 40 else "✅ **下注頻率適中**：平均每 " + f"{1/bet_freq*100:.1f}" + " 天下注一次。"}
+{"⚠️ **下注頻率偏低**：僅 " + f"{bet_freq:.0f}%" + " 天有下注，可考慮放寬 Edge 門檻至 3.5%。" if bet_freq < 40 else "✅ **下注頻率適中**：平均每 " + (f"{100/bet_freq:.1f}" if bet_freq > 0 else "?") + " 天下注一次。"}
 
 ---
 
@@ -639,38 +640,62 @@ def run(
     end_reason = "NATURAL"
     end_date   = s
 
-    with (
-        open(bet_log_path, "w", newline="", encoding="utf-8") as blog_f,
-        open(daily_path,   "w", newline="", encoding="utf-8") as daily_f,
-    ):
-        bet_log_writer = csv.DictWriter(blog_f, fieldnames=_BET_LOG_FIELDS)
-        daily_writer   = csv.DictWriter(daily_f, fieldnames=_DAILY_FIELDS)
-        bet_log_writer.writeheader()
-        daily_writer.writeheader()
+    try:
+        with (
+            open(bet_log_path, "w", newline="", encoding="utf-8") as blog_f,
+            open(daily_path,   "w", newline="", encoding="utf-8") as daily_f,
+        ):
+            bet_log_writer = csv.DictWriter(blog_f, fieldnames=_BET_LOG_FIELDS)
+            daily_writer   = csv.DictWriter(daily_f, fieldnames=_DAILY_FIELDS)
+            bet_log_writer.writeheader()
+            daily_writer.writeheader()
 
-        for d in date_range(s, today - timedelta(days=1)):
-            # 自動抓取數據（若快取不存在）
-            if auto_fetch:
-                _auto_fetch_day(d)
+            for d in date_range(s, today - timedelta(days=1)):
+                # 自動抓取數據（若快取不存在）
+                if auto_fetch:
+                    _auto_fetch_day(d)
 
-            bankroll, stop = run_one_day(d, bankroll, bet_log_writer, daily_writer)
-            end_date = d
+                try:
+                    bankroll, stop = run_one_day(d, bankroll, bet_log_writer, daily_writer)
+                    end_date = d
+                except Exception as e:
+                    logger.error(f"  {d} 單日回測錯誤（略過）：{e}")
+                    end_date = d
+                    stop = ""
 
-            if stop:
-                end_reason = stop
-                logger.info(f"\n{'='*55}")
-                logger.info(f"回測終止：{stop}  最終本金：NT${bankroll:,.0f}")
-                break
-        else:
-            logger.info(f"\n回測完成（數據截止）  最終本金：NT${bankroll:,.0f}")
+                if stop:
+                    end_reason = stop
+                    logger.info(f"\n{'='*55}")
+                    logger.info(f"回測終止：{stop}  最終本金：NT${bankroll:,.0f}")
+                    break
+            else:
+                logger.info(f"\n回測完成（數據截止）  最終本金：NT${bankroll:,.0f}")
 
-    # 產生報告
-    report_md = generate_report(
-        s, end_date, end_reason, init_bankroll, bankroll,
-        bet_log_path, daily_path,
-    )
-    report_path.write_text(report_md, encoding="utf-8")
-    logger.info(f"報告已存至：{report_path}")
+    except Exception as e:
+        logger.error(f"回測主流程錯誤：{e}")
+        end_reason = "ERROR"
+
+    # 產生報告（無論是否發生錯誤，只要 CSV 存在就生成）
+    try:
+        report_md = generate_report(
+            s, end_date, end_reason, init_bankroll, bankroll,
+            bet_log_path, daily_path,
+        )
+        report_path.write_text(report_md, encoding="utf-8")
+        logger.info(f"報告已存至：{report_path}")
+    except Exception as e:
+        logger.error(f"報告生成失敗：{e}")
+        # 寫入最簡摘要，確保 workflow 能讀到
+        fallback = (
+            f"# 回測報告（錯誤摘要）\n\n"
+            f"**起始日期**：{s}\n"
+            f"**結束日期**：{end_date}\n"
+            f"**最終本金**：NT${bankroll:,.0f}\n"
+            f"**結束原因**：{end_reason}\n\n"
+            f"> ⚠️ 完整報告生成失敗：{e}\n"
+        )
+        report_path.write_text(fallback, encoding="utf-8")
+        logger.info(f"已寫入備用摘要：{report_path}")
 
     return {
         "final_bankroll": bankroll,
@@ -717,7 +742,7 @@ def _inject_synthetic_odds(games: list, sport: str) -> list:
 
 
 def _auto_fetch_day(d: date) -> None:
-    """若當日數據快取不存在，自動執行抓取（含賠率配對）。"""
+    """若當日數據快取不存在，自動執行抓取（含賠率配對）。失敗時記錄警告並繼續。"""
     import os
     import fetch_nba, fetch_mlb, fetch_odds
     from utils import save_json
@@ -729,22 +754,34 @@ def _auto_fetch_day(d: date) -> None:
     has_api_key = bool(os.environ.get("ODDS_API_KEY", "").strip())
 
     if not json_exists(nba_out):
-        nba_raw = fetch_nba.run(d)
-        if nba_raw:
-            if has_api_key:
-                nba_odds = fetch_odds.run("NBA", d)
-                if nba_odds:
-                    nba_raw = fetch_odds.match_odds_to_games(nba_raw, nba_odds, "NBA")
-            save_json(nba_raw, nba_out)
+        try:
+            nba_raw = fetch_nba.run(d)
+            if nba_raw:
+                if has_api_key:
+                    try:
+                        nba_odds = fetch_odds.run("NBA", d)
+                        if nba_odds:
+                            nba_raw = fetch_odds.match_odds_to_games(nba_raw, nba_odds, "NBA")
+                    except Exception as e:
+                        logger.warning(f"  NBA 賠率抓取失敗 {d}，使用合成賠率：{e}")
+                save_json(nba_raw, nba_out)
+        except Exception as e:
+            logger.warning(f"  NBA 數據抓取失敗 {d}（略過此日 NBA）：{e}")
 
     if not json_exists(mlb_out):
-        mlb_raw = fetch_mlb.run(d)
-        if mlb_raw:
-            if has_api_key:
-                mlb_odds = fetch_odds.run("MLB", d)
-                if mlb_odds:
-                    mlb_raw = fetch_odds.match_odds_to_games(mlb_raw, mlb_odds, "MLB")
-            save_json(mlb_raw, mlb_out)
+        try:
+            mlb_raw = fetch_mlb.run(d)
+            if mlb_raw:
+                if has_api_key:
+                    try:
+                        mlb_odds = fetch_odds.run("MLB", d)
+                        if mlb_odds:
+                            mlb_raw = fetch_odds.match_odds_to_games(mlb_raw, mlb_odds, "MLB")
+                    except Exception as e:
+                        logger.warning(f"  MLB 賠率抓取失敗 {d}，使用合成賠率：{e}")
+                save_json(mlb_raw, mlb_out)
+        except Exception as e:
+            logger.warning(f"  MLB 數據抓取失敗 {d}（略過此日 MLB）：{e}")
 
 
 # ── CLI 入口 ──────────────────────────────────────────────
