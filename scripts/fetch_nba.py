@@ -124,13 +124,19 @@ def fetch_team_recent_records(as_of_date: date | str, last_n: int = 10) -> Optio
         tid  = team["id"]
         try:
             time.sleep(_API_DELAY)
-            log = teamgamelog.TeamGameLog(
-                team_id=tid,
-                season=season,
-                season_type_all_star="Regular Season",
-                date_to_nullable=d.strftime("%m/%d/%Y"),
-            )
-            df = log.get_data_frames()[0]
+            # 先抓季後賽，若無數據再抓例行賽
+            df = pd.DataFrame()
+            for stype in ["Playoffs", "Regular Season"]:
+                log = teamgamelog.TeamGameLog(
+                    team_id=tid,
+                    season=season,
+                    season_type_all_star=stype,
+                    date_to_nullable=d.strftime("%m/%d/%Y"),
+                )
+                df_tmp = log.get_data_frames()[0]
+                if not df_tmp.empty:
+                    df = df_tmp
+                    break
             if df.empty:
                 continue
 
@@ -220,11 +226,9 @@ def fetch_injury_report(as_of_date: date | str) -> Optional[dict]:
 def fetch_today_games(as_of_date: date | str) -> Optional[list]:
     """
     取得指定日期的 NBA 賽事列表。
-    來源：NBA Stats API scoreboardv2
+    來源：NBA Stats API scoreboardv3（季後賽相容）
     回傳：[{game_id, home_team, away_team, game_time_et, arena}, ...]
     """
-    from nba_api.stats.endpoints import scoreboardv2
-
     d = parse_date(as_of_date)
     cache_path = NBA_DIR / f"schedule_{d.isoformat()}.json"
 
@@ -234,38 +238,26 @@ def fetch_today_games(as_of_date: date | str) -> Optional[list]:
 
     logger.info(f"抓取 NBA 賽程：{d}")
     try:
-        from nba_api.stats.static import teams as nba_teams_static
-        id_to_abbr = {t["id"]: t["abbreviation"] for t in nba_teams_static.get_teams()}
+        from nba_api.stats.endpoints import scoreboardv3
 
         time.sleep(_API_DELAY)
-        board = scoreboardv2.ScoreboardV2(game_date=d.strftime("%Y-%m-%d"))
-        games_df  = board.get_data_frames()[0]   # GameHeader
-        linescore = board.get_data_frames()[1]   # LineScore (has TEAM_ABBREVIATION)
-
-        # Build game_id → {home_abbr, away_abbr} from LineScore
-        abbr_map: dict = {}
-        for _, lr in linescore.iterrows():
-            gid = str(lr["GAME_ID"])
-            abbr_map.setdefault(gid, []).append(lr["TEAM_ABBREVIATION"])
+        board = scoreboardv3.ScoreboardV3(game_date=d.strftime("%Y-%m-%d"))
+        data = board.get_dict()
+        raw_games = data.get("scoreboard", {}).get("games", [])
 
         games = []
-        for _, row in games_df.iterrows():
-            gid = str(row.get("GAME_ID", ""))
-            home_id = int(row.get("HOME_TEAM_ID", 0))
-            away_id = int(row.get("VISITOR_TEAM_ID", 0))
-            teams   = abbr_map.get(gid, [])
-            # LineScore order: visitor first, home second
-            home_abbr = id_to_abbr.get(home_id, teams[1] if len(teams) > 1 else "")
-            away_abbr = id_to_abbr.get(away_id, teams[0] if len(teams) > 0 else "")
+        for g in raw_games:
+            home = g.get("homeTeam", {})
+            away = g.get("awayTeam", {})
             games.append({
-                "game_id":        gid,
+                "game_id":        str(g.get("gameId", "")),
                 "game_date":      d.isoformat(),
-                "home_team_id":   home_id,
-                "away_team_id":   away_id,
-                "home_team_abbr": home_abbr,
-                "away_team_abbr": away_abbr,
-                "game_status":    int(row.get("GAME_STATUS_ID", 1)),
-                "arena":          row.get("ARENA_NAME", ""),
+                "home_team_id":   home.get("teamId", 0),
+                "away_team_id":   away.get("teamId", 0),
+                "home_team_abbr": home.get("teamTricode", ""),
+                "away_team_abbr": away.get("teamTricode", ""),
+                "game_status":    g.get("gameStatus", 1),
+                "arena":          g.get("arena", {}).get("arenaName", ""),
             })
 
         save_json(games, cache_path)
@@ -452,7 +444,9 @@ def run(as_of_date: date | str | None = None) -> Optional[list]:
     games     = fetch_today_games(d)
     if not games:
         logger.info("今日無 NBA 賽事")
-        save_json([], output_path)
+        # 只有明確為空（API 回傳 0 場）才快取，None 表示抓取失敗不快取
+        if games is not None:
+            save_json([], output_path)
         return []
 
     eff       = fetch_team_efficiency(d)

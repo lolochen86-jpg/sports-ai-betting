@@ -1,7 +1,7 @@
 {
   "date": "2026-05-18",
-  "bankroll": 2565.0,
-  "total_bet": 260,
+  "bankroll": 2130.0,
+  "total_bet": 210,
   "single_picks": [
     {
       "sport": "MLB",
@@ -275,8 +275,8 @@
       "parlay_odds": 3.656,
       "true_prob": 0.364,
       "parlay_ev": 0.3305,
-      "kelly_frac": 0.018665960564643667
+      "kelly_frac": 0.014932768451714934
     }
   ],
-  "dry_run": true
+  "dry_run": false
 }
