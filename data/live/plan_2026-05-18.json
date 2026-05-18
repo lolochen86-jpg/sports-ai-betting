@@ -10,7 +10,7 @@
       "home_team": "MIA",
       "away_team": "ATL",
       "bet_side": "home",
-      "bet_label": "MIA 勝",
+      "bet_label": "馬林魚 勝",
       "bet_type": "moneyline",
       "odds": 1.897,
       "true_prob": 0.6254118881118882,
@@ -76,7 +76,7 @@
       "home_team": "KC",
       "away_team": "BOS",
       "bet_side": "home",
-      "bet_label": "KC 勝",
+      "bet_label": "皇家 勝",
       "bet_type": "moneyline",
       "odds": 1.927,
       "true_prob": 0.5819478406552494,
@@ -146,7 +146,7 @@
           "home_team": "MIA",
           "away_team": "ATL",
           "bet_side": "home",
-          "bet_label": "MIA 勝",
+          "bet_label": "馬林魚 勝",
           "bet_type": "moneyline",
           "odds": 1.897,
           "true_prob": 0.6254118881118882,
@@ -212,7 +212,7 @@
           "home_team": "KC",
           "away_team": "BOS",
           "bet_side": "home",
-          "bet_label": "KC 勝",
+          "bet_label": "皇家 勝",
           "bet_type": "moneyline",
           "odds": 1.927,
           "true_prob": 0.5819478406552494,
@@ -278,5 +278,5 @@
       "kelly_frac": 0.018665960564643667
     }
   ],
-  "dry_run": false
+  "dry_run": true
 }

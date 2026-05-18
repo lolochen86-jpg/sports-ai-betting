@@ -56,34 +56,36 @@
   <div class="stat-grid">
     <div class="stat-card">
       <div class="stat-label">目前本金</div>
-      <div class="stat-value accent">NT$3,000</div>
+      <div class="stat-value accent">NT$2,565</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">累積報酬率</div>
-      <div class="stat-value green">
-        +0.0%
+      <div class="stat-value red">
+        -14.5%
       </div>
     </div>
     <div class="stat-card">
       <div class="stat-label">最大回撤</div>
       <div class="stat-value yellow">
-        -0.0%
+        -14.5%
       </div>
     </div>
     <div class="stat-card">
       <div class="stat-label">總下注次數</div>
-      <div class="stat-value">0</div>
+      <div class="stat-value">13</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">單關命中率</div>
       <div class="stat-value">
-        —
+        50.0%
+        
       </div>
     </div>
     <div class="stat-card">
       <div class="stat-label">串關命中率</div>
       <div class="stat-value purple">
-        —
+        0.0%
+        
       </div>
     </div>
   </div>
@@ -123,7 +125,7 @@
 </div>
 
 <script>
-const raw = {"labels": ["2026-05-18"], "values": [3000.0], "initial": 3000.0};
+const raw = {"labels": ["2026-05-18", "2026-05-17"], "values": [3000.0, 2565.0], "initial": 3000.0};
 const ctx = document.getElementById('bankrollChart').getContext('2d');
 new Chart(ctx, {
   type: 'line',
