@@ -1,114 +1,57 @@
-# 運彩AI分析師 — 回測結果報告
+# 運彩AI分析師 — 雙策略回測對比報告
 
-**測試期間**：2026-05-01 → 2026-05-17
-**起始本金**：NT$3,000
-**最終本金**：NT$1,615
-**結束原因**：數據截止（自然結束）
-**總天數**：17 天（有下注 17 天）
+**測試期間**：2026-05-01 起
+**起始本金**：NT$3,000（兩策略各自獨立）
+**停利目標**：NT$12,000（4倍）｜**停損**：本金歸零
 
 ---
 
-## 整體績效
+## 🥊 策略對決總覽
 
-| 指標 | 數值 |
-|---|---|
-| 起始本金 | NT$3,000 |
-| 最終本金 | NT$1,615 |
-| 總損益 | NT$-1,385 |
-| 總投入金額 | NT$16,350 |
-| ROI | -8.5% |
-| 本金高點 | NT$7,196 |
-| 最大回撤 | -79.3% |
-| 單關命中率 | 30/61 = 49.2% |
-| 串關命中率 | 20/93 = 21.5% |
-
----
-
-## 📋 下注策略分析
-
-### 一、信心等級分析（A / B / C）
-
-| 等級 | 條件 | 注數 | 命中率 | 盈虧 |
-|---|---|---|---|---|
-| A 級 | Edge ≥ 7%，數據完整 | 39 | 43.6% | NT$-1,669 |
-| B 級 | Edge ≥ 4%，數據完整 | 22 | 59.1% | NT$+286 |
-| C 級 | Edge ≥ 4%，數據不完整 | 0 | 0.0% | NT$+0 |
-
-> 平均 Edge：46.6%｜建議：集中 A 級下注，C 級注碼應壓最低
-
----
-
-### 二、球種分析
-
-| 球種 | 注數 | 命中率 | 盈虧 | 評估 |
-|---|---|---|---|---|
-| NBA 單關 | 0 | 0.0% | NT$+0 | ⚠️ 待觀察 |
-| MLB 單關 | 61 | 49.2% | NT$-1,383 | ⚠️ 待觀察 |
-| 串關 | 93 | 21.5% | NT$-2 | ⚠️ 待觀察 |
-
----
-
-### 三、注碼管理分析（凱利策略）
-
-| 指標 | 數值 |
-|---|---|
-| 平均單注 | NT$110 |
-| 最高單注 | NT$560 |
-| 最低單注 | NT$20 |
-| 平均賠率 | 2.00 |
-| 下注天數佔比 | 100%（17/17 天） |
-
-> **策略說明**：使用 **1/4 分數凱利**，A 級 25%、B 級 20%、C 級 12% 凱利係數，
-> 單注上限 8% 本金，保留 10% 不動本金作緩衝。
-
----
-
-### 四、風險評估
-
-| 指標 | 數值 | 評等 |
+| 指標 | 🛡️ 穩健型 | ⚡ 激進型 |
 |---|---|---|
-| 最大回撤 | -79.3% | 🔴 偏高 |
-| 最長連勝 | 11 注 | — |
-| 最長連敗 | 11 注 | 🔴 風險偏高 |
-| 最佳單注 | 3-串（CWS 勝、CHC 勝、TOR 勝） @5.74 → +NT$568 | — |
-| 最差單注 | BOS 勝 @1.72 → -NT$560 | — |
+| 最終本金 | **NT$996** | **NT$652** |
+| 結束原因 | 數據截止（自然結束） | 數據截止（自然結束） |
+| 總損益 | NT$-2,004 | NT$-2,348 |
+| ROI | -13.4% | -18.8% |
+| 本金高點 | NT$7,007 | NT$5,085 |
+| 最大回撤 | -85.8% | -87.2% |
+| 下注天數 | 15/17 天 | 7/17 天 |
+| 單關命中率 | 48.1% | 53.8% |
+| 串關命中率 | 17.4% | 13.0% |
+| 平均單注 | NT$104 | NT$110 |
+| 平均賠率 | 2.00 | 1.99 |
+| 預估達標 | N/A | N/A |
+| **勝出** | **{winner_emoji} 勝** |  |
 
 ---
 
-### 五、目標進度
+## 🛡️ 穩健型策略詳情
 
-| 項目 | 數值 |
+> **策略**：Edge ≥ 4% 單關、串關 EV ≥ 8%，凱利 A/25% B/20% C/12%，每日最多 4 場單關
+
+### 整體績效
+
+| 指標 | 數值 |
 |---|---|
-| 停利目標 | NT$12,000 |
-| 目前本金 | NT$1,615 |
-| 距目標還差 | NT$10,385（86.5%） |
-| 預估達標 | N/A |
-| 每日平均獲利 | NT$-81 |
+| 最終本金 | NT$996 |
+| 總損益 | NT$-2,004（ROI -13.4%） |
+| 最大回撤 | -85.8% |
+| 最長連勝/連敗 | 11 勝 / 11 敗 |
+| 最佳單注 | 3-串（CWS 勝、CHC 勝、TOR 勝） @5.74 → +NT$568 |
+| 最差單注 | BOS 勝 @1.72 → -NT$550 |
 
----
+### 球種分析
 
-### 六、策略建議
+| 球種 | 注數 | 命中率 | 盈虧 |
+|---|---|---|---|
+| NBA 單關 | 0 | N/A | NT$+0 |
+| MLB 單關 | 54 | 48.1% | NT$-1,386 |
+| 串關 | 92 | 17.4% | NT$-618 |
 
-⚠️ **勝率偏低**：建議提高 Edge 門檻至 6% 以上，減少 C 級下注。
+### 📒 逐日下注明細
 
-⚠️ **回撤偏大**：建議降低凱利係數或增加保留比例。
-
-✅ **下注頻率適中**：平均每 1.0 天下注一次。
-
----
-
-## 各月份績效
-
-| 月份 | 下注場次 | 命中 | 月盈虧 | 月末本金 |
-|---|---|---|---|---|
-| 2026-05 | 154 | 50（32%）| NT$-1,385 | NT$1,615 |
-
-
----
-
-## 📒 逐日下注明細
-
-#### 2026-05-01　🟢 7/11 中　盈虧 NT$+1,480　本金 NT$3,000 → NT$4,480
+##### 2026-05-01　🟢 7/13 中　盈虧 NT$+1,370　本金 NT$3,000 → NT$4,370
 
 | # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
 |---|---|---|---|---|---|---|---|---|---|
@@ -121,236 +64,394 @@
 | 7 | PARLAY | 2-串（CWS 勝、TOR 勝） | PARLAY | 2.90 | 51.2% | NT$160 | ✅ WIN | NT$+304 | NT$4,232 |
 | 8 | PARLAY | 3-串（CWS 勝、CHC 勝、TOR 勝） | PARLAY | 5.74 | 89.4% | NT$120 | ✅ WIN | NT$+568 | NT$4,800 |
 | 9 | PARLAY | 3-串（CWS 勝、CHC 勝、LAD 勝） | PARLAY | 6.23 | 85.1% | NT$120 | ❌ LOSS | NT$-120 | NT$4,680 |
-| 10 | PARLAY | 3-串（CHC 勝、TOR 勝、LAD 勝） | PARLAY | 6.20 | 78.5% | NT$110 | ❌ LOSS | NT$-110 | NT$4,570 |
-| 11 | PARLAY | 4-串（CWS 勝、CHC 勝、TOR 勝、LAD 勝） | PARLAY | 10.59 | 123.5% | NT$90 | ❌ LOSS | NT$-90 | NT$4,480 |
+| 10 | PARLAY | 3-串（CWS 勝、CHC 勝、LAA 勝） | PARLAY | 7.32 | 81.4% | NT$90 | ❌ LOSS | NT$-90 | NT$4,590 |
+| 11 | PARLAY | 4-串（CWS 勝、CHC 勝、TOR 勝、LAD 勝） | PARLAY | 10.59 | 123.5% | NT$90 | ❌ LOSS | NT$-90 | NT$4,500 |
+| 12 | PARLAY | 4-串（CWS 勝、CHC 勝、TOR 勝、LAA 勝） | PARLAY | 12.45 | 119.0% | NT$70 | ❌ LOSS | NT$-70 | NT$4,430 |
+| 13 | PARLAY | 4-串（CWS 勝、CHC 勝、LAD 勝、LAA 勝） | PARLAY | 13.52 | 114.0% | NT$60 | ❌ LOSS | NT$-60 | NT$4,370 |
 
-#### 2026-05-02　🟢 11/11 中　盈虧 NT$+2,716　本金 NT$4,480 → NT$7,196
-
-| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | MLB | PIT 勝 | A | 1.94 | 8.9% | NT$210 | ✅ WIN | NT$+197 | NT$4,677 |
-| 2 | MLB | CLE 勝 | B | 1.78 | 5.5% | NT$120 | ✅ WIN | NT$+93 | NT$4,770 |
-| 3 | MLB | NYY 勝 | B | 1.97 | 4.7% | NT$90 | ✅ WIN | NT$+87 | NT$4,857 |
-| 4 | MLB | CWS 勝 | B | 2.08 | 4.0% | NT$80 | ✅ WIN | NT$+87 | NT$4,944 |
-| 5 | PARLAY | 2-串（PIT 勝、CLE 勝） | PARLAY | 3.45 | 28.8% | NT$90 | ✅ WIN | NT$+220 | NT$5,164 |
-| 6 | PARLAY | 2-串（PIT 勝、NYY 勝） | PARLAY | 3.82 | 28.1% | NT$80 | ✅ WIN | NT$+226 | NT$5,390 |
-| 7 | PARLAY | 2-串（PIT 勝、CWS 勝） | PARLAY | 4.04 | 27.1% | NT$70 | ✅ WIN | NT$+213 | NT$5,603 |
-| 8 | PARLAY | 3-串（PIT 勝、CLE 勝、NYY 勝） | PARLAY | 6.80 | 40.6% | NT$60 | ✅ WIN | NT$+348 | NT$5,951 |
-| 9 | PARLAY | 3-串（PIT 勝、CLE 勝、CWS 勝） | PARLAY | 7.18 | 39.5% | NT$60 | ✅ WIN | NT$+371 | NT$6,322 |
-| 10 | PARLAY | 3-串（PIT 勝、NYY 勝、CWS 勝） | PARLAY | 7.96 | 38.8% | NT$50 | ✅ WIN | NT$+348 | NT$6,670 |
-| 11 | PARLAY | 4-串（PIT 勝、CLE 勝、NYY 勝、CWS 勝） | PARLAY | 14.15 | 52.4% | NT$40 | ✅ WIN | NT$+526 | NT$7,196 |
-
-#### 2026-05-03　🔴 2/11 中　盈虧 NT$-1,455　本金 NT$7,196 → NT$5,741
+##### 2026-05-02　🟢 11/11 中　盈虧 NT$+2,637　本金 NT$4,370 → NT$7,007
 
 | # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | MLB | BOS 勝 | A | 1.72 | 13.1% | NT$560 | ❌ LOSS | NT$-560 | NT$6,636 |
-| 2 | MLB | ATL 勝 | A | 1.77 | 11.8% | NT$450 | ✅ WIN | NT$+349 | NT$6,985 |
-| 3 | MLB | CLE 勝 | A | 1.86 | 10.4% | NT$390 | ❌ LOSS | NT$-390 | NT$6,595 |
-| 4 | MLB | PIT 勝 | A | 2.03 | 7.4% | NT$240 | ✅ WIN | NT$+246 | NT$6,841 |
-| 5 | PARLAY | 2-串（BOS 勝、ATL 勝） | PARLAY | 3.06 | 48.3% | NT$240 | ❌ LOSS | NT$-240 | NT$6,601 |
-| 6 | PARLAY | 2-串（BOS 勝、CLE 勝） | PARLAY | 3.21 | 46.2% | NT$210 | ❌ LOSS | NT$-210 | NT$6,391 |
-| 7 | PARLAY | 2-串（ATL 勝、CLE 勝） | PARLAY | 3.31 | 44.4% | NT$180 | ❌ LOSS | NT$-180 | NT$6,211 |
-| 8 | PARLAY | 3-串（BOS 勝、ATL 勝、CLE 勝） | PARLAY | 5.69 | 76.9% | NT$150 | ❌ LOSS | NT$-150 | NT$6,061 |
-| 9 | PARLAY | 3-串（BOS 勝、ATL 勝、PIT 勝） | PARLAY | 6.19 | 70.6% | NT$120 | ❌ LOSS | NT$-120 | NT$5,941 |
-| 10 | PARLAY | 3-串（BOS 勝、CLE 勝、PIT 勝） | PARLAY | 6.50 | 68.2% | NT$110 | ❌ LOSS | NT$-110 | NT$5,831 |
-| 11 | PARLAY | 4-串（BOS 勝、ATL 勝、CLE 勝、PIT 勝） | PARLAY | 11.54 | 103.5% | NT$90 | ❌ LOSS | NT$-90 | NT$5,741 |
+| 1 | MLB | PIT 勝 | A | 1.94 | 8.9% | NT$200 | ✅ WIN | NT$+188 | NT$4,558 |
+| 2 | MLB | CLE 勝 | B | 1.78 | 5.5% | NT$110 | ✅ WIN | NT$+86 | NT$4,644 |
+| 3 | MLB | NYY 勝 | B | 1.97 | 4.7% | NT$90 | ✅ WIN | NT$+87 | NT$4,731 |
+| 4 | MLB | CWS 勝 | B | 2.08 | 4.0% | NT$70 | ✅ WIN | NT$+76 | NT$4,807 |
+| 5 | PARLAY | 2-串（PIT 勝、CLE 勝） | PARLAY | 3.45 | 28.8% | NT$80 | ✅ WIN | NT$+196 | NT$5,003 |
+| 6 | PARLAY | 2-串（PIT 勝、NYY 勝） | PARLAY | 3.82 | 28.1% | NT$70 | ✅ WIN | NT$+198 | NT$5,201 |
+| 7 | PARLAY | 2-串（PIT 勝、CWS 勝） | PARLAY | 4.04 | 27.1% | NT$70 | ✅ WIN | NT$+213 | NT$5,414 |
+| 8 | PARLAY | 3-串（PIT 勝、CLE 勝、NYY 勝） | PARLAY | 6.80 | 40.6% | NT$60 | ✅ WIN | NT$+348 | NT$5,762 |
+| 9 | PARLAY | 3-串（PIT 勝、CLE 勝、CWS 勝） | PARLAY | 7.18 | 39.5% | NT$60 | ✅ WIN | NT$+371 | NT$6,133 |
+| 10 | PARLAY | 3-串（PIT 勝、NYY 勝、CWS 勝） | PARLAY | 7.96 | 38.8% | NT$50 | ✅ WIN | NT$+348 | NT$6,481 |
+| 11 | PARLAY | 4-串（PIT 勝、CLE 勝、NYY 勝、CWS 勝） | PARLAY | 14.15 | 52.4% | NT$40 | ✅ WIN | NT$+526 | NT$7,007 |
 
-#### 2026-05-04　🟢 6/11 中　盈虧 NT$+1,082　本金 NT$5,741 → NT$6,823
-
-| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | MLB | NYM 勝 | A | 1.72 | 10.5% | NT$360 | ✅ WIN | NT$+258 | NT$5,999 |
-| 2 | MLB | CWS 勝 | B | 1.92 | 6.3% | NT$160 | ✅ WIN | NT$+147 | NT$6,146 |
-| 3 | MLB | MIA 勝 | B | 1.94 | 5.9% | NT$150 | ❌ LOSS | NT$-150 | NT$5,996 |
-| 4 | MLB | KC 勝 | B | 2.07 | 5.2% | NT$120 | ✅ WIN | NT$+129 | NT$6,125 |
-| 5 | PARLAY | 2-串（NYM 勝、CWS 勝） | PARLAY | 3.30 | 32.4% | NT$130 | ✅ WIN | NT$+299 | NT$6,424 |
-| 6 | PARLAY | 2-串（NYM 勝、MIA 勝） | PARLAY | 3.33 | 31.5% | NT$130 | ❌ LOSS | NT$-130 | NT$6,294 |
-| 7 | PARLAY | 2-串（NYM 勝、KC 勝） | PARLAY | 3.56 | 30.7% | NT$110 | ✅ WIN | NT$+282 | NT$6,576 |
-| 8 | PARLAY | 3-串（NYM 勝、CWS 勝、MIA 勝） | PARLAY | 6.39 | 47.5% | NT$90 | ❌ LOSS | NT$-90 | NT$6,486 |
-| 9 | PARLAY | 3-串（NYM 勝、CWS 勝、KC 勝） | PARLAY | 6.84 | 46.6% | NT$80 | ✅ WIN | NT$+467 | NT$6,953 |
-| 10 | PARLAY | 3-串（NYM 勝、MIA 勝、KC 勝） | PARLAY | 6.91 | 45.6% | NT$80 | ❌ LOSS | NT$-80 | NT$6,873 |
-| 11 | PARLAY | 4-串（NYM 勝、CWS 勝、MIA 勝、KC 勝） | PARLAY | 13.26 | 63.3% | NT$50 | ❌ LOSS | NT$-50 | NT$6,823 |
-
-#### 2026-05-05　🔴 1/10 中　盈虧 NT$-1,856　本金 NT$6,823 → NT$4,967
+##### 2026-05-03　🔴 2/13 中　盈虧 NT$-1,583　本金 NT$7,007 → NT$5,424
 
 | # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | MLB | MIA 勝 | A | 1.87 | 21.4% | NT$550 | ❌ LOSS | NT$-550 | NT$6,273 |
-| 2 | MLB | WSH 勝 | A | 2.07 | 10.3% | NT$310 | ❌ LOSS | NT$-310 | NT$5,963 |
-| 3 | MLB | NYM 勝 | A | 1.87 | 9.4% | NT$300 | ❌ LOSS | NT$-300 | NT$5,663 |
-| 4 | MLB | TB 勝 | A | 2.25 | 8.6% | NT$220 | ✅ WIN | NT$+274 | NT$5,937 |
-| 5 | PARLAY | 2-串（MIA 勝、WSH 勝） | PARLAY | 3.87 | 69.8% | NT$220 | ❌ LOSS | NT$-220 | NT$5,717 |
-| 6 | PARLAY | 2-串（MIA 勝、TB 勝） | PARLAY | 4.19 | 67.0% | NT$180 | ❌ LOSS | NT$-180 | NT$5,537 |
-| 7 | PARLAY | 2-串（MIA 勝、NYM 勝） | PARLAY | 3.49 | 64.6% | NT$220 | ❌ LOSS | NT$-220 | NT$5,317 |
-| 8 | PARLAY | 3-串（MIA 勝、WSH 勝、TB 勝） | PARLAY | 8.69 | 102.7% | NT$110 | ❌ LOSS | NT$-110 | NT$5,207 |
-| 9 | PARLAY | 3-串（MIA 勝、WSH 勝、NYM 勝） | PARLAY | 7.23 | 99.8% | NT$130 | ❌ LOSS | NT$-130 | NT$5,077 |
-| 10 | PARLAY | 3-串（MIA 勝、NYM 勝、TB 勝） | PARLAY | 7.83 | 96.5% | NT$110 | ❌ LOSS | NT$-110 | NT$4,967 |
+| 1 | MLB | BOS 勝 | A | 1.72 | 13.1% | NT$550 | ❌ LOSS | NT$-550 | NT$6,457 |
+| 2 | MLB | ATL 勝 | A | 1.77 | 11.8% | NT$440 | ✅ WIN | NT$+341 | NT$6,798 |
+| 3 | MLB | CLE 勝 | A | 1.86 | 10.4% | NT$380 | ❌ LOSS | NT$-380 | NT$6,418 |
+| 4 | MLB | PIT 勝 | A | 2.03 | 7.4% | NT$230 | ✅ WIN | NT$+236 | NT$6,654 |
+| 5 | PARLAY | 2-串（BOS 勝、ATL 勝） | PARLAY | 3.06 | 48.3% | NT$230 | ❌ LOSS | NT$-230 | NT$6,424 |
+| 6 | PARLAY | 2-串（BOS 勝、CLE 勝） | PARLAY | 3.21 | 46.2% | NT$200 | ❌ LOSS | NT$-200 | NT$6,224 |
+| 7 | PARLAY | 2-串（ATL 勝、CLE 勝） | PARLAY | 3.31 | 44.4% | NT$180 | ❌ LOSS | NT$-180 | NT$6,044 |
+| 8 | PARLAY | 3-串（BOS 勝、ATL 勝、CLE 勝） | PARLAY | 5.69 | 76.9% | NT$150 | ❌ LOSS | NT$-150 | NT$5,894 |
+| 9 | PARLAY | 3-串（BOS 勝、ATL 勝、PIT 勝） | PARLAY | 6.19 | 70.6% | NT$120 | ❌ LOSS | NT$-120 | NT$5,774 |
+| 10 | PARLAY | 3-串（BOS 勝、CLE 勝、PIT 勝） | PARLAY | 6.50 | 68.2% | NT$110 | ❌ LOSS | NT$-110 | NT$5,664 |
+| 11 | PARLAY | 4-串（BOS 勝、ATL 勝、CLE 勝、PIT 勝） | PARLAY | 11.54 | 103.5% | NT$80 | ❌ LOSS | NT$-80 | NT$5,584 |
+| 12 | PARLAY | 4-串（BOS 勝、ATL 勝、CLE 勝、TB 勝） | PARLAY | 11.83 | 99.0% | NT$80 | ❌ LOSS | NT$-80 | NT$5,504 |
+| 13 | PARLAY | 4-串（BOS 勝、ATL 勝、CLE 勝、TOR 勝） | PARLAY | 11.37 | 98.2% | NT$80 | ❌ LOSS | NT$-80 | NT$5,424 |
 
-#### 2026-05-06　🔴 1/11 中　盈虧 NT$-1,871　本金 NT$4,967 → NT$3,096
-
-| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | MLB | MIA 勝 | A | 2.09 | 20.6% | NT$400 | ❌ LOSS | NT$-400 | NT$4,567 |
-| 2 | MLB | AZ 勝 | A | 2.16 | 18.9% | NT$370 | ❌ LOSS | NT$-370 | NT$4,197 |
-| 3 | MLB | PHI 勝 | A | 1.76 | 18.3% | NT$340 | ✅ WIN | NT$+259 | NT$4,456 |
-| 4 | MLB | NYY 勝 | A | 1.86 | 16.2% | NT$360 | ❌ LOSS | NT$-360 | NT$4,096 |
-| 5 | PARLAY | 2-串（MIA 勝、AZ 勝） | PARLAY | 4.52 | 101.6% | NT$180 | ❌ LOSS | NT$-180 | NT$3,916 |
-| 6 | PARLAY | 2-串（MIA 勝、PHI 勝） | PARLAY | 3.69 | 89.3% | NT$200 | ❌ LOSS | NT$-200 | NT$3,716 |
-| 7 | PARLAY | 2-串（MIA 勝、NYY 勝） | PARLAY | 3.89 | 86.3% | NT$170 | ❌ LOSS | NT$-170 | NT$3,546 |
-| 8 | PARLAY | 3-串（MIA 勝、AZ 勝、PHI 勝） | PARLAY | 7.97 | 166.6% | NT$130 | ❌ LOSS | NT$-130 | NT$3,416 |
-| 9 | PARLAY | 3-串（MIA 勝、AZ 勝、NYY 勝） | PARLAY | 8.42 | 162.3% | NT$110 | ❌ LOSS | NT$-110 | NT$3,306 |
-| 10 | PARLAY | 3-串（MIA 勝、PHI 勝、NYY 勝） | PARLAY | 6.86 | 146.4% | NT$120 | ❌ LOSS | NT$-120 | NT$3,186 |
-| 11 | PARLAY | 4-串（MIA 勝、AZ 勝、PHI 勝、NYY 勝） | PARLAY | 14.84 | 246.9% | NT$90 | ❌ LOSS | NT$-90 | NT$3,096 |
-
-#### 2026-05-07　🔴 1/10 中　盈虧 NT$-953　本金 NT$3,096 → NT$2,143
+##### 2026-05-04　🟢 6/11 中　盈虧 NT$+997　本金 NT$5,424 → NT$6,421
 
 | # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | MLB | PHI 勝 | A | 2.23 | 23.5% | NT$250 | ❌ LOSS | NT$-250 | NT$2,846 |
-| 2 | MLB | WSH 勝 | A | 1.77 | 20.0% | NT$230 | ✅ WIN | NT$+177 | NT$3,023 |
-| 3 | MLB | AZ 勝 | A | 2.43 | 18.9% | NT$240 | ❌ LOSS | NT$-240 | NT$2,783 |
-| 4 | MLB | SD 勝 | B | 1.81 | 5.9% | NT$70 | ❌ LOSS | NT$-70 | NT$2,713 |
-| 5 | PARLAY | 2-串（PHI 勝、AZ 勝） | PARLAY | 5.43 | 122.6% | NT$110 | ❌ LOSS | NT$-110 | NT$2,603 |
-| 6 | PARLAY | 2-串（PHI 勝、WSH 勝） | PARLAY | 3.95 | 106.6% | NT$140 | ❌ LOSS | NT$-140 | NT$2,463 |
-| 7 | PARLAY | 2-串（WSH 勝、AZ 勝） | PARLAY | 4.29 | 97.5% | NT$110 | ❌ LOSS | NT$-110 | NT$2,353 |
-| 8 | PARLAY | 3-串（PHI 勝、WSH 勝、AZ 勝） | PARLAY | 9.59 | 201.4% | NT$80 | ❌ LOSS | NT$-80 | NT$2,273 |
-| 9 | PARLAY | 3-串（PHI 勝、AZ 勝、SD 勝） | PARLAY | 9.80 | 146.6% | NT$60 | ❌ LOSS | NT$-60 | NT$2,213 |
-| 10 | PARLAY | 3-串（PHI 勝、WSH 勝、SD 勝） | PARLAY | 7.13 | 128.8% | NT$70 | ❌ LOSS | NT$-70 | NT$2,143 |
+| 1 | MLB | NYM 勝 | A | 1.72 | 10.5% | NT$340 | ✅ WIN | NT$+244 | NT$5,668 |
+| 2 | MLB | CWS 勝 | B | 1.92 | 6.3% | NT$150 | ✅ WIN | NT$+138 | NT$5,806 |
+| 3 | MLB | MIA 勝 | B | 1.94 | 5.9% | NT$140 | ❌ LOSS | NT$-140 | NT$5,666 |
+| 4 | MLB | KC 勝 | B | 2.07 | 5.2% | NT$110 | ✅ WIN | NT$+118 | NT$5,784 |
+| 5 | PARLAY | 2-串（NYM 勝、CWS 勝） | PARLAY | 3.30 | 32.4% | NT$120 | ✅ WIN | NT$+276 | NT$6,060 |
+| 6 | PARLAY | 2-串（NYM 勝、MIA 勝） | PARLAY | 3.33 | 31.5% | NT$120 | ❌ LOSS | NT$-120 | NT$5,940 |
+| 7 | PARLAY | 2-串（NYM 勝、KC 勝） | PARLAY | 3.56 | 30.7% | NT$110 | ✅ WIN | NT$+282 | NT$6,222 |
+| 8 | PARLAY | 3-串（NYM 勝、CWS 勝、MIA 勝） | PARLAY | 6.39 | 47.5% | NT$80 | ❌ LOSS | NT$-80 | NT$6,142 |
+| 9 | PARLAY | 3-串（NYM 勝、CWS 勝、KC 勝） | PARLAY | 6.84 | 46.6% | NT$70 | ✅ WIN | NT$+409 | NT$6,551 |
+| 10 | PARLAY | 3-串（NYM 勝、MIA 勝、KC 勝） | PARLAY | 6.91 | 45.6% | NT$80 | ❌ LOSS | NT$-80 | NT$6,471 |
+| 11 | PARLAY | 4-串（NYM 勝、CWS 勝、MIA 勝、KC 勝） | PARLAY | 13.26 | 63.3% | NT$50 | ❌ LOSS | NT$-50 | NT$6,421 |
 
-#### 2026-05-08　🔴 1/3 中　盈虧 NT$-62　本金 NT$2,143 → NT$2,081
-
-| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | MLB | CLE 勝 | A | 1.87 | 16.4% | NT$170 | ✅ WIN | NT$+148 | NT$2,291 |
-| 2 | MLB | AZ 勝 | A | 2.66 | 15.2% | NT$140 | ❌ LOSS | NT$-140 | NT$2,151 |
-| 3 | PARLAY | 2-串（CLE 勝、AZ 勝） | PARLAY | 4.97 | 83.4% | NT$70 | ❌ LOSS | NT$-70 | NT$2,081 |
-
-#### 2026-05-09　🔴 1/10 中　盈虧 NT$-331　本金 NT$2,081 → NT$1,750
+##### 2026-05-05　🔴 1/12 中　盈虧 NT$-1,849　本金 NT$6,421 → NT$4,572
 
 | # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | MLB | CLE 勝 | A | 2.45 | 14.0% | NT$120 | ❌ LOSS | NT$-120 | NT$1,961 |
-| 2 | MLB | TB 勝 | A | 2.11 | 7.3% | NT$70 | ⬜ VOID | NT$+0 | NT$1,961 |
-| 3 | MLB | HOU 勝 | A | 2.11 | 7.1% | NT$70 | ❌ LOSS | NT$-70 | NT$1,891 |
-| 4 | MLB | PHI 勝 | B | 1.99 | 5.8% | NT$40 | ✅ WIN | NT$+39 | NT$1,930 |
-| 5 | PARLAY | 2-串（CLE 勝、TB 勝） | PARLAY | 5.15 | 54.9% | NT$40 | ❌ LOSS | NT$-40 | NT$1,890 |
-| 6 | PARLAY | 2-串（CLE 勝、HOU 勝） | PARLAY | 5.17 | 54.6% | NT$40 | ❌ LOSS | NT$-40 | NT$1,850 |
-| 7 | PARLAY | 2-串（CLE 勝、PHI 勝） | PARLAY | 4.86 | 49.6% | NT$40 | ❌ LOSS | NT$-40 | NT$1,810 |
-| 8 | PARLAY | 3-串（CLE 勝、TB 勝、HOU 勝） | PARLAY | 10.89 | 78.2% | NT$20 | ❌ LOSS | NT$-20 | NT$1,790 |
-| 9 | PARLAY | 3-串（CLE 勝、TB 勝、PHI 勝） | PARLAY | 10.23 | 72.5% | NT$20 | ❌ LOSS | NT$-20 | NT$1,770 |
-| 10 | PARLAY | 3-串（CLE 勝、HOU 勝、PHI 勝） | PARLAY | 10.26 | 72.2% | NT$20 | ❌ LOSS | NT$-20 | NT$1,750 |
+| 1 | MLB | MIA 勝 | A | 1.87 | 21.4% | NT$510 | ❌ LOSS | NT$-510 | NT$5,911 |
+| 2 | MLB | WSH 勝 | A | 2.07 | 10.3% | NT$290 | ❌ LOSS | NT$-290 | NT$5,621 |
+| 3 | MLB | NYM 勝 | A | 1.87 | 9.4% | NT$290 | ❌ LOSS | NT$-290 | NT$5,331 |
+| 4 | MLB | TB 勝 | A | 2.25 | 8.6% | NT$210 | ✅ WIN | NT$+261 | NT$5,592 |
+| 5 | PARLAY | 2-串（MIA 勝、WSH 勝） | PARLAY | 3.87 | 69.8% | NT$200 | ❌ LOSS | NT$-200 | NT$5,392 |
+| 6 | PARLAY | 2-串（MIA 勝、TB 勝） | PARLAY | 4.19 | 67.0% | NT$170 | ❌ LOSS | NT$-170 | NT$5,222 |
+| 7 | PARLAY | 2-串（MIA 勝、NYM 勝） | PARLAY | 3.49 | 64.6% | NT$200 | ❌ LOSS | NT$-200 | NT$5,022 |
+| 8 | PARLAY | 3-串（MIA 勝、WSH 勝、TB 勝） | PARLAY | 8.69 | 102.7% | NT$100 | ❌ LOSS | NT$-100 | NT$4,922 |
+| 9 | PARLAY | 3-串（MIA 勝、WSH 勝、NYM 勝） | PARLAY | 7.23 | 99.8% | NT$120 | ❌ LOSS | NT$-120 | NT$4,802 |
+| 10 | PARLAY | 3-串（MIA 勝、NYM 勝、TB 勝） | PARLAY | 7.83 | 96.5% | NT$100 | ❌ LOSS | NT$-100 | NT$4,702 |
+| 11 | PARLAY | 4-串（MIA 勝、WSH 勝、NYM 勝、LAD 勝） | PARLAY | 13.87 | 128.0% | NT$70 | ❌ LOSS | NT$-70 | NT$4,632 |
+| 12 | PARLAY | 4-串（MIA 勝、NYM 勝、LAD 勝、SEA 勝） | PARLAY | 14.52 | 112.4% | NT$60 | ❌ LOSS | NT$-60 | NT$4,572 |
 
-#### 2026-05-10　🔴 2/10 中　盈虧 NT$-147　本金 NT$1,750 → NT$1,603
-
-| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | MLB | TB 勝 | A | 2.11 | 10.8% | NT$90 | ✅ WIN | NT$+100 | NT$1,850 |
-| 2 | MLB | PIT 勝 | A | 2.31 | 10.2% | NT$80 | ❌ LOSS | NT$-80 | NT$1,770 |
-| 3 | MLB | HOU 勝 | A | 1.94 | 9.3% | NT$80 | ❌ LOSS | NT$-80 | NT$1,690 |
-| 4 | MLB | AZ 勝 | A | 2.22 | 8.2% | NT$60 | ✅ WIN | NT$+73 | NT$1,763 |
-| 5 | PARLAY | 2-串（TB 勝、PIT 勝） | PARLAY | 4.87 | 51.5% | NT$40 | ❌ LOSS | NT$-40 | NT$1,723 |
-| 6 | PARLAY | 2-串（PIT 勝、AZ 勝） | PARLAY | 5.14 | 46.0% | NT$30 | ❌ LOSS | NT$-30 | NT$1,693 |
-| 7 | PARLAY | 2-串（PIT 勝、HOU 勝） | PARLAY | 4.48 | 45.7% | NT$30 | ❌ LOSS | NT$-30 | NT$1,663 |
-| 8 | PARLAY | 3-串（TB 勝、PIT 勝、AZ 勝） | PARLAY | 10.83 | 79.0% | NT$20 | ❌ LOSS | NT$-20 | NT$1,643 |
-| 9 | PARLAY | 3-串（TB 勝、PIT 勝、HOU 勝） | PARLAY | 9.44 | 78.7% | NT$20 | ❌ LOSS | NT$-20 | NT$1,623 |
-| 10 | PARLAY | 3-串（PIT 勝、HOU 勝、AZ 勝） | PARLAY | 9.96 | 72.2% | NT$20 | ❌ LOSS | NT$-20 | NT$1,603 |
-
-#### 2026-05-11　🔴 0/1 中　盈虧 NT$-80　本金 NT$1,603 → NT$1,523
+##### 2026-05-06　🔴 1/13 中　盈虧 NT$-1,833　本金 NT$4,572 → NT$2,739
 
 | # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | MLB | HOU 勝 | A | 2.04 | 10.5% | NT$80 | ❌ LOSS | NT$-80 | NT$1,523 |
+| 1 | MLB | MIA 勝 | A | 2.09 | 20.6% | NT$370 | ❌ LOSS | NT$-370 | NT$4,202 |
+| 2 | MLB | AZ 勝 | A | 2.16 | 18.9% | NT$340 | ❌ LOSS | NT$-340 | NT$3,862 |
+| 3 | MLB | PHI 勝 | A | 1.76 | 18.3% | NT$310 | ✅ WIN | NT$+237 | NT$4,099 |
+| 4 | MLB | NYY 勝 | A | 1.86 | 16.2% | NT$330 | ❌ LOSS | NT$-330 | NT$3,769 |
+| 5 | PARLAY | 2-串（MIA 勝、AZ 勝） | PARLAY | 4.52 | 101.6% | NT$160 | ❌ LOSS | NT$-160 | NT$3,609 |
+| 6 | PARLAY | 2-串（MIA 勝、PHI 勝） | PARLAY | 3.69 | 89.3% | NT$180 | ❌ LOSS | NT$-180 | NT$3,429 |
+| 7 | PARLAY | 2-串（MIA 勝、NYY 勝） | PARLAY | 3.89 | 86.3% | NT$150 | ❌ LOSS | NT$-150 | NT$3,279 |
+| 8 | PARLAY | 3-串（MIA 勝、AZ 勝、PHI 勝） | PARLAY | 7.97 | 166.6% | NT$120 | ❌ LOSS | NT$-120 | NT$3,159 |
+| 9 | PARLAY | 3-串（MIA 勝、AZ 勝、NYY 勝） | PARLAY | 8.42 | 162.3% | NT$100 | ❌ LOSS | NT$-100 | NT$3,059 |
+| 10 | PARLAY | 3-串（MIA 勝、PHI 勝、NYY 勝） | PARLAY | 6.86 | 146.4% | NT$110 | ❌ LOSS | NT$-110 | NT$2,949 |
+| 11 | PARLAY | 4-串（MIA 勝、AZ 勝、PHI 勝、NYY 勝） | PARLAY | 14.84 | 246.9% | NT$80 | ❌ LOSS | NT$-80 | NT$2,869 |
+| 12 | PARLAY | 4-串（MIA 勝、AZ 勝、PHI 勝、LAD 勝） | PARLAY | 14.15 | 200.9% | NT$70 | ❌ LOSS | NT$-70 | NT$2,799 |
+| 13 | PARLAY | 4-串（MIA 勝、AZ 勝、PHI 勝、TB 勝） | PARLAY | 14.30 | 198.2% | NT$60 | ❌ LOSS | NT$-60 | NT$2,739 |
 
-#### 2026-05-12　🟢 6/10 中　盈虧 NT$+343　本金 NT$1,523 → NT$1,866
-
-| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | MLB | CLE 勝 | A | 2.34 | 13.6% | NT$90 | ✅ WIN | NT$+121 | NT$1,644 |
-| 2 | MLB | CIN 勝 | A | 2.17 | 11.8% | NT$90 | ❌ LOSS | NT$-90 | NT$1,554 |
-| 3 | MLB | TB 勝 | B | 1.79 | 6.0% | NT$40 | ✅ WIN | NT$+32 | NT$1,586 |
-| 4 | MLB | MIN 勝 | B | 1.92 | 5.1% | NT$30 | ✅ WIN | NT$+28 | NT$1,614 |
-| 5 | PARLAY | 2-串（CLE 勝、CIN 勝） | PARLAY | 5.09 | 65.5% | NT$40 | ❌ LOSS | NT$-40 | NT$1,574 |
-| 6 | PARLAY | 2-串（CLE 勝、TB 勝） | PARLAY | 4.20 | 45.9% | NT$30 | ✅ WIN | NT$+96 | NT$1,670 |
-| 7 | PARLAY | 2-串（CLE 勝、MIN 勝） | PARLAY | 4.50 | 44.7% | NT$30 | ✅ WIN | NT$+105 | NT$1,775 |
-| 8 | PARLAY | 3-串（CLE 勝、CIN 勝、TB 勝） | PARLAY | 9.13 | 83.3% | NT$30 | ❌ LOSS | NT$-30 | NT$1,745 |
-| 9 | PARLAY | 3-串（CLE 勝、CIN 勝、MIN 勝） | PARLAY | 9.77 | 81.7% | NT$20 | ❌ LOSS | NT$-20 | NT$1,725 |
-| 10 | PARLAY | 3-串（CLE 勝、TB 勝、MIN 勝） | PARLAY | 8.06 | 60.3% | NT$20 | ✅ WIN | NT$+141 | NT$1,866 |
-
-#### 2026-05-13　🟢 3/7 中　盈虧 NT$+7　本金 NT$1,866 → NT$1,873
+##### 2026-05-07　🔴 1/12 中　盈虧 NT$-896　本金 NT$2,739 → NT$1,843
 
 | # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | MLB | MIL 勝 | B | 1.84 | 6.9% | NT$60 | ❌ LOSS | NT$-60 | NT$1,806 |
-| 2 | MLB | BOS 勝 | B | 1.97 | 6.2% | NT$50 | ✅ WIN | NT$+48 | NT$1,854 |
-| 3 | MLB | TEX 勝 | B | 2.00 | 4.2% | NT$30 | ✅ WIN | NT$+30 | NT$1,884 |
-| 4 | PARLAY | 2-串（MIL 勝、BOS 勝） | PARLAY | 3.62 | 26.3% | NT$30 | ❌ LOSS | NT$-30 | NT$1,854 |
-| 5 | PARLAY | 2-串（MIL 勝、TEX 勝） | PARLAY | 3.68 | 22.1% | NT$20 | ❌ LOSS | NT$-20 | NT$1,834 |
-| 6 | PARLAY | 2-串（BOS 勝、TEX 勝） | PARLAY | 3.95 | 21.6% | NT$20 | ✅ WIN | NT$+59 | NT$1,893 |
-| 7 | PARLAY | 3-串（MIL 勝、BOS 勝、TEX 勝） | PARLAY | 7.25 | 36.9% | NT$20 | ❌ LOSS | NT$-20 | NT$1,873 |
+| 1 | MLB | PHI 勝 | A | 2.23 | 23.5% | NT$220 | ❌ LOSS | NT$-220 | NT$2,519 |
+| 2 | MLB | WSH 勝 | A | 1.77 | 20.0% | NT$200 | ✅ WIN | NT$+154 | NT$2,673 |
+| 3 | MLB | AZ 勝 | A | 2.43 | 18.9% | NT$210 | ❌ LOSS | NT$-210 | NT$2,463 |
+| 4 | MLB | SD 勝 | B | 1.81 | 5.9% | NT$70 | ❌ LOSS | NT$-70 | NT$2,393 |
+| 5 | PARLAY | 2-串（PHI 勝、AZ 勝） | PARLAY | 5.43 | 122.6% | NT$100 | ❌ LOSS | NT$-100 | NT$2,293 |
+| 6 | PARLAY | 2-串（PHI 勝、WSH 勝） | PARLAY | 3.95 | 106.6% | NT$120 | ❌ LOSS | NT$-120 | NT$2,173 |
+| 7 | PARLAY | 2-串（WSH 勝、AZ 勝） | PARLAY | 4.29 | 97.5% | NT$100 | ❌ LOSS | NT$-100 | NT$2,073 |
+| 8 | PARLAY | 3-串（PHI 勝、WSH 勝、AZ 勝） | PARLAY | 9.59 | 201.4% | NT$70 | ❌ LOSS | NT$-70 | NT$2,003 |
+| 9 | PARLAY | 3-串（PHI 勝、AZ 勝、CHC 勝） | PARLAY | 10.40 | 146.8% | NT$50 | ❌ LOSS | NT$-50 | NT$1,953 |
+| 10 | PARLAY | 3-串（PHI 勝、AZ 勝、SD 勝） | PARLAY | 9.80 | 146.6% | NT$50 | ❌ LOSS | NT$-50 | NT$1,903 |
+| 11 | PARLAY | 4-串（PHI 勝、WSH 勝、SD 勝、CHC 勝） | PARLAY | 13.67 | 153.6% | NT$30 | ❌ LOSS | NT$-30 | NT$1,873 |
+| 12 | PARLAY | 4-串（WSH 勝、AZ 勝、SD 勝、CHC 勝） | PARLAY | 14.87 | 142.5% | NT$30 | ❌ LOSS | NT$-30 | NT$1,843 |
 
-#### 2026-05-14　🔴 0/10 中　盈虧 NT$-370　本金 NT$1,873 → NT$1,503
-
-| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | MLB | WSH 勝 | A | 2.31 | 11.0% | NT$90 | ❌ LOSS | NT$-90 | NT$1,783 |
-| 2 | MLB | BOS 勝 | B | 2.10 | 6.5% | NT$40 | ❌ LOSS | NT$-40 | NT$1,743 |
-| 3 | MLB | KC 勝 | B | 1.78 | 5.9% | NT$50 | ❌ LOSS | NT$-50 | NT$1,693 |
-| 4 | MLB | SF 勝 | B | 1.86 | 5.7% | NT$40 | ❌ LOSS | NT$-40 | NT$1,653 |
-| 5 | PARLAY | 2-串（WSH 勝、BOS 勝） | PARLAY | 4.85 | 42.6% | NT$30 | ❌ LOSS | NT$-30 | NT$1,623 |
-| 6 | PARLAY | 2-串（WSH 勝、SF 勝） | PARLAY | 4.30 | 38.7% | NT$30 | ❌ LOSS | NT$-30 | NT$1,593 |
-| 7 | PARLAY | 2-串（WSH 勝、KC 勝） | PARLAY | 4.12 | 38.5% | NT$30 | ❌ LOSS | NT$-30 | NT$1,563 |
-| 8 | PARLAY | 3-串（WSH 勝、BOS 勝、SF 勝） | PARLAY | 9.02 | 57.6% | NT$20 | ❌ LOSS | NT$-20 | NT$1,543 |
-| 9 | PARLAY | 3-串（WSH 勝、BOS 勝、KC 勝） | PARLAY | 8.63 | 57.4% | NT$20 | ❌ LOSS | NT$-20 | NT$1,523 |
-| 10 | PARLAY | 3-串（WSH 勝、KC 勝、SF 勝） | PARLAY | 7.66 | 53.1% | NT$20 | ❌ LOSS | NT$-20 | NT$1,503 |
-
-#### 2026-05-15　🔴 3/10 中　盈虧 NT$-12　本金 NT$1,503 → NT$1,491
+##### 2026-05-08　🔴 1/3 中　盈虧 NT$-49　本金 NT$1,843 → NT$1,794
 
 | # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | MLB | HOU 勝 | A | 1.95 | 18.8% | NT$120 | ✅ WIN | NT$+114 | NT$1,617 |
-| 2 | MLB | CLE 勝 | A | 2.03 | 8.0% | NT$60 | ❌ LOSS | NT$-60 | NT$1,557 |
-| 3 | MLB | KC 勝 | B | 2.16 | 6.3% | NT$40 | ❌ LOSS | NT$-40 | NT$1,517 |
-| 4 | MLB | ATL 勝 | B | 1.91 | 5.7% | NT$40 | ✅ WIN | NT$+36 | NT$1,553 |
-| 5 | PARLAY | 2-串（HOU 勝、CLE 勝） | PARLAY | 3.94 | 58.9% | NT$50 | ❌ LOSS | NT$-50 | NT$1,503 |
-| 6 | PARLAY | 2-串（HOU 勝、KC 勝） | PARLAY | 4.21 | 55.4% | NT$40 | ❌ LOSS | NT$-40 | NT$1,463 |
-| 7 | PARLAY | 2-串（HOU 勝、ATL 勝） | PARLAY | 3.71 | 51.5% | NT$40 | ✅ WIN | NT$+108 | NT$1,571 |
-| 8 | PARLAY | 3-串（HOU 勝、CLE 勝、KC 勝） | PARLAY | 8.52 | 80.6% | NT$30 | ❌ LOSS | NT$-30 | NT$1,541 |
-| 9 | PARLAY | 3-串（HOU 勝、CLE 勝、ATL 勝） | PARLAY | 7.52 | 76.2% | NT$30 | ❌ LOSS | NT$-30 | NT$1,511 |
-| 10 | PARLAY | 3-串（HOU 勝、KC 勝、ATL 勝） | PARLAY | 8.02 | 72.3% | NT$20 | ❌ LOSS | NT$-20 | NT$1,491 |
+| 1 | MLB | CLE 勝 | A | 1.87 | 16.4% | NT$150 | ✅ WIN | NT$+131 | NT$1,974 |
+| 2 | MLB | AZ 勝 | A | 2.66 | 15.2% | NT$120 | ❌ LOSS | NT$-120 | NT$1,854 |
+| 3 | PARLAY | 2-串（CLE 勝、AZ 勝） | PARLAY | 4.97 | 83.4% | NT$60 | ❌ LOSS | NT$-60 | NT$1,794 |
 
-#### 2026-05-16　🟢 3/7 中　盈虧 NT$+424　本金 NT$1,491 → NT$1,915
+##### 2026-05-09　🔴 1/10 中　盈虧 NT$-281　本金 NT$1,794 → NT$1,513
 
 | # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | MLB | COL 勝 | A | 2.50 | 21.2% | NT$120 | ✅ WIN | NT$+181 | NT$1,672 |
-| 2 | MLB | HOU 勝 | A | 2.11 | 16.7% | NT$130 | ✅ WIN | NT$+144 | NT$1,816 |
-| 3 | MLB | KC 勝 | B | 1.93 | 6.3% | NT$50 | ❌ LOSS | NT$-50 | NT$1,766 |
-| 4 | PARLAY | 2-串（COL 勝、HOU 勝） | PARLAY | 5.28 | 107.1% | NT$70 | ✅ WIN | NT$+299 | NT$2,065 |
-| 5 | PARLAY | 2-串（COL 勝、KC 勝） | PARLAY | 4.82 | 71.7% | NT$60 | ❌ LOSS | NT$-60 | NT$2,005 |
-| 6 | PARLAY | 2-串（HOU 勝、KC 勝） | PARLAY | 4.05 | 51.5% | NT$50 | ❌ LOSS | NT$-50 | NT$1,955 |
-| 7 | PARLAY | 3-串（COL 勝、HOU 勝、KC 勝） | PARLAY | 10.15 | 132.1% | NT$40 | ❌ LOSS | NT$-40 | NT$1,915 |
+| 1 | MLB | CLE 勝 | A | 2.45 | 14.0% | NT$110 | ❌ LOSS | NT$-110 | NT$1,684 |
+| 2 | MLB | TB 勝 | A | 2.11 | 7.3% | NT$60 | ⬜ VOID | NT$+0 | NT$1,684 |
+| 3 | MLB | HOU 勝 | A | 2.11 | 7.1% | NT$60 | ❌ LOSS | NT$-60 | NT$1,624 |
+| 4 | MLB | PHI 勝 | B | 1.99 | 5.8% | NT$40 | ✅ WIN | NT$+39 | NT$1,663 |
+| 5 | PARLAY | 2-串（CLE 勝、TB 勝） | PARLAY | 5.15 | 54.9% | NT$30 | ❌ LOSS | NT$-30 | NT$1,633 |
+| 6 | PARLAY | 2-串（CLE 勝、HOU 勝） | PARLAY | 5.17 | 54.6% | NT$30 | ❌ LOSS | NT$-30 | NT$1,603 |
+| 7 | PARLAY | 2-串（CLE 勝、PHI 勝） | PARLAY | 4.86 | 49.6% | NT$30 | ❌ LOSS | NT$-30 | NT$1,573 |
+| 8 | PARLAY | 3-串（CLE 勝、TB 勝、HOU 勝） | PARLAY | 10.89 | 78.2% | NT$20 | ❌ LOSS | NT$-20 | NT$1,553 |
+| 9 | PARLAY | 3-串（CLE 勝、TB 勝、PHI 勝） | PARLAY | 10.23 | 72.5% | NT$20 | ❌ LOSS | NT$-20 | NT$1,533 |
+| 10 | PARLAY | 3-串（CLE 勝、HOU 勝、PHI 勝） | PARLAY | 10.26 | 72.2% | NT$20 | ❌ LOSS | NT$-20 | NT$1,513 |
 
-#### 2026-05-17　🔴 2/11 中　盈虧 NT$-300　本金 NT$1,915 → NT$1,615
+##### 2026-05-10　🔴 2/10 中　盈虧 NT$-130　本金 NT$1,513 → NT$1,383
 
 | # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | MLB | CHC 勝 | A | 1.72 | 11.0% | NT$130 | ❌ LOSS | NT$-130 | NT$1,785 |
-| 2 | MLB | ATH 勝 | B | 1.87 | 6.6% | NT$50 | ❌ LOSS | NT$-50 | NT$1,735 |
-| 3 | MLB | TOR 勝 | B | 1.75 | 6.2% | NT$50 | ✅ WIN | NT$+38 | NT$1,773 |
-| 4 | MLB | PHI 勝 | B | 2.04 | 5.5% | NT$40 | ✅ WIN | NT$+42 | NT$1,815 |
-| 5 | PARLAY | 2-串（CHC 勝、ATH 勝） | PARLAY | 3.20 | 33.5% | NT$40 | ❌ LOSS | NT$-40 | NT$1,775 |
-| 6 | PARLAY | 2-串（CHC 勝、PHI 勝） | PARLAY | 3.50 | 32.1% | NT$30 | ❌ LOSS | NT$-30 | NT$1,745 |
-| 7 | PARLAY | 2-串（CHC 勝、TOR 勝） | PARLAY | 3.01 | 31.6% | NT$40 | ❌ LOSS | NT$-40 | NT$1,705 |
-| 8 | PARLAY | 3-串（CHC 勝、ATH 勝、PHI 勝） | PARLAY | 6.54 | 48.5% | NT$20 | ❌ LOSS | NT$-20 | NT$1,685 |
-| 9 | PARLAY | 3-串（CHC 勝、ATH 勝、TOR 勝） | PARLAY | 5.62 | 47.9% | NT$30 | ❌ LOSS | NT$-30 | NT$1,655 |
-| 10 | PARLAY | 3-串（CHC 勝、TOR 勝、PHI 勝） | PARLAY | 6.15 | 46.4% | NT$20 | ❌ LOSS | NT$-20 | NT$1,635 |
-| 11 | PARLAY | 4-串（CHC 勝、ATH 勝、TOR 勝、PHI 勝） | PARLAY | 11.47 | 64.5% | NT$20 | ❌ LOSS | NT$-20 | NT$1,615 |
+| 1 | MLB | TB 勝 | A | 2.11 | 10.8% | NT$80 | ✅ WIN | NT$+89 | NT$1,602 |
+| 2 | MLB | PIT 勝 | A | 2.31 | 10.2% | NT$70 | ❌ LOSS | NT$-70 | NT$1,532 |
+| 3 | MLB | HOU 勝 | A | 1.94 | 9.3% | NT$70 | ❌ LOSS | NT$-70 | NT$1,462 |
+| 4 | MLB | AZ 勝 | A | 2.22 | 8.2% | NT$50 | ✅ WIN | NT$+61 | NT$1,523 |
+| 5 | PARLAY | 2-串（TB 勝、PIT 勝） | PARLAY | 4.87 | 51.5% | NT$30 | ❌ LOSS | NT$-30 | NT$1,493 |
+| 6 | PARLAY | 2-串（PIT 勝、AZ 勝） | PARLAY | 5.14 | 46.0% | NT$20 | ❌ LOSS | NT$-20 | NT$1,473 |
+| 7 | PARLAY | 2-串（PIT 勝、HOU 勝） | PARLAY | 4.48 | 45.7% | NT$30 | ❌ LOSS | NT$-30 | NT$1,443 |
+| 8 | PARLAY | 3-串（TB 勝、PIT 勝、AZ 勝） | PARLAY | 10.83 | 79.0% | NT$20 | ❌ LOSS | NT$-20 | NT$1,423 |
+| 9 | PARLAY | 3-串（TB 勝、PIT 勝、HOU 勝） | PARLAY | 9.44 | 78.7% | NT$20 | ❌ LOSS | NT$-20 | NT$1,403 |
+| 10 | PARLAY | 3-串（PIT 勝、HOU 勝、AZ 勝） | PARLAY | 9.96 | 72.2% | NT$20 | ❌ LOSS | NT$-20 | NT$1,383 |
+
+##### 2026-05-11　🔴 0/1 中　盈虧 NT$-70　本金 NT$1,383 → NT$1,313
+
+| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | MLB | HOU 勝 | A | 2.04 | 10.5% | NT$70 | ❌ LOSS | NT$-70 | NT$1,313 |
+
+##### 2026-05-12　🟢 4/10 中　盈虧 NT$+63　本金 NT$1,313 → NT$1,376
+
+| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | MLB | CLE 勝 | A | 2.34 | 13.6% | NT$80 | ✅ WIN | NT$+107 | NT$1,420 |
+| 2 | MLB | CIN 勝 | A | 2.17 | 11.8% | NT$80 | ❌ LOSS | NT$-80 | NT$1,340 |
+| 3 | MLB | TB 勝 | B | 1.79 | 6.0% | NT$40 | ✅ WIN | NT$+32 | NT$1,372 |
+| 4 | MLB | MIN 勝 | B | 1.92 | 5.1% | NT$30 | ✅ WIN | NT$+28 | NT$1,400 |
+| 5 | PARLAY | 2-串（CLE 勝、CIN 勝） | PARLAY | 5.09 | 65.5% | NT$30 | ❌ LOSS | NT$-30 | NT$1,370 |
+| 6 | PARLAY | 2-串（CLE 勝、TB 勝） | PARLAY | 4.20 | 45.9% | NT$30 | ✅ WIN | NT$+96 | NT$1,466 |
+| 7 | PARLAY | 2-串（CLE 勝、ATH 勝） | PARLAY | 4.84 | 45.3% | NT$30 | ❌ LOSS | NT$-30 | NT$1,436 |
+| 8 | PARLAY | 3-串（CLE 勝、CIN 勝、TB 勝） | PARLAY | 9.13 | 83.3% | NT$20 | ❌ LOSS | NT$-20 | NT$1,416 |
+| 9 | PARLAY | 3-串（CLE 勝、CIN 勝、ATH 勝） | PARLAY | 10.52 | 82.5% | NT$20 | ❌ LOSS | NT$-20 | NT$1,396 |
+| 10 | PARLAY | 3-串（CLE 勝、CIN 勝、MIN 勝） | PARLAY | 9.77 | 81.7% | NT$20 | ❌ LOSS | NT$-20 | NT$1,376 |
+
+##### 2026-05-13　🔴 3/7 中　盈虧 NT$-12　本金 NT$1,376 → NT$1,364
+
+| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | MLB | MIL 勝 | B | 1.84 | 6.9% | NT$40 | ❌ LOSS | NT$-40 | NT$1,336 |
+| 2 | MLB | BOS 勝 | B | 1.97 | 6.2% | NT$30 | ✅ WIN | NT$+29 | NT$1,365 |
+| 3 | MLB | TEX 勝 | B | 2.00 | 4.2% | NT$20 | ✅ WIN | NT$+20 | NT$1,385 |
+| 4 | PARLAY | 2-串（MIL 勝、BOS 勝） | PARLAY | 3.62 | 26.3% | NT$20 | ❌ LOSS | NT$-20 | NT$1,365 |
+| 5 | PARLAY | 2-串（MIL 勝、TEX 勝） | PARLAY | 3.68 | 22.1% | NT$20 | ❌ LOSS | NT$-20 | NT$1,345 |
+| 6 | PARLAY | 2-串（BOS 勝、TEX 勝） | PARLAY | 3.95 | 21.6% | NT$10 | ✅ WIN | NT$+29 | NT$1,374 |
+| 7 | PARLAY | 3-串（MIL 勝、BOS 勝、TEX 勝） | PARLAY | 7.25 | 36.9% | NT$10 | ❌ LOSS | NT$-10 | NT$1,364 |
+
+##### 2026-05-14　🔴 0/10 中　盈虧 NT$-250　本金 NT$1,364 → NT$1,114
+
+| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | MLB | WSH 勝 | A | 2.31 | 11.0% | NT$70 | ❌ LOSS | NT$-70 | NT$1,294 |
+| 2 | MLB | BOS 勝 | B | 2.10 | 6.5% | NT$30 | ❌ LOSS | NT$-30 | NT$1,264 |
+| 3 | MLB | KC 勝 | B | 1.78 | 5.9% | NT$30 | ❌ LOSS | NT$-30 | NT$1,234 |
+| 4 | MLB | SF 勝 | B | 1.86 | 5.7% | NT$30 | ❌ LOSS | NT$-30 | NT$1,204 |
+| 5 | PARLAY | 2-串（WSH 勝、BOS 勝） | PARLAY | 4.85 | 42.6% | NT$20 | ❌ LOSS | NT$-20 | NT$1,184 |
+| 6 | PARLAY | 2-串（WSH 勝、SF 勝） | PARLAY | 4.30 | 38.7% | NT$20 | ❌ LOSS | NT$-20 | NT$1,164 |
+| 7 | PARLAY | 2-串（WSH 勝、KC 勝） | PARLAY | 4.12 | 38.5% | NT$20 | ❌ LOSS | NT$-20 | NT$1,144 |
+| 8 | PARLAY | 3-串（WSH 勝、BOS 勝、SF 勝） | PARLAY | 9.02 | 57.6% | NT$10 | ❌ LOSS | NT$-10 | NT$1,134 |
+| 9 | PARLAY | 3-串（WSH 勝、BOS 勝、KC 勝） | PARLAY | 8.63 | 57.4% | NT$10 | ❌ LOSS | NT$-10 | NT$1,124 |
+| 10 | PARLAY | 3-串（WSH 勝、KC 勝、SF 勝） | PARLAY | 7.66 | 53.1% | NT$10 | ❌ LOSS | NT$-10 | NT$1,114 |
+
+##### 2026-05-15　🔴 2/10 中　盈虧 NT$-118　本金 NT$1,114 → NT$996
+
+| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | MLB | HOU 勝 | A | 1.95 | 18.8% | NT$90 | ✅ WIN | NT$+85 | NT$1,199 |
+| 2 | MLB | CLE 勝 | A | 2.03 | 8.0% | NT$50 | ❌ LOSS | NT$-50 | NT$1,149 |
+| 3 | MLB | KC 勝 | B | 2.16 | 6.3% | NT$30 | ❌ LOSS | NT$-30 | NT$1,119 |
+| 4 | MLB | ATL 勝 | B | 1.91 | 5.7% | NT$30 | ✅ WIN | NT$+27 | NT$1,146 |
+| 5 | PARLAY | 2-串（HOU 勝、CLE 勝） | PARLAY | 3.94 | 58.9% | NT$30 | ❌ LOSS | NT$-30 | NT$1,116 |
+| 6 | PARLAY | 2-串（HOU 勝、KC 勝） | PARLAY | 4.21 | 55.4% | NT$30 | ❌ LOSS | NT$-30 | NT$1,086 |
+| 7 | PARLAY | 2-串（HOU 勝、COL 勝） | PARLAY | 3.87 | 51.8% | NT$30 | ❌ LOSS | NT$-30 | NT$1,056 |
+| 8 | PARLAY | 3-串（HOU 勝、CLE 勝、KC 勝） | PARLAY | 8.52 | 80.6% | NT$20 | ❌ LOSS | NT$-20 | NT$1,036 |
+| 9 | PARLAY | 3-串（HOU 勝、CLE 勝、COL 勝） | PARLAY | 7.84 | 76.5% | NT$20 | ❌ LOSS | NT$-20 | NT$1,016 |
+| 10 | PARLAY | 3-串（HOU 勝、CLE 勝、ATL 勝） | PARLAY | 7.52 | 76.2% | NT$20 | ❌ LOSS | NT$-20 | NT$996 |
 
 
 ---
 
-*回測使用 1/4 分數凱利，Pinnacle 賠率換算台灣運彩等效賠率*
+## ⚡ 激進型策略詳情
+
+> **策略**：串關為主（EV ≥ 4%，賠率上限 30），單關需 Edge ≥ 8%，每日最多 5 組串關，最多 2 場單關
+
+### 整體績效
+
+| 指標 | 數值 |
+|---|---|
+| 最終本金 | NT$652 |
+| 總損益 | NT$-2,348（ROI -18.8%） |
+| 最大回撤 | -87.2% |
+| 最長連勝/連敗 | 5 勝 / 33 敗 |
+| 最佳單注 | 4-串（CWS 勝、CHC 勝、TOR 勝、ATL 勝） @11.18 → +NT$1,018 |
+| 最差單注 | MIA 勝 @1.87 → -NT$360 |
+
+### 球種分析
+
+| 球種 | 注數 | 命中率 | 盈虧 |
+|---|---|---|---|
+| NBA 單關 | 0 | N/A | NT$+0 |
+| MLB 單關 | 13 | 53.8% | NT$-80 |
+| 串關 | 100 | 13.0% | NT$-2,268 |
+
+### 📒 逐日下注明細
+
+##### 2026-05-01　🟢 7/17 中　盈虧 NT$+2,085　本金 NT$3,000 → NT$5,085
+
+| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | MLB | CWS 勝 | A | 1.71 | 14.8% | NT$240 | ✅ WIN | NT$+170 | NT$3,170 |
+| 2 | MLB | CHC 勝 | A | 1.98 | 12.8% | NT$210 | ✅ WIN | NT$+205 | NT$3,375 |
+| 3 | PARLAY | 2-串（CWS 勝、CHC 勝） | PARLAY | 3.38 | 56.9% | NT$180 | ✅ WIN | NT$+428 | NT$3,803 |
+| 4 | PARLAY | 2-串（CHC 勝、TOR 勝） | PARLAY | 3.36 | 51.3% | NT$180 | ✅ WIN | NT$+425 | NT$4,228 |
+| 5 | PARLAY | 2-串（CWS 勝、TOR 勝） | PARLAY | 2.90 | 51.2% | NT$250 | ✅ WIN | NT$+476 | NT$4,704 |
+| 6 | PARLAY | 2-串（CHC 勝、LAD 勝） | PARLAY | 3.65 | 47.8% | NT$190 | ❌ LOSS | NT$-190 | NT$4,514 |
+| 7 | PARLAY | 2-串（CWS 勝、LAD 勝） | PARLAY | 3.15 | 47.7% | NT$220 | ❌ LOSS | NT$-220 | NT$4,294 |
+| 8 | PARLAY | 3-串（CWS 勝、CHC 勝、TOR 勝） | PARLAY | 5.74 | 89.4% | NT$180 | ✅ WIN | NT$+853 | NT$5,147 |
+| 9 | PARLAY | 3-串（CWS 勝、CHC 勝、LAD 勝） | PARLAY | 6.23 | 85.1% | NT$180 | ❌ LOSS | NT$-180 | NT$4,967 |
+| 10 | PARLAY | 3-串（CWS 勝、CHC 勝、LAA 勝） | PARLAY | 7.32 | 81.4% | NT$140 | ❌ LOSS | NT$-140 | NT$4,827 |
+| 11 | PARLAY | 3-串（CHC 勝、TOR 勝、LAD 勝） | PARLAY | 6.20 | 78.5% | NT$160 | ❌ LOSS | NT$-160 | NT$4,667 |
+| 12 | PARLAY | 3-串（CWS 勝、TOR 勝、LAD 勝） | PARLAY | 5.36 | 78.3% | NT$180 | ❌ LOSS | NT$-180 | NT$4,487 |
+| 13 | PARLAY | 4-串（CWS 勝、CHC 勝、TOR 勝、LAD 勝） | PARLAY | 10.59 | 123.5% | NT$130 | ❌ LOSS | NT$-130 | NT$4,357 |
+| 14 | PARLAY | 4-串（CWS 勝、CHC 勝、TOR 勝、LAA 勝） | PARLAY | 12.45 | 119.0% | NT$100 | ❌ LOSS | NT$-100 | NT$4,257 |
+| 15 | PARLAY | 4-串（CWS 勝、CHC 勝、LAD 勝、LAA 勝） | PARLAY | 13.52 | 114.0% | NT$90 | ❌ LOSS | NT$-90 | NT$4,167 |
+| 16 | PARLAY | 4-串（CWS 勝、CHC 勝、TOR 勝、ATL 勝） | PARLAY | 11.18 | 110.3% | NT$100 | ✅ WIN | NT$+1,018 | NT$5,185 |
+| 17 | PARLAY | 4-串（CHC 勝、TOR 勝、LAD 勝、LAA 勝） | PARLAY | 13.46 | 106.3% | NT$100 | ❌ LOSS | NT$-100 | NT$5,085 |
+
+##### 2026-05-02　🔴 2/17 中　盈虧 NT$-662　本金 NT$5,085 → NT$4,423
+
+| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | MLB | PIT 勝 | A | 1.94 | 8.9% | NT$230 | ✅ WIN | NT$+216 | NT$5,301 |
+| 2 | MLB | BOS 勝 | A | 2.32 | 8.5% | NT$200 | ❌ LOSS | NT$-200 | NT$5,101 |
+| 3 | PARLAY | 2-串（PIT 勝、BOS 勝） | PARLAY | 4.50 | 40.5% | NT$130 | ❌ LOSS | NT$-130 | NT$4,971 |
+| 4 | PARLAY | 2-串（BOS 勝、LAA 勝） | PARLAY | 5.18 | 34.8% | NT$90 | ❌ LOSS | NT$-90 | NT$4,881 |
+| 5 | PARLAY | 2-串（PIT 勝、LAA 勝） | PARLAY | 4.32 | 32.0% | NT$100 | ✅ WIN | NT$+332 | NT$5,213 |
+| 6 | PARLAY | 2-串（BOS 勝、CLE 勝） | PARLAY | 4.13 | 31.4% | NT$120 | ❌ LOSS | NT$-120 | NT$5,093 |
+| 7 | PARLAY | 2-串（BOS 勝、NYY 勝） | PARLAY | 4.58 | 30.7% | NT$100 | ❌ LOSS | NT$-100 | NT$4,993 |
+| 8 | PARLAY | 3-串（PIT 勝、BOS 勝、LAA 勝） | PARLAY | 10.04 | 58.1% | NT$70 | ❌ LOSS | NT$-70 | NT$4,923 |
+| 9 | PARLAY | 3-串（PIT 勝、BOS 勝、CLE 勝） | PARLAY | 8.00 | 54.2% | NT$80 | ❌ LOSS | NT$-80 | NT$4,843 |
+| 10 | PARLAY | 3-串（PIT 勝、BOS 勝、NYY 勝） | PARLAY | 8.88 | 53.4% | NT$70 | ❌ LOSS | NT$-70 | NT$4,773 |
+| 11 | PARLAY | 3-串（PIT 勝、BOS 勝、CWS 勝） | PARLAY | 9.37 | 52.2% | NT$70 | ❌ LOSS | NT$-70 | NT$4,703 |
+| 12 | PARLAY | 3-串（PIT 勝、BOS 勝、MIA 勝） | PARLAY | 8.10 | 50.1% | NT$70 | ❌ LOSS | NT$-70 | NT$4,633 |
+| 13 | PARLAY | 4-串（PIT 勝、BOS 勝、LAA 勝、CLE 勝） | PARLAY | 17.84 | 73.5% | NT$40 | ❌ LOSS | NT$-40 | NT$4,593 |
+| 14 | PARLAY | 4-串（PIT 勝、BOS 勝、LAA 勝、NYY 勝） | PARLAY | 19.79 | 72.6% | NT$40 | ❌ LOSS | NT$-40 | NT$4,553 |
+| 15 | PARLAY | 4-串（PIT 勝、BOS 勝、LAA 勝、CWS 勝） | PARLAY | 20.89 | 71.3% | NT$40 | ❌ LOSS | NT$-40 | NT$4,513 |
+| 16 | PARLAY | 4-串（PIT 勝、BOS 勝、LAA 勝、MIA 勝） | PARLAY | 18.07 | 68.9% | NT$40 | ❌ LOSS | NT$-40 | NT$4,473 |
+| 17 | PARLAY | 4-串（PIT 勝、BOS 勝、CLE 勝、NYY 勝） | PARLAY | 15.78 | 68.3% | NT$50 | ❌ LOSS | NT$-50 | NT$4,423 |
+
+##### 2026-05-03　🔴 2/17 中　盈虧 NT$-1,401　本金 NT$4,423 → NT$3,022
+
+| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | MLB | BOS 勝 | A | 1.72 | 13.1% | NT$350 | ❌ LOSS | NT$-350 | NT$4,073 |
+| 2 | MLB | ATL 勝 | A | 1.77 | 11.8% | NT$280 | ✅ WIN | NT$+217 | NT$4,290 |
+| 3 | PARLAY | 2-串（BOS 勝、ATL 勝） | PARLAY | 3.06 | 48.3% | NT$220 | ❌ LOSS | NT$-220 | NT$4,070 |
+| 4 | PARLAY | 2-串（BOS 勝、CLE 勝） | PARLAY | 3.21 | 46.2% | NT$190 | ❌ LOSS | NT$-190 | NT$3,880 |
+| 5 | PARLAY | 2-串（ATL 勝、CLE 勝） | PARLAY | 3.31 | 44.4% | NT$160 | ❌ LOSS | NT$-160 | NT$3,720 |
+| 6 | PARLAY | 2-串（BOS 勝、PIT 勝） | PARLAY | 3.49 | 41.0% | NT$130 | ❌ LOSS | NT$-130 | NT$3,590 |
+| 7 | PARLAY | 2-串（ATL 勝、PIT 勝） | PARLAY | 3.60 | 39.2% | NT$120 | ✅ WIN | NT$+312 | NT$3,902 |
+| 8 | PARLAY | 3-串（BOS 勝、ATL 勝、CLE 勝） | PARLAY | 5.69 | 76.9% | NT$140 | ❌ LOSS | NT$-140 | NT$3,762 |
+| 9 | PARLAY | 3-串（BOS 勝、ATL 勝、PIT 勝） | PARLAY | 6.19 | 70.6% | NT$110 | ❌ LOSS | NT$-110 | NT$3,652 |
+| 10 | PARLAY | 3-串（BOS 勝、CLE 勝、PIT 勝） | PARLAY | 6.50 | 68.2% | NT$100 | ❌ LOSS | NT$-100 | NT$3,552 |
+| 11 | PARLAY | 3-串（BOS 勝、ATL 勝、TB 勝） | PARLAY | 6.35 | 66.8% | NT$100 | ❌ LOSS | NT$-100 | NT$3,452 |
+| 12 | PARLAY | 3-串（BOS 勝、ATL 勝、TOR 勝） | PARLAY | 6.10 | 66.1% | NT$100 | ❌ LOSS | NT$-100 | NT$3,352 |
+| 13 | PARLAY | 4-串（BOS 勝、ATL 勝、CLE 勝、PIT 勝） | PARLAY | 11.54 | 103.5% | NT$70 | ❌ LOSS | NT$-70 | NT$3,282 |
+| 14 | PARLAY | 4-串（BOS 勝、ATL 勝、CLE 勝、TB 勝） | PARLAY | 11.83 | 99.0% | NT$70 | ❌ LOSS | NT$-70 | NT$3,212 |
+| 15 | PARLAY | 4-串（BOS 勝、ATL 勝、CLE 勝、TOR 勝） | PARLAY | 11.37 | 98.2% | NT$70 | ❌ LOSS | NT$-70 | NT$3,142 |
+| 16 | PARLAY | 4-串（BOS 勝、ATL 勝、CLE 勝、NYM 勝） | PARLAY | 10.41 | 93.0% | NT$70 | ❌ LOSS | NT$-70 | NT$3,072 |
+| 17 | PARLAY | 4-串（BOS 勝、ATL 勝、PIT 勝、TB 勝） | PARLAY | 12.87 | 91.8% | NT$50 | ❌ LOSS | NT$-50 | NT$3,022 |
+
+##### 2026-05-04　🟢 7/16 中　盈虧 NT$+1,514　本金 NT$3,022 → NT$4,536
+
+| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | MLB | NYM 勝 | A | 1.72 | 10.5% | NT$190 | ✅ WIN | NT$+136 | NT$3,158 |
+| 2 | PARLAY | 2-串（NYM 勝、CWS 勝） | PARLAY | 3.30 | 32.4% | NT$100 | ✅ WIN | NT$+230 | NT$3,388 |
+| 3 | PARLAY | 2-串（NYM 勝、MIA 勝） | PARLAY | 3.33 | 31.5% | NT$100 | ❌ LOSS | NT$-100 | NT$3,288 |
+| 4 | PARLAY | 2-串（NYM 勝、KC 勝） | PARLAY | 3.56 | 30.7% | NT$90 | ✅ WIN | NT$+230 | NT$3,518 |
+| 5 | PARLAY | 2-串（NYM 勝、SF 勝） | PARLAY | 3.66 | 29.0% | NT$80 | ✅ WIN | NT$+213 | NT$3,731 |
+| 6 | PARLAY | 2-串（CWS 勝、MIA 勝） | PARLAY | 3.72 | 25.0% | NT$80 | ❌ LOSS | NT$-80 | NT$3,651 |
+| 7 | PARLAY | 3-串（NYM 勝、CWS 勝、MIA 勝） | PARLAY | 6.39 | 47.5% | NT$70 | ❌ LOSS | NT$-70 | NT$3,581 |
+| 8 | PARLAY | 3-串（NYM 勝、CWS 勝、KC 勝） | PARLAY | 6.84 | 46.6% | NT$60 | ✅ WIN | NT$+350 | NT$3,931 |
+| 9 | PARLAY | 3-串（NYM 勝、MIA 勝、KC 勝） | PARLAY | 6.91 | 45.6% | NT$70 | ❌ LOSS | NT$-70 | NT$3,861 |
+| 10 | PARLAY | 3-串（NYM 勝、CWS 勝、SF 勝） | PARLAY | 7.03 | 44.7% | NT$60 | ✅ WIN | NT$+362 | NT$4,223 |
+| 11 | PARLAY | 3-串（NYM 勝、MIA 勝、SF 勝） | PARLAY | 7.10 | 43.7% | NT$70 | ❌ LOSS | NT$-70 | NT$4,153 |
+| 12 | PARLAY | 4-串（NYM 勝、CWS 勝、MIA 勝、KC 勝） | PARLAY | 13.26 | 63.3% | NT$50 | ❌ LOSS | NT$-50 | NT$4,103 |
+| 13 | PARLAY | 4-串（NYM 勝、CWS 勝、MIA 勝、SF 勝） | PARLAY | 13.63 | 61.2% | NT$40 | ❌ LOSS | NT$-40 | NT$4,063 |
+| 14 | PARLAY | 4-串（NYM 勝、CWS 勝、KC 勝、SF 勝） | PARLAY | 14.58 | 60.2% | NT$40 | ✅ WIN | NT$+543 | NT$4,606 |
+| 15 | PARLAY | 4-串（NYM 勝、MIA 勝、KC 勝、SF 勝） | PARLAY | 14.72 | 59.1% | NT$40 | ❌ LOSS | NT$-40 | NT$4,566 |
+| 16 | PARLAY | 4-串（CWS 勝、MIA 勝、KC 勝、SF 勝） | PARLAY | 16.46 | 51.3% | NT$30 | ❌ LOSS | NT$-30 | NT$4,536 |
+
+##### 2026-05-05　🔴 1/17 中　盈虧 NT$-1,735　本金 NT$4,536 → NT$2,801
+
+| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | MLB | MIA 勝 | A | 1.87 | 21.4% | NT$360 | ❌ LOSS | NT$-360 | NT$4,176 |
+| 2 | MLB | CHC 勝 | A | 2.64 | 12.6% | NT$210 | ✅ WIN | NT$+345 | NT$4,521 |
+| 3 | PARLAY | 2-串（MIA 勝、CHC 勝） | PARLAY | 4.93 | 86.6% | NT$220 | ❌ LOSS | NT$-220 | NT$4,301 |
+| 4 | PARLAY | 2-串（MIA 勝、WSH 勝） | PARLAY | 3.87 | 69.8% | NT$230 | ❌ LOSS | NT$-230 | NT$4,071 |
+| 5 | PARLAY | 2-串（MIA 勝、TB 勝） | PARLAY | 4.19 | 67.0% | NT$190 | ❌ LOSS | NT$-190 | NT$3,881 |
+| 6 | PARLAY | 2-串（MIA 勝、NYM 勝） | PARLAY | 3.49 | 64.6% | NT$220 | ❌ LOSS | NT$-220 | NT$3,661 |
+| 7 | PARLAY | 2-串（CHC 勝、WSH 勝） | PARLAY | 5.48 | 61.9% | NT$110 | ❌ LOSS | NT$-110 | NT$3,551 |
+| 8 | PARLAY | 3-串（MIA 勝、CHC 勝、WSH 勝） | PARLAY | 10.23 | 126.5% | NT$110 | ❌ LOSS | NT$-110 | NT$3,441 |
+| 9 | PARLAY | 3-串（MIA 勝、CHC 勝、TB 勝） | PARLAY | 11.08 | 122.8% | NT$90 | ❌ LOSS | NT$-90 | NT$3,351 |
+| 10 | PARLAY | 3-串（MIA 勝、CHC 勝、NYM 勝） | PARLAY | 9.22 | 119.5% | NT$110 | ❌ LOSS | NT$-110 | NT$3,241 |
+| 11 | PARLAY | 3-串（MIA 勝、CHC 勝、LAD 勝） | PARLAY | 9.46 | 112.9% | NT$100 | ❌ LOSS | NT$-100 | NT$3,141 |
+| 12 | PARLAY | 3-串（MIA 勝、CHC 勝、SEA 勝） | PARLAY | 10.72 | 111.0% | NT$80 | ❌ LOSS | NT$-80 | NT$3,061 |
+| 13 | PARLAY | 4-串（MIA 勝、CHC 勝、WSH 勝、TB 勝） | PARLAY | 22.97 | 170.4% | NT$50 | ❌ LOSS | NT$-50 | NT$3,011 |
+| 14 | PARLAY | 4-串（MIA 勝、CHC 勝、WSH 勝、NYM 勝） | PARLAY | 19.11 | 166.4% | NT$60 | ❌ LOSS | NT$-60 | NT$2,951 |
+| 15 | PARLAY | 4-串（MIA 勝、CHC 勝、NYM 勝、TB 勝） | PARLAY | 20.69 | 162.1% | NT$50 | ❌ LOSS | NT$-50 | NT$2,901 |
+| 16 | PARLAY | 4-串（MIA 勝、CHC 勝、WSH 勝、LAD 勝） | PARLAY | 19.63 | 158.4% | NT$50 | ❌ LOSS | NT$-50 | NT$2,851 |
+| 17 | PARLAY | 4-串（MIA 勝、CHC 勝、WSH 勝、SEA 勝） | PARLAY | 22.23 | 156.1% | NT$50 | ❌ LOSS | NT$-50 | NT$2,801 |
+
+##### 2026-05-06　🔴 0/17 中　盈虧 NT$-1,670　本金 NT$2,801 → NT$1,131
+
+| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | MLB | MIA 勝 | A | 2.09 | 20.6% | NT$220 | ❌ LOSS | NT$-220 | NT$2,581 |
+| 2 | MLB | AZ 勝 | A | 2.16 | 18.9% | NT$210 | ❌ LOSS | NT$-210 | NT$2,371 |
+| 3 | PARLAY | 2-串（MIA 勝、AZ 勝） | PARLAY | 4.52 | 101.6% | NT$150 | ❌ LOSS | NT$-150 | NT$2,221 |
+| 4 | PARLAY | 2-串（MIA 勝、PHI 勝） | PARLAY | 3.69 | 89.3% | NT$160 | ❌ LOSS | NT$-160 | NT$2,061 |
+| 5 | PARLAY | 2-串（MIA 勝、NYY 勝） | PARLAY | 3.89 | 86.3% | NT$140 | ❌ LOSS | NT$-140 | NT$1,921 |
+| 6 | PARLAY | 2-串（AZ 勝、PHI 勝） | PARLAY | 3.81 | 86.2% | NT$130 | ❌ LOSS | NT$-130 | NT$1,791 |
+| 7 | PARLAY | 2-串（AZ 勝、NYY 勝） | PARLAY | 4.03 | 83.2% | NT$110 | ❌ LOSS | NT$-110 | NT$1,681 |
+| 8 | PARLAY | 3-串（MIA 勝、AZ 勝、PHI 勝） | PARLAY | 7.97 | 166.6% | NT$90 | ❌ LOSS | NT$-90 | NT$1,591 |
+| 9 | PARLAY | 3-串（MIA 勝、AZ 勝、NYY 勝） | PARLAY | 8.42 | 162.3% | NT$80 | ❌ LOSS | NT$-80 | NT$1,511 |
+| 10 | PARLAY | 3-串（MIA 勝、PHI 勝、NYY 勝） | PARLAY | 6.86 | 146.4% | NT$80 | ❌ LOSS | NT$-80 | NT$1,431 |
+| 11 | PARLAY | 3-串（AZ 勝、PHI 勝、NYY 勝） | PARLAY | 7.10 | 142.3% | NT$70 | ❌ LOSS | NT$-70 | NT$1,361 |
+| 12 | PARLAY | 3-串（MIA 勝、AZ 勝、CWS 勝） | PARLAY | 9.82 | 129.6% | NT$40 | ❌ LOSS | NT$-40 | NT$1,321 |
+| 13 | PARLAY | 4-串（MIA 勝、AZ 勝、PHI 勝、NYY 勝） | PARLAY | 14.84 | 246.9% | NT$50 | ❌ LOSS | NT$-50 | NT$1,271 |
+| 14 | PARLAY | 4-串（MIA 勝、AZ 勝、PHI 勝、CWS 勝） | PARLAY | 17.31 | 203.7% | NT$30 | ❌ LOSS | NT$-30 | NT$1,241 |
+| 15 | PARLAY | 4-串（MIA 勝、AZ 勝、PHI 勝、LAD 勝） | PARLAY | 14.15 | 200.9% | NT$40 | ❌ LOSS | NT$-40 | NT$1,201 |
+| 16 | PARLAY | 4-串（MIA 勝、AZ 勝、NYY 勝、CWS 勝） | PARLAY | 18.27 | 198.8% | NT$30 | ❌ LOSS | NT$-30 | NT$1,171 |
+| 17 | PARLAY | 4-串（MIA 勝、AZ 勝、PHI 勝、TB 勝） | PARLAY | 14.30 | 198.2% | NT$40 | ❌ LOSS | NT$-40 | NT$1,131 |
+
+##### 2026-05-07　🔴 1/12 中　盈虧 NT$-479　本金 NT$1,131 → NT$652
+
+| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | MLB | PHI 勝 | A | 2.23 | 23.5% | NT$90 | ❌ LOSS | NT$-90 | NT$1,041 |
+| 2 | MLB | WSH 勝 | A | 1.77 | 20.0% | NT$80 | ✅ WIN | NT$+61 | NT$1,102 |
+| 3 | PARLAY | 2-串（PHI 勝、AZ 勝） | PARLAY | 5.43 | 122.6% | NT$70 | ❌ LOSS | NT$-70 | NT$1,032 |
+| 4 | PARLAY | 2-串（PHI 勝、WSH 勝） | PARLAY | 3.95 | 106.6% | NT$80 | ❌ LOSS | NT$-80 | NT$952 |
+| 5 | PARLAY | 2-串（WSH 勝、AZ 勝） | PARLAY | 4.29 | 97.5% | NT$60 | ❌ LOSS | NT$-60 | NT$892 |
+| 6 | PARLAY | 2-串（PHI 勝、CHC 勝） | PARLAY | 4.28 | 69.1% | NT$40 | ❌ LOSS | NT$-40 | NT$852 |
+| 7 | PARLAY | 2-串（PHI 勝、SD 勝） | PARLAY | 4.04 | 69.0% | NT$40 | ❌ LOSS | NT$-40 | NT$812 |
+| 8 | PARLAY | 3-串（PHI 勝、WSH 勝、AZ 勝） | PARLAY | 9.59 | 201.4% | NT$40 | ❌ LOSS | NT$-40 | NT$772 |
+| 9 | PARLAY | 3-串（PHI 勝、AZ 勝、CHC 勝） | PARLAY | 10.40 | 146.8% | NT$30 | ❌ LOSS | NT$-30 | NT$742 |
+| 10 | PARLAY | 3-串（PHI 勝、AZ 勝、SD 勝） | PARLAY | 9.80 | 146.6% | NT$30 | ❌ LOSS | NT$-30 | NT$712 |
+| 11 | PARLAY | 3-串（PHI 勝、WSH 勝、CHC 勝） | PARLAY | 7.57 | 129.0% | NT$30 | ❌ LOSS | NT$-30 | NT$682 |
+| 12 | PARLAY | 3-串（PHI 勝、WSH 勝、SD 勝） | PARLAY | 7.13 | 128.8% | NT$30 | ❌ LOSS | NT$-30 | NT$652 |
+
+
+---
+
+*回測使用分數凱利，Pinnacle 賠率換算台灣運彩等效賠率*
 *停利目標：NT$12,000（4倍）｜停損門檻：歸零*
 *所有數據嚴格限制於比賽開始前已公開的資訊（無未來數據洩漏）*
-*生成時間：2026-05-17*
+*生成時間：2026-05-01*
