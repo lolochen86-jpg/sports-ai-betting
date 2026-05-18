@@ -449,7 +449,8 @@ class _DictPlan:
                 self.grade      = p.get("grade", "C")
                 self._kf        = float(p.get("kelly_frac", 0))
             def bet_amount(self, bankroll):
-                return round(self._kf * bankroll)
+                raw = self._kf * bankroll
+                return max(10.0, round(raw / 10) * 10)
             def data_card(self, bankroll):
                 return ""
 
@@ -464,7 +465,8 @@ class _DictPlan:
                 self.legs = [_Pick(lg) for lg in legs_raw]
                 self.label = "·".join(lg.bet_label for lg in self.legs)
             def bet_amount(self, bankroll):
-                return round(self._kf * bankroll)
+                raw = self._kf * bankroll
+                return max(10.0, round(raw / 10) * 10)
 
         self.single_picks = [_Pick(p) for p in d.get("single_picks", [])]
         self.parlays      = [_Parlay(p, self.bankroll) for p in d.get("parlays", [])]
