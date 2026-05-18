@@ -65,9 +65,11 @@ class StrategyConfig:
     single_min_edge:   float = 0.04   # 加入單關的最低 Edge（激進型設更高）
     # 串關設定
     parlay_min_ev:     float = 0.08   # 串關最低 EV
-    parlay_4_min_ev:   float = 0.10   # 4-串最低 EV
+    parlay_4_min_ev:   float = 0.10   # 4-串最低 EV（已棄用）
     max_parlay_odds:   float = 15.0   # 串關最高賠率上限
-    max_parlays_per_n: int   = 3      # 每種 n-串最多組數
+    max_parlays_per_n: int   = 1      # 每種 n-串最多組數
+    max_parlay_legs:   int   = 2      # 最多幾串（2=只允許二串）
+    parlay_min_leg_edge: float = 0.08 # 每腳進串關最低 edge
     # 凱利係數
     kelly_single_A:    float = 0.25   # A 級單關
     kelly_single_B:    float = 0.20   # B 級單關
@@ -78,43 +80,46 @@ class StrategyConfig:
     max_singles:       int   = 4      # 每日最多單關數
 
 
-# 穩健型（原本行為不變）
+# 穩健型
 CONSERVATIVE = StrategyConfig(
     name="穩健型",
     min_edge=0.04,       min_true_prob=0.52,
     min_odds=1.70,       max_odds=3.50,
     single_min_edge=0.04,
     parlay_min_ev=0.08,  parlay_4_min_ev=0.10,
-    max_parlay_odds=15.0, max_parlays_per_n=3,
+    max_parlay_odds=12.0, max_parlays_per_n=1,  # 只留最強 1 個二串
+    max_parlay_legs=2,   parlay_min_leg_edge=0.08,
     kelly_single_A=0.25, kelly_single_B=0.20, kelly_single_C=0.12,
-    kelly_parlay=0.15,   hard_cap_pct=0.08,
+    kelly_parlay=0.12,   hard_cap_pct=0.08,
     max_singles=4,
 )
 
-# 激進型（高賠率串關為主）
+# 激進型
 AGGRESSIVE = StrategyConfig(
     name="激進型",
-    min_edge=0.03,       min_true_prob=0.50,   # 放寬篩選，取更多候選
-    min_odds=1.70,       max_odds=5.00,         # 接受更高賠率冷門
-    single_min_edge=0.08,                       # 單關需極高信心
-    parlay_min_ev=0.04,  parlay_4_min_ev=0.06, # 降低串關 EV 門檻
-    max_parlay_odds=30.0, max_parlays_per_n=5,  # 允許高賠率、更多串關組合
+    min_edge=0.03,       min_true_prob=0.50,
+    min_odds=1.70,       max_odds=5.00,
+    single_min_edge=0.08,
+    parlay_min_ev=0.08,  parlay_4_min_ev=0.10,
+    max_parlay_odds=15.0, max_parlays_per_n=2,  # 最多 2 個二串
+    max_parlay_legs=2,   parlay_min_leg_edge=0.08,
     kelly_single_A=0.20, kelly_single_B=0.15, kelly_single_C=0.08,
-    kelly_parlay=0.22,   hard_cap_pct=0.10,    # 串關更積極，上限略高
-    max_singles=2,                              # 每日最多 2 場單關
+    kelly_parlay=0.15,   hard_cap_pct=0.10,
+    max_singles=2,
 )
 
 # 冷門獵人型（只押冷門隊伍，賠率 ≥ 2.00）
 UNDERDOG = StrategyConfig(
     name="冷門獵人型",
-    min_edge=0.05,       min_true_prob=0.40,   # 放寬勝率，冷門本來就低
-    min_odds=2.00,       max_odds=6.00,         # 只下真正冷門
-    single_min_edge=0.05,                       # 單關需明確 edge
-    parlay_min_ev=0.10,  parlay_4_min_ev=0.15, # 串關要求較高 EV
-    max_parlay_odds=20.0, max_parlays_per_n=2,  # 少量冷門串關
+    min_edge=0.05,       min_true_prob=0.40,
+    min_odds=2.00,       max_odds=6.00,
+    single_min_edge=0.05,
+    parlay_min_ev=0.10,  parlay_4_min_ev=0.15,
+    max_parlay_odds=15.0, max_parlays_per_n=1,  # 只留最強 1 個二串
+    max_parlay_legs=2,   parlay_min_leg_edge=0.08,
     kelly_single_A=0.15, kelly_single_B=0.12, kelly_single_C=0.08,
-    kelly_parlay=0.10,   hard_cap_pct=0.08,    # 保守 Kelly（冷門波動大）
-    max_singles=4,                              # 每日最多 4 場單關
+    kelly_parlay=0.10,   hard_cap_pct=0.08,
+    max_singles=4,
 )
 
 
@@ -512,25 +517,28 @@ def _grade(edge_val: float, game: dict) -> str:
 def build_parlays(picks: list[Pick], bankroll: float,
                   cfg: "StrategyConfig | None" = None) -> list[Parlay]:
     """
-    從候選 Pick 中生成所有符合 EV 門檻的串關組合（2〜4 串）。
-    同一場比賽不能出現兩次。
+    從候選 Pick 中生成符合門檻的串關組合。
+    只產生 2 串（最多到 max_parlay_legs），每種串數只保留 EV 最高的 max_parlays_per_n 組。
+    每腳必須達到 parlay_min_leg_edge 才能進串關，避免弱腳拖垮整串。
     """
     c = cfg or CONSERVATIVE
+    max_legs = min(c.max_parlay_legs, 2)  # 強制上限 2 串，不產生 3/4 串
     parlays = []
 
-    for n in range(2, 5):
-        if len(picks) < n:
-            continue
-        min_ev = c.parlay_4_min_ev if n == 4 else c.parlay_min_ev
+    # 只有 edge 達門檻的腳才能進串關
+    eligible = [p for p in picks if p.edge >= c.parlay_min_leg_edge]
 
-        for combo in combinations(picks, n):
-            # 同一場不能重複
+    for n in range(2, max_legs + 1):
+        if len(eligible) < n:
+            continue
+
+        for combo in combinations(eligible, n):
             game_ids = [p.game_id for p in combo]
             if len(game_ids) != len(set(game_ids)):
                 continue
 
-            p_odds   = 1.0
-            p_prob   = 1.0
+            p_odds = 1.0
+            p_prob = 1.0
             for p in combo:
                 p_odds *= p.odds
                 p_prob *= p.true_prob
@@ -539,16 +547,12 @@ def build_parlays(picks: list[Pick], bankroll: float,
                 continue
 
             ev = p_prob * p_odds - 1.0
-            if ev < min_ev:
+            if ev < c.parlay_min_ev:
                 continue
 
-            # 本金 < 1500 時禁止 4-串
-            if n == 4 and bankroll < 1500:
-                continue
-
-            b_net = p_odds - 1.0
+            b_net  = p_odds - 1.0
             full_k = (b_net * p_prob - (1 - p_prob)) / b_net if b_net > 0 else 0
-            frac = max(0.0, full_k * c.kelly_parlay)
+            frac   = max(0.0, full_k * c.kelly_parlay)
 
             parlays.append(Parlay(
                 legs=list(combo),
@@ -558,17 +562,9 @@ def build_parlays(picks: list[Pick], bankroll: float,
                 kelly_frac=frac,
             ))
 
-    # 每個 n 最多保留 EV 前 N 的組合，避免注碼過散
-    from collections import defaultdict
-    by_n: dict[int, list[Parlay]] = defaultdict(list)
-    for p in parlays:
-        by_n[len(p.legs)].append(p)
-    result = []
-    for n, group in by_n.items():
-        group.sort(key=lambda x: x.parlay_ev, reverse=True)
-        result.extend(group[:c.max_parlays_per_n])
-
-    return result
+    # 只保留 EV 最高的前 max_parlays_per_n 組
+    parlays.sort(key=lambda x: x.parlay_ev, reverse=True)
+    return parlays[:c.max_parlays_per_n]
 
 
 # ── 本金區間凱利係數調整 ──────────────────────────────────
