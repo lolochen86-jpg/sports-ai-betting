@@ -2,8 +2,8 @@ name: 運彩AI — 每日分析與報告
 
 on:
   schedule:
-    # UTC 01:00 = 台灣時間 09:00（每日早上分析）
-    - cron: '0 1 * * *'
+    # UTC 13:00 = 台灣時間 21:00（每日晚上分析）
+    - cron: '0 13 * * *'
   workflow_dispatch:
     inputs:
       report_date:
