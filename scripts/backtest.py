@@ -501,6 +501,49 @@ def generate_report(
     target_str = (f"約 {days_to_target:.0f} 個下注日（若維持現有勝率）"
                   if days_to_target != float('inf') and days_to_target > 0 else "已達標" if final_bankroll >= _TARGET else "N/A")
 
+    # ── 逐日逐注明細 ──────────────────────────────────────
+    result_icon = {"WIN": "✅", "LOSS": "❌", "VOID": "⬜"}
+    # 依日期分組
+    from collections import defaultdict
+    bets_by_date: dict[str, list] = defaultdict(list)
+    for r in bet_rows:
+        bets_by_date[str(r.get("date", ""))].append(r)
+
+    detail_sections = []
+    for d_str in sorted(bets_by_date.keys()):
+        day_bets = bets_by_date[d_str]
+        day_open  = float(day_bets[0].get("bankroll_before", 0))
+        day_close = float(day_bets[-1].get("bankroll_after", 0))
+        day_pnl   = day_close - day_open
+        day_wins  = sum(1 for r in day_bets if r.get("result") == "WIN")
+        day_icon  = "🟢" if day_pnl > 0 else ("🔴" if day_pnl < 0 else "⬜")
+
+        rows_md = "| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |\n"
+        rows_md += "|---|---|---|---|---|---|---|---|---|---|\n"
+        for i, r in enumerate(day_bets, 1):
+            icon  = result_icon.get(r.get("result", ""), "？")
+            sport = r.get("sport", "")
+            label = r.get("bet_label", "")
+            grade = r.get("grade", "")
+            odds  = float(r.get("odds", 0))
+            edge  = float(r.get("edge", 0))
+            amt   = float(r.get("bet_amount", 0))
+            pnl   = float(r.get("pnl", 0))
+            bk_after = float(r.get("bankroll_after", 0))
+            rows_md += (
+                f"| {i} | {sport} | {label} | {grade} | {odds:.2f} | {edge:.1%} "
+                f"| NT${amt:,.0f} | {icon} {r.get('result','')} "
+                f"| NT${pnl:+,.0f} | NT${bk_after:,.0f} |\n"
+            )
+
+        detail_sections.append(
+            f"#### {d_str}　{day_icon} {day_wins}/{len(day_bets)} 中　"
+            f"盈虧 NT${day_pnl:+,.0f}　本金 NT${day_open:,.0f} → NT${day_close:,.0f}\n\n"
+            f"{rows_md}"
+        )
+
+    detail_md = "\n".join(detail_sections) if detail_sections else "_（無下注記錄）_"
+
     md = f"""# 運彩AI分析師 — 回測結果報告
 
 **測試期間**：{start} → {end}
@@ -603,6 +646,12 @@ def generate_report(
 ## 各月份績效
 
 {month_table}
+
+---
+
+## 📒 逐日下注明細
+
+{detail_md}
 
 ---
 
