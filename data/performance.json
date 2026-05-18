@@ -1,10 +1,10 @@
 {
-  "total_bets": 0,
+  "total_bets": 1,
   "wins": 0,
   "losses": 0,
-  "total_wagered": 0.0,
+  "total_wagered": 100.0,
   "total_pnl": 0.0,
-  "single_bets": 0,
+  "single_bets": 1,
   "single_wins": 0,
   "parlay_bets": 0,
   "parlay_wins": 0,
@@ -14,7 +14,7 @@
       "wins": 0
     },
     "MLB": {
-      "bets": 0,
+      "bets": 1,
       "wins": 0
     }
   },
@@ -36,6 +36,12 @@
       "bets": 0,
       "wins": 0,
       "pnl": 0
+    },
+    {
+      "date": "2026-05-18",
+      "bets": 1,
+      "wins": 0,
+      "pnl": 0.0
     }
   ]
 }
