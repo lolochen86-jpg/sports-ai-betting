@@ -28,7 +28,7 @@ from utils import (
 
 logger = get_logger("analyze")
 
-# ── 模型參數（與規格書一致）──────────────────────────────
+# ── 模型參數預設值（穩健型）────────────────────────────
 _MIN_EDGE          = 0.04    # 最低 Edge 門檻
 _MIN_TRUE_PROB     = 0.52    # 最低估算勝率
 _MIN_ODDS          = 1.70    # 最低賠率（過低無串關價值）
@@ -44,6 +44,64 @@ _HARD_CAP_PCT      = 0.08    # 單注上限（本金 %）
 _INITIAL_BANKROLL  = 3000.0   # 起始本金
 _TARGET_BANKROLL   = 12000.0  # 停利目標（4倍）
 _RUIN_THRESHOLD    = 10.0     # 視為歸零門檻（NT$10 以下停止）
+
+
+# ── 策略設定檔 ────────────────────────────────────────────
+from dataclasses import dataclass as _dc
+
+@_dc
+class StrategyConfig:
+    """
+    下注策略設定檔。
+    傳入 analyze.run() 可切換不同風格。
+    """
+    name:              str   = "穩健型"
+    # Pick 篩選門檻
+    min_edge:          float = 0.04   # 最低 Edge（用於找候選 picks）
+    min_true_prob:     float = 0.52   # 最低估算勝率
+    min_odds:          float = 1.70   # 最低賠率
+    max_odds:          float = 3.50   # 最高賠率
+    single_min_edge:   float = 0.04   # 加入單關的最低 Edge（激進型設更高）
+    # 串關設定
+    parlay_min_ev:     float = 0.08   # 串關最低 EV
+    parlay_4_min_ev:   float = 0.10   # 4-串最低 EV
+    max_parlay_odds:   float = 15.0   # 串關最高賠率上限
+    max_parlays_per_n: int   = 3      # 每種 n-串最多組數
+    # 凱利係數
+    kelly_single_A:    float = 0.25   # A 級單關
+    kelly_single_B:    float = 0.20   # B 級單關
+    kelly_single_C:    float = 0.12   # C 級單關
+    kelly_parlay:      float = 0.15   # 串關
+    hard_cap_pct:      float = 0.08   # 單注上限（本金 %）
+    # 每日配置
+    max_singles:       int   = 4      # 每日最多單關數
+
+
+# 穩健型（原本行為不變）
+CONSERVATIVE = StrategyConfig(
+    name="穩健型",
+    min_edge=0.04,       min_true_prob=0.52,
+    min_odds=1.70,       max_odds=3.50,
+    single_min_edge=0.04,
+    parlay_min_ev=0.08,  parlay_4_min_ev=0.10,
+    max_parlay_odds=15.0, max_parlays_per_n=3,
+    kelly_single_A=0.25, kelly_single_B=0.20, kelly_single_C=0.12,
+    kelly_parlay=0.15,   hard_cap_pct=0.08,
+    max_singles=4,
+)
+
+# 激進型（高賠率串關為主）
+AGGRESSIVE = StrategyConfig(
+    name="激進型",
+    min_edge=0.03,       min_true_prob=0.50,   # 放寬篩選，取更多候選
+    min_odds=1.70,       max_odds=5.00,         # 接受更高賠率冷門
+    single_min_edge=0.08,                       # 單關需極高信心
+    parlay_min_ev=0.04,  parlay_4_min_ev=0.06, # 降低串關 EV 門檻
+    max_parlay_odds=30.0, max_parlays_per_n=5,  # 允許高賠率、更多串關組合
+    kelly_single_A=0.20, kelly_single_B=0.15, kelly_single_C=0.08,
+    kelly_parlay=0.22,   hard_cap_pct=0.10,    # 串關更積極，上限略高
+    max_singles=2,                              # 每日最多 2 場單關
+)
 
 
 def check_stop_condition(bankroll: float) -> tuple[bool, str]:
@@ -92,13 +150,22 @@ class Pick:
     breakdown:       ProbBreakdown = field(default_factory=ProbBreakdown)
     raw_data:        dict         = field(default_factory=dict)
 
-    def bet_amount(self, bankroll: float) -> float:
-        return kelly_bet_amount(bankroll, self.odds, self.true_prob,
-                                self._kelly_fraction_raw(), _HARD_CAP_PCT)
+    def bet_amount(self, bankroll: float,
+                  cfg: "StrategyConfig | None" = None) -> float:
+        coef = self._kelly_coef(cfg)
+        cap  = (cfg.hard_cap_pct if cfg else _HARD_CAP_PCT)
+        return kelly_bet_amount(bankroll, self.odds, self.true_prob, coef, cap)
 
     def _kelly_fraction_raw(self) -> float:
-        # grade 對應的凱利係數
+        # grade 對應的凱利係數（預設穩健型）
         return {"A": 0.25, "B": 0.20, "C": 0.12}.get(self.grade, _KELLY_SINGLE)
+
+    def _kelly_coef(self, cfg: "StrategyConfig | None" = None) -> float:
+        if cfg is None:
+            return self._kelly_fraction_raw()
+        return {"A": cfg.kelly_single_A,
+                "B": cfg.kelly_single_B,
+                "C": cfg.kelly_single_C}.get(self.grade, cfg.kelly_single_A)
 
     def data_card(self, bankroll: float) -> str:
         """產生報告用的數據卡文字。"""
@@ -150,9 +217,12 @@ class Parlay:
     parlay_ev:     float         # true_prob * parlay_odds - 1
     kelly_frac:    float
 
-    def bet_amount(self, bankroll: float) -> float:
-        raw = bankroll * self.kelly_frac
-        cap = bankroll * _HARD_CAP_PCT * len(self.legs)
+    def bet_amount(self, bankroll: float,
+                  cfg: "StrategyConfig | None" = None) -> float:
+        k   = self.kelly_frac
+        cap_pct = (cfg.hard_cap_pct if cfg else _HARD_CAP_PCT)
+        raw = bankroll * k
+        cap = bankroll * cap_pct * len(self.legs)
         raw = min(raw, cap)
         return max(10.0, round(raw / 10) * 10)
 
@@ -266,11 +336,13 @@ def mlb_win_probability(game: dict) -> tuple[float, ProbBreakdown]:
 
 
 # ── 單場分析主函式 ─────────────────────────────────────────
-def analyze_nba_game(game: dict) -> list[Pick]:
+def analyze_nba_game(game: dict,
+                     cfg: "StrategyConfig | None" = None) -> list[Pick]:
     """
     分析一場 NBA 賽事，回傳所有通過門檻的 Pick 列表。
     同一場最多產生 2 個 Pick（主隊/客隊各一，但通常只有一個過門檻）。
     """
+    c = cfg or CONSERVATIVE
     ok, missing = validate_nba_game(game)
     if not ok:
         logger.warning(f"NBA {game.get('away_team')}@{game.get('home_team')} 數據不足：{missing}")
@@ -300,14 +372,14 @@ def analyze_nba_game(game: dict) -> list[Pick]:
         ("away", away_win_prob, a_fair, a_edge, a_odds,
          f"{game['away_team']} 勝"),
     ]:
-        if edge_val < _MIN_EDGE:
+        if edge_val < c.min_edge:
             continue
-        if prob < _MIN_TRUE_PROB:
+        if prob < c.min_true_prob:
             continue
-        if odds < _MIN_ODDS or odds > _MAX_ODDS:
+        if odds < c.min_odds or odds > c.max_odds:
             continue
 
-        frac = _kelly_frac_for_edge(edge_val, prob, odds)
+        frac = _kelly_frac_for_edge(edge_val, prob, odds, c)
         grade = _grade(edge_val, game)
 
         # 客隊勝率對應的 breakdown 要翻轉
@@ -335,8 +407,10 @@ def analyze_nba_game(game: dict) -> list[Pick]:
     return picks
 
 
-def analyze_mlb_game(game: dict) -> list[Pick]:
+def analyze_mlb_game(game: dict,
+                     cfg: "StrategyConfig | None" = None) -> list[Pick]:
     """分析一場 MLB 賽事，回傳通過門檻的 Pick 列表。"""
+    c = cfg or CONSERVATIVE
     ok, missing = validate_mlb_game(game)
     if not ok:
         logger.warning(f"MLB {game.get('away_team')}@{game.get('home_team')} 數據不足：{missing}")
@@ -366,14 +440,14 @@ def analyze_mlb_game(game: dict) -> list[Pick]:
         ("away", away_win_prob, a_fair, a_edge, a_odds,
          f"{game['away_team']} 勝"),
     ]:
-        if edge_val < _MIN_EDGE:
+        if edge_val < c.min_edge:
             continue
-        if prob < _MIN_TRUE_PROB:
+        if prob < c.min_true_prob:
             continue
-        if odds < _MIN_ODDS or odds > _MAX_ODDS:
+        if odds < c.min_odds or odds > c.max_odds:
             continue
 
-        frac = _kelly_frac_for_edge(edge_val, prob, odds)
+        frac = _kelly_frac_for_edge(edge_val, prob, odds, c)
         grade = _grade(edge_val, game)
 
         if side == "away":
@@ -401,9 +475,11 @@ def analyze_mlb_game(game: dict) -> list[Pick]:
 
 
 # ── 輔助：凱利比例 & 信心等級 ────────────────────────────
-def _kelly_frac_for_edge(edge_val: float, true_prob: float, odds: float) -> float:
+def _kelly_frac_for_edge(edge_val: float, true_prob: float, odds: float,
+                         cfg: "StrategyConfig | None" = None) -> float:
+    c = cfg or CONSERVATIVE
     grade = "A" if edge_val >= 0.07 else ("B" if edge_val >= 0.04 else "C")
-    coef  = {"A": 0.25, "B": 0.20, "C": 0.12}[grade]
+    coef  = {"A": c.kelly_single_A, "B": c.kelly_single_B, "C": c.kelly_single_C}[grade]
     return kelly_fraction(odds, true_prob, coef)
 
 
@@ -421,17 +497,19 @@ def _grade(edge_val: float, game: dict) -> str:
 
 
 # ── 串關組合生成 ───────────────────────────────────────────
-def build_parlays(picks: list[Pick], bankroll: float) -> list[Parlay]:
+def build_parlays(picks: list[Pick], bankroll: float,
+                  cfg: "StrategyConfig | None" = None) -> list[Parlay]:
     """
     從候選 Pick 中生成所有符合 EV 門檻的串關組合（2〜4 串）。
     同一場比賽不能出現兩次。
     """
+    c = cfg or CONSERVATIVE
     parlays = []
 
     for n in range(2, 5):
         if len(picks) < n:
             continue
-        min_ev = _PARLAY_4_MIN_EV if n == 4 else _PARLAY_MIN_EV
+        min_ev = c.parlay_4_min_ev if n == 4 else c.parlay_min_ev
 
         for combo in combinations(picks, n):
             # 同一場不能重複
@@ -445,7 +523,7 @@ def build_parlays(picks: list[Pick], bankroll: float) -> list[Parlay]:
                 p_odds *= p.odds
                 p_prob *= p.true_prob
 
-            if p_odds > _MAX_PARLAY_ODDS:
+            if p_odds > c.max_parlay_odds:
                 continue
 
             ev = p_prob * p_odds - 1.0
@@ -458,7 +536,7 @@ def build_parlays(picks: list[Pick], bankroll: float) -> list[Parlay]:
 
             b_net = p_odds - 1.0
             full_k = (b_net * p_prob - (1 - p_prob)) / b_net if b_net > 0 else 0
-            frac = max(0.0, full_k * _KELLY_PARLAY)
+            frac = max(0.0, full_k * c.kelly_parlay)
 
             parlays.append(Parlay(
                 legs=list(combo),
@@ -468,7 +546,7 @@ def build_parlays(picks: list[Pick], bankroll: float) -> list[Parlay]:
                 kelly_frac=frac,
             ))
 
-    # 每個 n 最多保留 EV 前 3 的組合，避免注碼過散
+    # 每個 n 最多保留 EV 前 N 的組合，避免注碼過散
     from collections import defaultdict
     by_n: dict[int, list[Parlay]] = defaultdict(list)
     for p in parlays:
@@ -476,7 +554,7 @@ def build_parlays(picks: list[Pick], bankroll: float) -> list[Parlay]:
     result = []
     for n, group in by_n.items():
         group.sort(key=lambda x: x.parlay_ev, reverse=True)
-        result.extend(group[:3])
+        result.extend(group[:c.max_parlays_per_n])
 
     return result
 
@@ -521,11 +599,14 @@ class DailyPlan:
         return lines
 
 
-def make_daily_plan(picks: list[Pick], bankroll: float, game_date: str) -> DailyPlan:
+def make_daily_plan(picks: list[Pick], bankroll: float, game_date: str,
+                    cfg: "StrategyConfig | None" = None) -> DailyPlan:
     """
-    依規格書分配每日注碼：
-      15~20% 單關、40~50% 2/3-串、20~30% 4-串、10% 保留。
+    依策略設定分配每日注碼。
+    穩健型：平衡單關與串關。
+    激進型：少量高信心單關 + 大量高賠率串關。
     """
+    c = cfg or CONSERVATIVE
     km = bankroll_kelly_multiplier(bankroll)
     if km == 0.0:
         logger.warning(f"本金 NT${bankroll:.0f} 低於危險線，今日停止下注")
@@ -534,23 +615,30 @@ def make_daily_plan(picks: list[Pick], bankroll: float, game_date: str) -> Daily
     available = bankroll * 0.90   # 保留 10%
     reserved  = bankroll * 0.10
 
+    # 候選 picks 依策略篩選單關門檻
+    all_sorted = sorted(picks, key=lambda x: x.edge, reverse=True)
+
     # 低本金時只下單關
     if bankroll < 1000:
-        picks_limited = sorted(picks, key=lambda x: x.edge, reverse=True)[:2]
+        picks_limited = all_sorted[:2]
         parlays_list  = []
     else:
-        picks_limited = sorted(picks, key=lambda x: x.edge, reverse=True)[:4]
-        parlays_list  = build_parlays(picks_limited, bankroll)
+        # 激進型：單關需高信心，其餘都用來組串關
+        single_candidates = [p for p in all_sorted if p.edge >= c.single_min_edge]
+        picks_limited     = single_candidates[:c.max_singles]
+        # 串關候選：所有 picks（包含 edge < single_min_edge 的也可組串）
+        parlay_candidates = all_sorted[:8]
+        parlays_list      = build_parlays(parlay_candidates, bankroll, c)
 
-    # 計算各注碼（套 bankroll_kelly_multiplier）
+    # 計算各注碼
     total = 0.0
     for p in picks_limited:
         amt = kelly_bet_amount(bankroll, p.odds, p.true_prob,
-                               p._kelly_fraction_raw() * km, _HARD_CAP_PCT)
+                               p._kelly_coef(c) * km, c.hard_cap_pct)
         total += amt
 
     for par in parlays_list:
-        amt = par.bet_amount(bankroll)
+        amt = par.bet_amount(bankroll, c)
         total += amt * km
 
     # 若超出可用資金，等比縮減
@@ -574,30 +662,33 @@ def make_daily_plan(picks: list[Pick], bankroll: float, game_date: str) -> Daily
 
 # ── 主流程 ────────────────────────────────────────────────
 def run(nba_games: list, mlb_games: list, bankroll: float,
-        game_date: str) -> DailyPlan:
+        game_date: str,
+        cfg: "StrategyConfig | None" = None) -> DailyPlan:
     """
     執行當日完整分析，回傳 DailyPlan。
     nba_games / mlb_games 已附加賠率欄位。
+    cfg: 策略設定，預設為 CONSERVATIVE（穩健型）
     """
-    logger.info(f"===== 分析引擎：{game_date}，本金 NT${bankroll:,.0f} =====")
+    c = cfg or CONSERVATIVE
+    logger.info(f"===== 分析引擎[{c.name}]：{game_date}，本金 NT${bankroll:,.0f} =====")
     all_picks: list[Pick] = []
 
     for game in nba_games:
-        picks = analyze_nba_game(game)
+        picks = analyze_nba_game(game, c)
         all_picks.extend(picks)
         if picks:
             for p in picks:
                 logger.info(f"  ✓ NBA {p.bet_label} Edge={p.edge:+.1%} [{p.grade}]")
 
     for game in mlb_games:
-        picks = analyze_mlb_game(game)
+        picks = analyze_mlb_game(game, c)
         all_picks.extend(picks)
         if picks:
             for p in picks:
                 logger.info(f"  ✓ MLB {p.bet_label} Edge={p.edge:+.1%} [{p.grade}]")
 
-    logger.info(f"  候選 Pick：{len(all_picks)} 個（Edge≥{_MIN_EDGE:.0%}）")
-    plan = make_daily_plan(all_picks, bankroll, game_date)
+    logger.info(f"  候選 Pick：{len(all_picks)} 個（Edge≥{c.min_edge:.0%}）")
+    plan = make_daily_plan(all_picks, bankroll, game_date, c)
 
     for line in plan.summary_lines():
         logger.info(line)

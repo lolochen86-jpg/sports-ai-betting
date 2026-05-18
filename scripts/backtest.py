@@ -26,7 +26,10 @@ from utils import (
     BACKTEST_DIR, get_logger, save_json, load_json, json_exists,
     parse_date, date_range, today_tw, NBA_DIR, MLB_DIR, ODDS_DIR
 )
-from analyze import DailyPlan, Pick, Parlay, run as analyze_run
+from analyze import (
+    DailyPlan, Pick, Parlay, run as analyze_run,
+    CONSERVATIVE, AGGRESSIVE, StrategyConfig,
+)
 
 logger = get_logger("backtest")
 
@@ -236,6 +239,7 @@ def run_one_day(
     bankroll: float,
     bet_log_writer,
     daily_writer,
+    cfg=None,
 ) -> tuple[float, str]:
     """
     執行單日回測流程。
@@ -267,7 +271,7 @@ def run_one_day(
     mlb_games = _inject_synthetic_odds(mlb_games, "MLB")
 
     # 2. 分析引擎
-    plan: DailyPlan = analyze_run(nba_games, mlb_games, bankroll, d.isoformat())
+    plan: DailyPlan = analyze_run(nba_games, mlb_games, bankroll, d.isoformat(), cfg)
 
     if not plan.single_picks and not plan.parlays:
         logger.info(f"  {d}：無符合門檻的選場，跳過")
@@ -360,46 +364,67 @@ def run_one_day(
 
 
 # ── 彙整報告 ──────────────────────────────────────────────
-def generate_report(
-    start: date, end: date, end_reason: str,
-    init_bankroll: float, final_bankroll: float,
-    bet_log_path: Path, daily_path: Path,
-) -> str:
-    """讀取 CSV 產生 Markdown 摘要報告。"""
-    import csv
+def _load_strategy_stats(res: dict, init_bankroll: float) -> dict:
+    """從單策略結果 dict 讀取 CSV，計算所有統計數字，回傳 stats dict。"""
+    import csv as _csv
+    bet_log_path = res["bet_log_path"]
+    daily_path   = res["daily_path"]
+    final_bankroll = res["final_bankroll"]
+    end_date     = res["end_date"]
+    end_reason   = res["end_reason"]
+    start_date   = end_date   # will be overridden below
 
-    # 讀取 daily_summary
     daily_rows = []
-    with open(daily_path, newline="", encoding="utf-8") as f:
-        daily_rows = list(csv.DictReader(f))
+    if Path(daily_path).exists():
+        with open(daily_path, newline="", encoding="utf-8") as f:
+            daily_rows = list(_csv.DictReader(f))
 
-    total_days   = (end - start).days + 1
-    bet_days     = sum(1 for r in daily_rows if int(r.get("bets_count", 0)) > 0)
-    total_pnl    = sum(float(r.get("total_pnl", 0)) for r in daily_rows)
-    total_bet    = sum(float(r.get("total_bet", 0)) for r in daily_rows)
-    roi          = total_pnl / total_bet * 100 if total_bet > 0 else 0
-
-    # 讀取 bet_log
     bet_rows = []
-    with open(bet_log_path, newline="", encoding="utf-8") as f:
-        bet_rows = list(csv.DictReader(f))
+    if Path(bet_log_path).exists():
+        with open(bet_log_path, newline="", encoding="utf-8") as f:
+            bet_rows = list(_csv.DictReader(f))
 
-    singles  = [r for r in bet_rows if r.get("bet_type") == "single"]
-    parlays  = [r for r in bet_rows if "parlay" in r.get("bet_type", "")]
-    s_wins   = sum(1 for r in singles if r["result"] == "WIN")
-    p_wins   = sum(1 for r in parlays if r["result"] == "WIN")
-    s_total  = len(singles)
-    p_total  = len(parlays)
+    if daily_rows:
+        start_date = min(r["date"] for r in daily_rows)
 
-    # 本金高點 & 最大回撤
-    peak = init_bankroll
-    max_dd = 0.0
+    total_days  = len(daily_rows)
+    bet_days    = sum(1 for r in daily_rows if int(r.get("bets_count", 0)) > 0)
+    total_pnl   = sum(float(r.get("total_pnl", 0)) for r in daily_rows)
+    total_bet   = sum(float(r.get("total_bet", 0)) for r in daily_rows)
+    roi         = total_pnl / total_bet * 100 if total_bet > 0 else 0
+
+    singles = [r for r in bet_rows if r.get("bet_type") == "single"]
+    parlays = [r for r in bet_rows if "parlay" in r.get("bet_type", "")]
+    s_wins  = sum(1 for r in singles if r["result"] == "WIN")
+    p_wins  = sum(1 for r in parlays if r["result"] == "WIN")
+
+    peak = init_bankroll; max_dd = 0.0
     for r in daily_rows:
         c = float(r.get("bankroll_close", init_bankroll))
-        if c > peak:
-            peak = c
+        if c > peak: peak = c
         dd = (peak - c) / peak * 100
         max_dd = max(max_dd, dd)
+
+    max_streak_win = max_streak_loss = cur = 0
+    prev = None
+    for r in bet_rows:
+        res2 = r.get("result")
+        if res2 == "VOID": cur = 0; prev = None; continue
+        cur = cur + 1 if res2 == prev else 1; prev = res2
+        if res2 == "WIN": max_streak_win = max(max_streak_win, cur)
+        else: max_streak_loss = max(max_streak_loss, cur)
+
+    amounts   = [float(r.get("bet_amount", 0)) for r in bet_rows if float(r.get("bet_amount", 0)) > 0]
+    odds_vals = [float(r.get("odds", 0)) for r in singles if float(r.get("odds", 0)) > 0]
+    won_rows  = [r for r in bet_rows if r.get("result") == "WIN"]
+    lost_rows = [r for r in bet_rows if r.get("result") == "LOSS"]
+    best_bet  = max(won_rows,  key=lambda r: float(r.get("pnl", 0)), default=None)
+    worst_bet = max(lost_rows, key=lambda r: abs(float(r.get("pnl", 0))), default=None)
+
+    # 球種
+    nba_bets = [r for r in bet_rows if r.get("sport") == "NBA"]
+    mlb_bets = [r for r in bet_rows if r.get("sport") == "MLB"]
+    par_bets  = [r for r in bet_rows if r.get("sport") == "PARLAY"]
 
     end_reason_text = {
         "RUIN":    "本金歸零（破產）",
@@ -408,282 +433,213 @@ def generate_report(
         "ERROR":   "執行中發生錯誤（部分結果）",
     }.get(end_reason, end_reason)
 
-    # 月份分拆
-    monthly: dict[str, dict] = {}
-    for r in daily_rows:
-        month = str(r["date"])[:7]
-        if month not in monthly:
-            monthly[month] = {"bets": 0, "wins": 0, "pnl": 0.0, "close": 0.0}
-        monthly[month]["bets"] += int(r.get("bets_count", 0))
-        monthly[month]["wins"] += int(r.get("wins", 0))
-        monthly[month]["pnl"]  += float(r.get("total_pnl", 0))
-        monthly[month]["close"] = float(r.get("bankroll_close", 0))
-
-    month_table = "| 月份 | 下注場次 | 命中 | 月盈虧 | 月末本金 |\n|---|---|---|---|---|\n"
-    for m, mv in sorted(monthly.items()):
-        hit_rate = mv["wins"] / mv["bets"] * 100 if mv["bets"] > 0 else 0
-        month_table += (
-            f"| {m} | {mv['bets']} | {mv['wins']}（{hit_rate:.0f}%）"
-            f"| NT${mv['pnl']:+,.0f} | NT${mv['close']:,.0f} |\n"
-        )
-
-    s_rate = f"{s_wins/s_total*100:.1f}%" if s_total else "N/A"
-    p_rate = f"{p_wins/p_total*100:.1f}%" if p_total else "N/A"
-
-    # ── 策略分析計算 ──────────────────────────────────────
-    # Edge 分布
-    edges = [float(r.get("edge", 0)) for r in bet_rows if r.get("edge")]
-    avg_edge = sum(edges) / len(edges) if edges else 0
-    edge_A = [r for r in bet_rows if r.get("grade") == "A"]
-    edge_B = [r for r in bet_rows if r.get("grade") == "B"]
-    edge_C = [r for r in bet_rows if r.get("grade") == "C"]
-    edge_A_wr = sum(1 for r in edge_A if r["result"]=="WIN") / len(edge_A) * 100 if edge_A else 0
-    edge_B_wr = sum(1 for r in edge_B if r["result"]=="WIN") / len(edge_B) * 100 if edge_B else 0
-    edge_C_wr = sum(1 for r in edge_C if r["result"]=="WIN") / len(edge_C) * 100 if edge_C else 0
-    edge_A_pnl = sum(float(r.get("pnl",0)) for r in edge_A)
-    edge_B_pnl = sum(float(r.get("pnl",0)) for r in edge_B)
-    edge_C_pnl = sum(float(r.get("pnl",0)) for r in edge_C)
-
-    # 球種分析
-    nba_bets = [r for r in bet_rows if r.get("sport") == "NBA"]
-    mlb_bets = [r for r in bet_rows if r.get("sport") == "MLB"]
-    par_bets  = [r for r in bet_rows if r.get("sport") == "PARLAY"]
-    nba_wr = sum(1 for r in nba_bets if r["result"]=="WIN") / len(nba_bets) * 100 if nba_bets else 0
-    mlb_wr = sum(1 for r in mlb_bets if r["result"]=="WIN") / len(mlb_bets) * 100 if mlb_bets else 0
-    par_wr = sum(1 for r in par_bets if r["result"]=="WIN") / len(par_bets) * 100 if par_bets else 0
-    nba_pnl = sum(float(r.get("pnl",0)) for r in nba_bets)
-    mlb_pnl = sum(float(r.get("pnl",0)) for r in mlb_bets)
-    par_pnl = sum(float(r.get("pnl",0)) for r in par_bets)
-
-    # 注碼分析
-    amounts = [float(r.get("bet_amount", 0)) for r in bet_rows if float(r.get("bet_amount",0)) > 0]
-    avg_bet = sum(amounts) / len(amounts) if amounts else 0
-    max_bet = max(amounts) if amounts else 0
-    min_bet = min(amounts) if amounts else 0
-
-    # 最佳 / 最差單注
-    won_rows  = [r for r in bet_rows if r.get("result") == "WIN"]
-    lost_rows = [r for r in bet_rows if r.get("result") == "LOSS"]
-    best_bet  = max(won_rows,  key=lambda r: float(r.get("pnl", 0)), default=None)
-    worst_bet = max(lost_rows, key=lambda r: abs(float(r.get("pnl", 0))), default=None)
-
-    best_str  = (f"{best_bet['bet_label']} @{float(best_bet['odds']):.2f} → +NT${float(best_bet['pnl']):,.0f}"
-                 if best_bet else "N/A")
-    worst_str = (f"{worst_bet['bet_label']} @{float(worst_bet['odds']):.2f} → -NT${abs(float(worst_bet['pnl'])):,.0f}"
-                 if worst_bet else "N/A")
-
-    # 連勝 / 連敗最長
-    max_streak_win = max_streak_loss = cur = 0
-    prev = None
-    for r in bet_rows:
-        res = r.get("result")
-        if res == "VOID":
-            cur = 0; prev = None; continue
-        if res == prev:
-            cur += 1
-        else:
-            cur = 1; prev = res
-        if res == "WIN":
-            max_streak_win  = max(max_streak_win, cur)
-        else:
-            max_streak_loss = max(max_streak_loss, cur)
-
-    # 賠率分布
-    odds_vals = [float(r.get("odds", 0)) for r in singles if float(r.get("odds",0)) > 0]
-    avg_odds = sum(odds_vals) / len(odds_vals) if odds_vals else 0
-
-    # 下注頻率
-    bet_freq = bet_days / total_days * 100 if total_days > 0 else 0
-
-    # 預期達標天數（線性推估）
     daily_growth = (final_bankroll - init_bankroll) / bet_days if bet_days > 0 else 0
-    days_to_target = (_TARGET - final_bankroll) / daily_growth if daily_growth > 0 else float('inf')
-    target_str = (f"約 {days_to_target:.0f} 個下注日（若維持現有勝率）"
-                  if days_to_target != float('inf') and days_to_target > 0 else "已達標" if final_bankroll >= _TARGET else "N/A")
+    days_to_target = (_TARGET - final_bankroll) / daily_growth if daily_growth > 0 else float("inf")
 
-    # ── 逐日逐注明細 ──────────────────────────────────────
+    # 逐日明細（依日期分組）
+    from collections import defaultdict as _dd
     result_icon = {"WIN": "✅", "LOSS": "❌", "VOID": "⬜"}
-    # 依日期分組
-    from collections import defaultdict
-    bets_by_date: dict[str, list] = defaultdict(list)
+    bets_by_date: dict = _dd(list)
     for r in bet_rows:
         bets_by_date[str(r.get("date", ""))].append(r)
 
     detail_sections = []
     for d_str in sorted(bets_by_date.keys()):
-        day_bets = bets_by_date[d_str]
+        day_bets  = bets_by_date[d_str]
         day_open  = float(day_bets[0].get("bankroll_before", 0))
         day_close = float(day_bets[-1].get("bankroll_after", 0))
         day_pnl   = day_close - day_open
         day_wins  = sum(1 for r in day_bets if r.get("result") == "WIN")
         day_icon  = "🟢" if day_pnl > 0 else ("🔴" if day_pnl < 0 else "⬜")
-
-        rows_md = "| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |\n"
-        rows_md += "|---|---|---|---|---|---|---|---|---|---|\n"
+        rows_md   = "| # | 球種 | 下注隊伍 | 等級 | 賠率 | Edge | 注碼 | 結果 | 盈虧 | 本金 |\n"
+        rows_md  += "|---|---|---|---|---|---|---|---|---|---|\n"
         for i, r in enumerate(day_bets, 1):
             icon  = result_icon.get(r.get("result", ""), "？")
-            sport = r.get("sport", "")
-            label = r.get("bet_label", "")
-            grade = r.get("grade", "")
-            odds  = float(r.get("odds", 0))
-            edge  = float(r.get("edge", 0))
-            amt   = float(r.get("bet_amount", 0))
-            pnl   = float(r.get("pnl", 0))
-            bk_after = float(r.get("bankroll_after", 0))
             rows_md += (
-                f"| {i} | {sport} | {label} | {grade} | {odds:.2f} | {edge:.1%} "
-                f"| NT${amt:,.0f} | {icon} {r.get('result','')} "
-                f"| NT${pnl:+,.0f} | NT${bk_after:,.0f} |\n"
+                f"| {i} | {r.get('sport','')} | {r.get('bet_label','')} "
+                f"| {r.get('grade','')} | {float(r.get('odds',0)):.2f} "
+                f"| {float(r.get('edge',0)):.1%} | NT${float(r.get('bet_amount',0)):,.0f} "
+                f"| {icon} {r.get('result','')} "
+                f"| NT${float(r.get('pnl',0)):+,.0f} | NT${float(r.get('bankroll_after',0)):,.0f} |\n"
             )
-
         detail_sections.append(
-            f"#### {d_str}　{day_icon} {day_wins}/{len(day_bets)} 中　"
-            f"盈虧 NT${day_pnl:+,.0f}　本金 NT${day_open:,.0f} → NT${day_close:,.0f}\n\n"
+            f"##### {d_str}　{day_icon} {day_wins}/{len(day_bets)} 中"
+            f"　盈虧 NT${day_pnl:+,.0f}　本金 NT${day_open:,.0f} → NT${day_close:,.0f}\n\n"
             f"{rows_md}"
         )
 
-    detail_md = "\n".join(detail_sections) if detail_sections else "_（無下注記錄）_"
+    return {
+        "cfg": res.get("cfg"),
+        "final_bankroll": final_bankroll, "end_reason_text": end_reason_text,
+        "end_date": end_date, "start_date": start_date,
+        "total_days": total_days, "bet_days": bet_days,
+        "total_pnl": total_pnl, "total_bet": total_bet, "roi": roi,
+        "peak": peak, "max_dd": max_dd,
+        "s_wins": s_wins, "s_total": len(singles),
+        "p_wins": p_wins, "p_total": len(parlays),
+        "max_streak_win": max_streak_win, "max_streak_loss": max_streak_loss,
+        "amounts": amounts, "odds_vals": odds_vals,
+        "nba_bets": nba_bets, "mlb_bets": mlb_bets, "par_bets": par_bets,
+        "best_bet": best_bet, "worst_bet": worst_bet,
+        "daily_growth": daily_growth, "days_to_target": days_to_target,
+        "detail_md": "\n".join(detail_sections) or "_（無下注記錄）_",
+        "daily_rows": daily_rows,
+    }
 
-    md = f"""# 運彩AI分析師 — 回測結果報告
 
-**測試期間**：{start} → {end}
-**起始本金**：NT${init_bankroll:,.0f}
-**最終本金**：NT${final_bankroll:,.0f}
-**結束原因**：{end_reason_text}
-**總天數**：{total_days} 天（有下注 {bet_days} 天）
+def generate_report(
+    start: date,
+    init_bankroll: float,
+    res_c: dict,   # 穩健型結果
+    res_a: dict,   # 激進型結果
+) -> str:
+    """讀取雙策略 CSV，產生對比 Markdown 報告。"""
+    c = _load_strategy_stats(res_c, init_bankroll)
+    a = _load_strategy_stats(res_a, init_bankroll)
+
+    def _sr(wins, total):
+        return f"{wins/total*100:.1f}%" if total else "N/A"
+
+    def _wr(bets):
+        w = sum(1 for r in bets if r.get("result") == "WIN")
+        return f"{w/len(bets)*100:.1f}%" if bets else "N/A"
+
+    def _pnl(bets):
+        return sum(float(r.get("pnl", 0)) for r in bets)
+
+    def _best(st):
+        b = st["best_bet"]
+        return f"{b['bet_label']} @{float(b['odds']):.2f} → +NT${float(b['pnl']):,.0f}" if b else "N/A"
+
+    def _worst(st):
+        w = st["worst_bet"]
+        return f"{w['bet_label']} @{float(w['odds']):.2f} → -NT${abs(float(w['pnl'])):,.0f}" if w else "N/A"
+
+    def _target_str(st):
+        dtt = st["days_to_target"]
+        fb  = st["final_bankroll"]
+        if fb >= _TARGET: return "✅ 已達標"
+        if dtt == float("inf") or dtt <= 0: return "N/A"
+        return f"約 {dtt:.0f} 個下注日"
+
+    c_avg_bet = sum(c["amounts"]) / len(c["amounts"]) if c["amounts"] else 0
+    a_avg_bet = sum(a["amounts"]) / len(a["amounts"]) if a["amounts"] else 0
+    c_avg_odds = sum(c["odds_vals"]) / len(c["odds_vals"]) if c["odds_vals"] else 0
+    a_avg_odds = sum(a["odds_vals"]) / len(a["odds_vals"]) if a["odds_vals"] else 0
+
+    c_bet_freq = c["bet_days"] / c["total_days"] * 100 if c["total_days"] else 0
+    a_bet_freq = a["bet_days"] / a["total_days"] * 100 if a["total_days"] else 0
+
+    winner = "穩健型" if c["final_bankroll"] >= a["final_bankroll"] else "激進型"
+    winner_emoji = "🏆"
+
+    md = f"""# 運彩AI分析師 — 雙策略回測對比報告
+
+**測試期間**：{start} 起
+**起始本金**：NT${init_bankroll:,.0f}（兩策略各自獨立）
+**停利目標**：NT${_TARGET:,.0f}（{_TARGET/init_bankroll:.0f}倍）｜**停損**：本金歸零
 
 ---
 
-## 整體績效
+## 🥊 策略對決總覽
 
-| 指標 | 數值 |
-|---|---|
-| 起始本金 | NT${init_bankroll:,.0f} |
-| 最終本金 | NT${final_bankroll:,.0f} |
-| 總損益 | NT${total_pnl:+,.0f} |
-| 總投入金額 | NT${total_bet:,.0f} |
-| ROI | {roi:+.1f}% |
-| 本金高點 | NT${peak:,.0f} |
-| 最大回撤 | -{max_dd:.1f}% |
-| 單關命中率 | {s_wins}/{s_total} = {s_rate} |
-| 串關命中率 | {p_wins}/{p_total} = {p_rate} |
-
----
-
-## 📋 下注策略分析
-
-### 一、信心等級分析（A / B / C）
-
-| 等級 | 條件 | 注數 | 命中率 | 盈虧 |
-|---|---|---|---|---|
-| A 級 | Edge ≥ 7%，數據完整 | {len(edge_A)} | {edge_A_wr:.1f}% | NT${edge_A_pnl:+,.0f} |
-| B 級 | Edge ≥ 4%，數據完整 | {len(edge_B)} | {edge_B_wr:.1f}% | NT${edge_B_pnl:+,.0f} |
-| C 級 | Edge ≥ 4%，數據不完整 | {len(edge_C)} | {edge_C_wr:.1f}% | NT${edge_C_pnl:+,.0f} |
-
-> 平均 Edge：{avg_edge:.1%}｜建議：集中 A 級下注，C 級注碼應壓最低
-
----
-
-### 二、球種分析
-
-| 球種 | 注數 | 命中率 | 盈虧 | 評估 |
-|---|---|---|---|---|
-| NBA 單關 | {len(nba_bets)} | {nba_wr:.1f}% | NT${nba_pnl:+,.0f} | {'✅ 優勢球種' if nba_pnl > 0 else '⚠️ 待觀察'} |
-| MLB 單關 | {len(mlb_bets)} | {mlb_wr:.1f}% | NT${mlb_pnl:+,.0f} | {'✅ 優勢球種' if mlb_pnl > 0 else '⚠️ 待觀察'} |
-| 串關 | {len(par_bets)} | {par_wr:.1f}% | NT${par_pnl:+,.0f} | {'✅ 穩定貢獻' if par_pnl > 0 else '⚠️ 待觀察'} |
-
----
-
-### 三、注碼管理分析（凱利策略）
-
-| 指標 | 數值 |
-|---|---|
-| 平均單注 | NT${avg_bet:,.0f} |
-| 最高單注 | NT${max_bet:,.0f} |
-| 最低單注 | NT${min_bet:,.0f} |
-| 平均賠率 | {avg_odds:.2f} |
-| 下注天數佔比 | {bet_freq:.0f}%（{bet_days}/{total_days} 天） |
-
-> **策略說明**：使用 **1/4 分數凱利**，A 級 25%、B 級 20%、C 級 12% 凱利係數，
-> 單注上限 8% 本金，保留 10% 不動本金作緩衝。
-
----
-
-### 四、風險評估
-
-| 指標 | 數值 | 評等 |
+| 指標 | 🛡️ 穩健型 | ⚡ 激進型 |
 |---|---|---|
-| 最大回撤 | -{max_dd:.1f}% | {'🟢 極低' if max_dd < 10 else '🟡 中等' if max_dd < 25 else '🔴 偏高'} |
-| 最長連勝 | {max_streak_win} 注 | — |
-| 最長連敗 | {max_streak_loss} 注 | {'🟢 可接受' if max_streak_loss <= 3 else '🟡 注意' if max_streak_loss <= 5 else '🔴 風險偏高'} |
-| 最佳單注 | {best_str} | — |
-| 最差單注 | {worst_str} | — |
+| 最終本金 | **NT${c['final_bankroll']:,.0f}** | **NT${a['final_bankroll']:,.0f}** |
+| 結束原因 | {c['end_reason_text']} | {a['end_reason_text']} |
+| 總損益 | NT${c['total_pnl']:+,.0f} | NT${a['total_pnl']:+,.0f} |
+| ROI | {c['roi']:+.1f}% | {a['roi']:+.1f}% |
+| 本金高點 | NT${c['peak']:,.0f} | NT${a['peak']:,.0f} |
+| 最大回撤 | -{c['max_dd']:.1f}% | -{a['max_dd']:.1f}% |
+| 下注天數 | {c['bet_days']}/{c['total_days']} 天 | {a['bet_days']}/{a['total_days']} 天 |
+| 單關命中率 | {_sr(c['s_wins'], c['s_total'])} | {_sr(a['s_wins'], a['s_total'])} |
+| 串關命中率 | {_sr(c['p_wins'], c['p_total'])} | {_sr(a['p_wins'], a['p_total'])} |
+| 平均單注 | NT${c_avg_bet:,.0f} | NT${a_avg_bet:,.0f} |
+| 平均賠率 | {c_avg_odds:.2f} | {a_avg_odds:.2f} |
+| 預估達標 | {_target_str(c)} | {_target_str(a)} |
+| **勝出** | {'**{winner_emoji} 勝**' if winner == '穩健型' else ''} | {'**{winner_emoji} 勝**' if winner == '激進型' else ''} |
 
 ---
 
-### 五、目標進度
+## 🛡️ 穩健型策略詳情
 
-| 項目 | 數值 |
+> **策略**：Edge ≥ 4% 單關、串關 EV ≥ 8%，凱利 A/25% B/20% C/12%，每日最多 4 場單關
+
+### 整體績效
+
+| 指標 | 數值 |
 |---|---|
-| 停利目標 | NT${_TARGET:,.0f} |
-| 目前本金 | NT${final_bankroll:,.0f} |
-| 距目標還差 | NT${max(0, _TARGET - final_bankroll):,.0f}（{max(0, _TARGET - final_bankroll) / _TARGET * 100:.1f}%） |
-| 預估達標 | {target_str} |
-| 每日平均獲利 | NT${daily_growth:+,.0f} |
+| 最終本金 | NT${c['final_bankroll']:,.0f} |
+| 總損益 | NT${c['total_pnl']:+,.0f}（ROI {c['roi']:+.1f}%） |
+| 最大回撤 | -{c['max_dd']:.1f}% |
+| 最長連勝/連敗 | {c['max_streak_win']} 勝 / {c['max_streak_loss']} 敗 |
+| 最佳單注 | {_best(c)} |
+| 最差單注 | {_worst(c)} |
+
+### 球種分析
+
+| 球種 | 注數 | 命中率 | 盈虧 |
+|---|---|---|---|
+| NBA 單關 | {len(c['nba_bets'])} | {_wr(c['nba_bets'])} | NT${_pnl(c['nba_bets']):+,.0f} |
+| MLB 單關 | {len(c['mlb_bets'])} | {_wr(c['mlb_bets'])} | NT${_pnl(c['mlb_bets']):+,.0f} |
+| 串關 | {len(c['par_bets'])} | {_wr(c['par_bets'])} | NT${_pnl(c['par_bets']):+,.0f} |
+
+### 📒 逐日下注明細
+
+{c['detail_md']}
 
 ---
 
-### 六、策略建議
+## ⚡ 激進型策略詳情
 
-{"✅ **勝率極高，策略有效**：單關 " + s_rate + "、串關 " + p_rate + "，建議維持現有策略。" if (s_wins/s_total if s_total else 0) > 0.6 else "⚠️ **勝率偏低**：建議提高 Edge 門檻至 6% 以上，減少 C 級下注。"}
+> **策略**：串關為主（EV ≥ 4%，賠率上限 30），單關需 Edge ≥ 8%，每日最多 5 組串關，最多 2 場單關
 
-{"✅ **回撤控制良好**：最大回撤僅 " + f"{max_dd:.1f}%" + "，資金管理穩健。" if max_dd < 15 else "⚠️ **回撤偏大**：建議降低凱利係數或增加保留比例。"}
+### 整體績效
 
-{"⚠️ **下注頻率偏低**：僅 " + f"{bet_freq:.0f}%" + " 天有下注，可考慮放寬 Edge 門檻至 3.5%。" if bet_freq < 40 else "✅ **下注頻率適中**：平均每 " + (f"{100/bet_freq:.1f}" if bet_freq > 0 else "?") + " 天下注一次。"}
+| 指標 | 數值 |
+|---|---|
+| 最終本金 | NT${a['final_bankroll']:,.0f} |
+| 總損益 | NT${a['total_pnl']:+,.0f}（ROI {a['roi']:+.1f}%） |
+| 最大回撤 | -{a['max_dd']:.1f}% |
+| 最長連勝/連敗 | {a['max_streak_win']} 勝 / {a['max_streak_loss']} 敗 |
+| 最佳單注 | {_best(a)} |
+| 最差單注 | {_worst(a)} |
+
+### 球種分析
+
+| 球種 | 注數 | 命中率 | 盈虧 |
+|---|---|---|---|
+| NBA 單關 | {len(a['nba_bets'])} | {_wr(a['nba_bets'])} | NT${_pnl(a['nba_bets']):+,.0f} |
+| MLB 單關 | {len(a['mlb_bets'])} | {_wr(a['mlb_bets'])} | NT${_pnl(a['mlb_bets']):+,.0f} |
+| 串關 | {len(a['par_bets'])} | {_wr(a['par_bets'])} | NT${_pnl(a['par_bets']):+,.0f} |
+
+### 📒 逐日下注明細
+
+{a['detail_md']}
 
 ---
 
-## 各月份績效
-
-{month_table}
-
----
-
-## 📒 逐日下注明細
-
-{detail_md}
-
----
-
-*回測使用 1/4 分數凱利，Pinnacle 賠率換算台灣運彩等效賠率*
+*回測使用分數凱利，Pinnacle 賠率換算台灣運彩等效賠率*
 *停利目標：NT${_TARGET:,.0f}（{_TARGET/init_bankroll:.0f}倍）｜停損門檻：歸零*
 *所有數據嚴格限制於比賽開始前已公開的資訊（無未來數據洩漏）*
-*生成時間：{end}*
+*生成時間：{start}*
 """
     return md
 
 
-# ── 主流程 ────────────────────────────────────────────────
-def run(
-    start_date: date | str | None = None,
-    init_bankroll: float = _INIT_BANKROLL,
-    auto_fetch: bool = True,
+# ── 單策略模擬 ────────────────────────────────────────────
+def _run_strategy(
+    s: date, today: date,
+    init_bankroll: float,
+    cfg: StrategyConfig,
+    auto_fetch: bool,
 ) -> dict:
     """
-    執行完整回測。
-
-    auto_fetch=True：每日自動呼叫 fetch_nba / fetch_mlb / fetch_odds
-    auto_fetch=False：假設數據已存在於 data/ 快取（離線模式）
-
-    回傳：{"final_bankroll", "end_reason", "end_date", "report_path"}
+    執行單一策略的完整回測，回傳結果 dict 含 CSV 路徑與最終本金。
     """
-    s = parse_date(start_date) if start_date else _START_DATE
-    today = today_tw()
-
-    BACKTEST_DIR.mkdir(parents=True, exist_ok=True)
-    bet_log_path = BACKTEST_DIR / f"backtest_log_{s.isoformat()}.csv"
-    daily_path   = BACKTEST_DIR / f"daily_summary_{s.isoformat()}.csv"
-    report_path  = BACKTEST_DIR / f"backtest_report_{s.isoformat()}.md"
+    slug = cfg.name.replace("型", "").replace("（", "").replace("）", "")
+    bet_log_path = BACKTEST_DIR / f"backtest_log_{s.isoformat()}_{slug}.csv"
+    daily_path   = BACKTEST_DIR / f"daily_summary_{s.isoformat()}_{slug}.csv"
 
     bankroll   = init_bankroll
     end_reason = "NATURAL"
@@ -700,59 +656,90 @@ def run(
             daily_writer.writeheader()
 
             for d in date_range(s, today - timedelta(days=1)):
-                # 自動抓取數據（若快取不存在）
                 if auto_fetch:
                     _auto_fetch_day(d)
 
                 try:
-                    bankroll, stop = run_one_day(d, bankroll, bet_log_writer, daily_writer)
+                    bankroll, stop = run_one_day(d, bankroll, bet_log_writer, daily_writer, cfg)
                     end_date = d
                 except Exception as e:
-                    logger.error(f"  {d} 單日回測錯誤（略過）：{e}")
+                    logger.error(f"  [{cfg.name}] {d} 單日錯誤（略過）：{e}")
                     end_date = d
                     stop = ""
 
                 if stop:
                     end_reason = stop
-                    logger.info(f"\n{'='*55}")
-                    logger.info(f"回測終止：{stop}  最終本金：NT${bankroll:,.0f}")
+                    logger.info(f"[{cfg.name}] 回測終止：{stop}  NT${bankroll:,.0f}")
                     break
             else:
-                logger.info(f"\n回測完成（數據截止）  最終本金：NT${bankroll:,.0f}")
+                logger.info(f"[{cfg.name}] 回測完成  NT${bankroll:,.0f}")
 
     except Exception as e:
-        logger.error(f"回測主流程錯誤：{e}")
+        logger.error(f"[{cfg.name}] 主流程錯誤：{e}")
         end_reason = "ERROR"
 
-    # 產生報告（無論是否發生錯誤，只要 CSV 存在就生成）
+    return {
+        "cfg":           cfg,
+        "final_bankroll": bankroll,
+        "end_reason":    end_reason,
+        "end_date":      end_date,
+        "bet_log_path":  bet_log_path,
+        "daily_path":    daily_path,
+    }
+
+
+# ── 主流程 ────────────────────────────────────────────────
+def run(
+    start_date: date | str | None = None,
+    init_bankroll: float = _INIT_BANKROLL,
+    auto_fetch: bool = True,
+) -> dict:
+    """
+    執行雙策略回測（穩健型 + 激進型），輸出合併對比報告。
+
+    auto_fetch=True：每日自動呼叫 fetch_nba / fetch_mlb / fetch_odds
+    auto_fetch=False：假設數據已存在於 data/ 快取（離線模式）
+
+    回傳：{"report_path", "conservative": {...}, "aggressive": {...}}
+    """
+    s = parse_date(start_date) if start_date else _START_DATE
+    today = today_tw()
+
+    BACKTEST_DIR.mkdir(parents=True, exist_ok=True)
+    report_path = BACKTEST_DIR / f"backtest_report_{s.isoformat()}.md"
+
+    logger.info(f"\n{'='*55}")
+    logger.info(f"回測起始：{s}  本金：NT${init_bankroll:,.0f}")
+    logger.info(f"{'='*55}")
+
+    # ── 穩健型 ──
+    logger.info("\n▶ 穩健型策略開始...")
+    res_c = _run_strategy(s, today, init_bankroll, CONSERVATIVE, auto_fetch)
+
+    # ── 激進型（數據已快取，auto_fetch 設 False 加速）──
+    logger.info("\n▶ 激進型策略開始...")
+    res_a = _run_strategy(s, today, init_bankroll, AGGRESSIVE, False)
+
+    # ── 合併報告 ──
     try:
-        report_md = generate_report(
-            s, end_date, end_reason, init_bankroll, bankroll,
-            bet_log_path, daily_path,
-        )
+        report_md = generate_report(s, init_bankroll, res_c, res_a)
         report_path.write_text(report_md, encoding="utf-8")
-        logger.info(f"報告已存至：{report_path}")
+        logger.info(f"\n報告已存至：{report_path}")
     except Exception as e:
         logger.error(f"報告生成失敗：{e}")
-        # 寫入最簡摘要，確保 workflow 能讀到
         fallback = (
             f"# 回測報告（錯誤摘要）\n\n"
             f"**起始日期**：{s}\n"
-            f"**結束日期**：{end_date}\n"
-            f"**最終本金**：NT${bankroll:,.0f}\n"
-            f"**結束原因**：{end_reason}\n\n"
+            f"**穩健型最終**：NT${res_c['final_bankroll']:,.0f}（{res_c['end_reason']}）\n"
+            f"**激進型最終**：NT${res_a['final_bankroll']:,.0f}（{res_a['end_reason']}）\n\n"
             f"> ⚠️ 完整報告生成失敗：{e}\n"
         )
         report_path.write_text(fallback, encoding="utf-8")
-        logger.info(f"已寫入備用摘要：{report_path}")
 
     return {
-        "final_bankroll": bankroll,
-        "end_reason":     end_reason,
-        "end_date":       end_date.isoformat(),
-        "report_path":    str(report_path),
-        "bet_log_path":   str(bet_log_path),
-        "daily_path":     str(daily_path),
+        "report_path":  str(report_path),
+        "conservative": res_c,
+        "aggressive":   res_a,
     }
 
 
@@ -838,8 +825,9 @@ if __name__ == "__main__":
     start = sys.argv[1] if len(sys.argv) > 1 else None
     init_b = float(sys.argv[2]) if len(sys.argv) > 2 else _INIT_BANKROLL
     result = run(start_date=start, init_bankroll=init_b)
+    rc = result["conservative"]
+    ra = result["aggressive"]
     print(f"\n{'='*55}")
-    print(f"回測結果：{result['end_reason']}")
-    print(f"結束日期：{result['end_date']}")
-    print(f"最終本金：NT${result['final_bankroll']:,.0f}")
-    print(f"報告路徑：{result['report_path']}")
+    print(f"穩健型：NT${rc['final_bankroll']:,.0f}  ({rc['end_reason']})")
+    print(f"激進型：NT${ra['final_bankroll']:,.0f}  ({ra['end_reason']})")
+    print(f"報告：{result['report_path']}")
