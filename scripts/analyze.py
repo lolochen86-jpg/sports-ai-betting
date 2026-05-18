@@ -41,9 +41,9 @@ _KELLY_PARLAY      = 0.15    # 串關凱利係數
 _HARD_CAP_PCT      = 0.08    # 單注上限（本金 %）
 
 # ── 停利停損設定 ──────────────────────────────────────────
-_INITIAL_BANKROLL  = 3000.0  # 起始本金
-_TARGET_BANKROLL   = 6000.0  # 停利目標（翻倍）
-_RUIN_THRESHOLD    = 10.0    # 視為歸零門檻（NT$10 以下停止）
+_INITIAL_BANKROLL  = 3000.0   # 起始本金
+_TARGET_BANKROLL   = 12000.0  # 停利目標（4倍）
+_RUIN_THRESHOLD    = 10.0     # 視為歸零門檻（NT$10 以下停止）
 
 
 def check_stop_condition(bankroll: float) -> tuple[bool, str]:

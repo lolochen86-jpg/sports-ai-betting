@@ -19,11 +19,11 @@ on:
       target_bankroll:
         description: '🎯 停利目標（新台幣）'
         required: true
-        default: '6000'
+        default: '12000'
         type: choice
         options:
           - '6000'
-          - '9000'
+          - '12000'
           - '15000'
           - '20000'
 

@@ -31,9 +31,9 @@ from analyze import DailyPlan, Pick, Parlay, run as analyze_run
 logger = get_logger("backtest")
 
 # ── 回測參數 ──────────────────────────────────────────────
-_START_DATE     = date(2026, 4, 1)
+_START_DATE     = date(2026, 5, 1)
 _INIT_BANKROLL  = 3000.0
-_TARGET         = 6000.0    # 達標本金
+_TARGET         = 12000.0   # 達標本金（4倍）
 _RUIN_THRESHOLD = 0.0       # 破產門檻
 
 # ── CSV 欄位定義 ──────────────────────────────────────────
@@ -429,6 +429,77 @@ def generate_report(
     s_rate = f"{s_wins/s_total*100:.1f}%" if s_total else "N/A"
     p_rate = f"{p_wins/p_total*100:.1f}%" if p_total else "N/A"
 
+    # ── 策略分析計算 ──────────────────────────────────────
+    # Edge 分布
+    edges = [float(r.get("edge", 0)) for r in bet_rows if r.get("edge")]
+    avg_edge = sum(edges) / len(edges) if edges else 0
+    edge_A = [r for r in bet_rows if r.get("grade") == "A"]
+    edge_B = [r for r in bet_rows if r.get("grade") == "B"]
+    edge_C = [r for r in bet_rows if r.get("grade") == "C"]
+    edge_A_wr = sum(1 for r in edge_A if r["result"]=="WIN") / len(edge_A) * 100 if edge_A else 0
+    edge_B_wr = sum(1 for r in edge_B if r["result"]=="WIN") / len(edge_B) * 100 if edge_B else 0
+    edge_C_wr = sum(1 for r in edge_C if r["result"]=="WIN") / len(edge_C) * 100 if edge_C else 0
+    edge_A_pnl = sum(float(r.get("pnl",0)) for r in edge_A)
+    edge_B_pnl = sum(float(r.get("pnl",0)) for r in edge_B)
+    edge_C_pnl = sum(float(r.get("pnl",0)) for r in edge_C)
+
+    # 球種分析
+    nba_bets = [r for r in bet_rows if r.get("sport") == "NBA"]
+    mlb_bets = [r for r in bet_rows if r.get("sport") == "MLB"]
+    par_bets  = [r for r in bet_rows if r.get("sport") == "PARLAY"]
+    nba_wr = sum(1 for r in nba_bets if r["result"]=="WIN") / len(nba_bets) * 100 if nba_bets else 0
+    mlb_wr = sum(1 for r in mlb_bets if r["result"]=="WIN") / len(mlb_bets) * 100 if mlb_bets else 0
+    par_wr = sum(1 for r in par_bets if r["result"]=="WIN") / len(par_bets) * 100 if par_bets else 0
+    nba_pnl = sum(float(r.get("pnl",0)) for r in nba_bets)
+    mlb_pnl = sum(float(r.get("pnl",0)) for r in mlb_bets)
+    par_pnl = sum(float(r.get("pnl",0)) for r in par_bets)
+
+    # 注碼分析
+    amounts = [float(r.get("bet_amount", 0)) for r in bet_rows if float(r.get("bet_amount",0)) > 0]
+    avg_bet = sum(amounts) / len(amounts) if amounts else 0
+    max_bet = max(amounts) if amounts else 0
+    min_bet = min(amounts) if amounts else 0
+
+    # 最佳 / 最差單注
+    won_rows  = [r for r in bet_rows if r.get("result") == "WIN"]
+    lost_rows = [r for r in bet_rows if r.get("result") == "LOSS"]
+    best_bet  = max(won_rows,  key=lambda r: float(r.get("pnl", 0)), default=None)
+    worst_bet = max(lost_rows, key=lambda r: abs(float(r.get("pnl", 0))), default=None)
+
+    best_str  = (f"{best_bet['bet_label']} @{float(best_bet['odds']):.2f} → +NT${float(best_bet['pnl']):,.0f}"
+                 if best_bet else "N/A")
+    worst_str = (f"{worst_bet['bet_label']} @{float(worst_bet['odds']):.2f} → -NT${abs(float(worst_bet['pnl'])):,.0f}"
+                 if worst_bet else "N/A")
+
+    # 連勝 / 連敗最長
+    max_streak_win = max_streak_loss = cur = 0
+    prev = None
+    for r in bet_rows:
+        res = r.get("result")
+        if res == "VOID":
+            cur = 0; prev = None; continue
+        if res == prev:
+            cur += 1
+        else:
+            cur = 1; prev = res
+        if res == "WIN":
+            max_streak_win  = max(max_streak_win, cur)
+        else:
+            max_streak_loss = max(max_streak_loss, cur)
+
+    # 賠率分布
+    odds_vals = [float(r.get("odds", 0)) for r in singles if float(r.get("odds",0)) > 0]
+    avg_odds = sum(odds_vals) / len(odds_vals) if odds_vals else 0
+
+    # 下注頻率
+    bet_freq = bet_days / total_days * 100 if total_days > 0 else 0
+
+    # 預期達標天數（線性推估）
+    daily_growth = (final_bankroll - init_bankroll) / bet_days if bet_days > 0 else 0
+    days_to_target = (_TARGET - final_bankroll) / daily_growth if daily_growth > 0 else float('inf')
+    target_str = (f"約 {days_to_target:.0f} 個下注日（若維持現有勝率）"
+                  if days_to_target != float('inf') and days_to_target > 0 else "已達標" if final_bankroll >= _TARGET else "N/A")
+
     md = f"""# 運彩AI分析師 — 回測結果報告
 
 **測試期間**：{start} → {end}
@@ -455,6 +526,79 @@ def generate_report(
 
 ---
 
+## 📋 下注策略分析
+
+### 一、信心等級分析（A / B / C）
+
+| 等級 | 條件 | 注數 | 命中率 | 盈虧 |
+|---|---|---|---|---|
+| A 級 | Edge ≥ 7%，數據完整 | {len(edge_A)} | {edge_A_wr:.1f}% | NT${edge_A_pnl:+,.0f} |
+| B 級 | Edge ≥ 4%，數據完整 | {len(edge_B)} | {edge_B_wr:.1f}% | NT${edge_B_pnl:+,.0f} |
+| C 級 | Edge ≥ 4%，數據不完整 | {len(edge_C)} | {edge_C_wr:.1f}% | NT${edge_C_pnl:+,.0f} |
+
+> 平均 Edge：{avg_edge:.1%}｜建議：集中 A 級下注，C 級注碼應壓最低
+
+---
+
+### 二、球種分析
+
+| 球種 | 注數 | 命中率 | 盈虧 | 評估 |
+|---|---|---|---|---|
+| NBA 單關 | {len(nba_bets)} | {nba_wr:.1f}% | NT${nba_pnl:+,.0f} | {'✅ 優勢球種' if nba_pnl > 0 else '⚠️ 待觀察'} |
+| MLB 單關 | {len(mlb_bets)} | {mlb_wr:.1f}% | NT${mlb_pnl:+,.0f} | {'✅ 優勢球種' if mlb_pnl > 0 else '⚠️ 待觀察'} |
+| 串關 | {len(par_bets)} | {par_wr:.1f}% | NT${par_pnl:+,.0f} | {'✅ 穩定貢獻' if par_pnl > 0 else '⚠️ 待觀察'} |
+
+---
+
+### 三、注碼管理分析（凱利策略）
+
+| 指標 | 數值 |
+|---|---|
+| 平均單注 | NT${avg_bet:,.0f} |
+| 最高單注 | NT${max_bet:,.0f} |
+| 最低單注 | NT${min_bet:,.0f} |
+| 平均賠率 | {avg_odds:.2f} |
+| 下注天數佔比 | {bet_freq:.0f}%（{bet_days}/{total_days} 天） |
+
+> **策略說明**：使用 **1/4 分數凱利**，A 級 25%、B 級 20%、C 級 12% 凱利係數，
+> 單注上限 8% 本金，保留 10% 不動本金作緩衝。
+
+---
+
+### 四、風險評估
+
+| 指標 | 數值 | 評等 |
+|---|---|---|
+| 最大回撤 | -{max_dd:.1f}% | {'🟢 極低' if max_dd < 10 else '🟡 中等' if max_dd < 25 else '🔴 偏高'} |
+| 最長連勝 | {max_streak_win} 注 | — |
+| 最長連敗 | {max_streak_loss} 注 | {'🟢 可接受' if max_streak_loss <= 3 else '🟡 注意' if max_streak_loss <= 5 else '🔴 風險偏高'} |
+| 最佳單注 | {best_str} | — |
+| 最差單注 | {worst_str} | — |
+
+---
+
+### 五、目標進度
+
+| 項目 | 數值 |
+|---|---|
+| 停利目標 | NT${_TARGET:,.0f} |
+| 目前本金 | NT${final_bankroll:,.0f} |
+| 距目標還差 | NT${max(0, _TARGET - final_bankroll):,.0f}（{max(0, _TARGET - final_bankroll) / _TARGET * 100:.1f}%） |
+| 預估達標 | {target_str} |
+| 每日平均獲利 | NT${daily_growth:+,.0f} |
+
+---
+
+### 六、策略建議
+
+{"✅ **勝率極高，策略有效**：單關 " + s_rate + "、串關 " + p_rate + "，建議維持現有策略。" if (s_wins/s_total if s_total else 0) > 0.6 else "⚠️ **勝率偏低**：建議提高 Edge 門檻至 6% 以上，減少 C 級下注。"}
+
+{"✅ **回撤控制良好**：最大回撤僅 " + f"{max_dd:.1f}%" + "，資金管理穩健。" if max_dd < 15 else "⚠️ **回撤偏大**：建議降低凱利係數或增加保留比例。"}
+
+{"⚠️ **下注頻率偏低**：僅 " + f"{bet_freq:.0f}%" + " 天有下注，可考慮放寬 Edge 門檻至 3.5%。" if bet_freq < 40 else "✅ **下注頻率適中**：平均每 " + f"{1/bet_freq*100:.1f}" + " 天下注一次。"}
+
+---
+
 ## 各月份績效
 
 {month_table}
@@ -462,6 +606,7 @@ def generate_report(
 ---
 
 *回測使用 1/4 分數凱利，Pinnacle 賠率換算台灣運彩等效賠率*
+*停利目標：NT${_TARGET:,.0f}（{_TARGET/init_bankroll:.0f}倍）｜停損門檻：歸零*
 *所有數據嚴格限制於比賽開始前已公開的資訊（無未來數據洩漏）*
 *生成時間：{end}*
 """
