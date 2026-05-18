@@ -19,7 +19,7 @@ from utils import (
     get_logger, save_json, load_json, json_exists, parse_date, today_tw
 )
 import fetch_odds
-from analyze import run as analyze_run
+from analyze import run as analyze_run, CONSERVATIVE, AGGRESSIVE, UNDERDOG
 
 logger = get_logger("run_daily")
 
@@ -80,40 +80,47 @@ def run(report_date: date | str | None = None, dry_run: bool = False) -> None:
         report_gen.run(plan=None, report_date=d)
         return
 
-    plan = analyze_run(nba_games, mlb_games, bankroll, d.isoformat())
+    # 三個策略分別執行
+    plan_c = analyze_run(nba_games, mlb_games, bankroll, d.isoformat(), cfg=CONSERVATIVE)
+    plan_a = analyze_run(nba_games, mlb_games, bankroll, d.isoformat(), cfg=AGGRESSIVE)
+    plan_u = analyze_run(nba_games, mlb_games, bankroll, d.isoformat(), cfg=UNDERDOG)
+
+    plans = {
+        "conservative": plan_c,
+        "aggressive":   plan_a,
+        "underdog":     plan_u,
+    }
 
     # 4. 序列化計劃（Pick / Parlay dataclass → dict）
     import dataclasses
-    def _serialize(obj):
-        if dataclasses.is_dataclass(obj):
-            return dataclasses.asdict(obj)
-        return obj
 
-    plan_dict = {
-        "date":         plan.date,
-        "bankroll":     plan.bankroll,
-        "total_bet":    plan.total_bet,
-        "single_picks": [dataclasses.asdict(p) for p in plan.single_picks],
-        "parlays": [
-            {
-                "legs":        [dataclasses.asdict(lg) for lg in par.legs],
-                "parlay_odds": par.parlay_odds,
-                "true_prob":   par.true_prob,
-                "parlay_ev":   par.parlay_ev,
-                "kelly_frac":  par.kelly_frac,
-            }
-            for par in plan.parlays
-        ],
-        "dry_run": dry_run,
-    }
-    plan_path = LIVE_DIR / f"plan_{d.isoformat()}.json"
-    save_json(plan_dict, plan_path)
-    logger.info(f"計劃已儲存：{plan_path.name}")
-    logger.info(f"  單關 {len(plan.single_picks)} 注，串關 {len(plan.parlays)} 組")
+    def _plan_to_dict(plan, dry_run=False):
+        return {
+            "date":         plan.date,
+            "bankroll":     plan.bankroll,
+            "total_bet":    plan.total_bet,
+            "single_picks": [dataclasses.asdict(p) for p in plan.single_picks],
+            "parlays": [
+                {
+                    "legs":        [dataclasses.asdict(lg) for lg in par.legs],
+                    "parlay_odds": par.parlay_odds,
+                    "true_prob":   par.true_prob,
+                    "parlay_ev":   par.parlay_ev,
+                    "kelly_frac":  par.kelly_frac,
+                }
+                for par in plan.parlays
+            ],
+            "dry_run": dry_run,
+        }
 
-    # 5. 報告生成（傳入 plan 物件）
+    for slug, plan in [("conservative", plan_c), ("aggressive", plan_a), ("underdog", plan_u)]:
+        plan_path = LIVE_DIR / f"plan_{d.isoformat()}_{slug}.json"
+        save_json(_plan_to_dict(plan, dry_run), plan_path)
+        logger.info(f"計劃已儲存：{plan_path.name}  單關 {len(plan.single_picks)} 注，串關 {len(plan.parlays)} 組")
+
+    # 5. 報告生成（傳入三個策略計劃）
     import report_gen
-    report_gen.run(plan=plan, report_date=d)
+    report_gen.run(plans=plans, report_date=d)
 
 
 if __name__ == "__main__":

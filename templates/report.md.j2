@@ -38,11 +38,43 @@
 
 ## 🎯 今日下注明細（{{ report_date }} 賽事）
 
+{% if strategies %}
+{% for strat in strategies %}
+### {{ strat.name }}
+
+{% if strat.no_picks %}
+> 今日無符合門檻的選場。
+
+{% else %}
+{% if strat.singles %}
+**單關**
+
+| # | 賽事 | 下注方向 | 賠率 | 估算勝率 | Edge | 信心 | 下注額 | 潛在獎金 |
+|---|---|---|---|---|---|---|---|---|
+{% for s in strat.singles %}| {{ loop.index }} | {{ s.matchup }} | **{{ s.label }}** | {{ s.odds | odds_fmt }} | {{ s.true_prob | pct }} | {{ s.edge | pct }} | {{ s.grade }} | {{ s.amount | ntd }} | +{{ s.potential | ntd }} |
+{% endfor %}
+
+{% endif %}
+{% if strat.parlays %}
+**串關**
+
+| # | 組合 | 總賠率 | 串關EV | 下注額 | 潛在獎金 |
+|---|---|---|---|---|---|
+{% for p in strat.parlays %}| {{ loop.index }} | {{ p.label }} | {{ p.parlay_odds | odds_fmt }} | {{ (p.parlay_ev * 100) | round(1) }}% | {{ p.amount | ntd }} | +{{ p.potential | ntd }} |
+{% endfor %}
+
+{% endif %}
+**小計**：{{ strat.total | ntd }}
+{% endif %}
+
+---
+{% endfor %}
+
+{% else %}
 {% if no_picks %}
 > **今日無符合門檻的選場**（Edge < 4% 或數據不足）。
 > 寧可空手，不強行下注。
 {% else %}
-
 {% if singles %}
 ### 單關
 
@@ -52,7 +84,6 @@
 {% endfor %}
 
 {% endif %}
-
 {% if parlays %}
 ### 串關
 
@@ -62,23 +93,8 @@
 {% endfor %}
 
 {% endif %}
-
 **今日合計下注**：{{ total_today | ntd }}
-
----
-
-### 📋 分析數據卡
-
-{% for s in singles %}
-<details>
-<summary>{{ s.label }}（{{ s.matchup }}）</summary>
-
-```
-{{ s.data_card }}
-```
-</details>
-{% endfor %}
-
+{% endif %}
 {% endif %}
 
 ---

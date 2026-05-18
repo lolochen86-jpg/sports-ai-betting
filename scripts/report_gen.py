@@ -190,10 +190,11 @@ def _make_jinja_env() -> Environment:
 # ── 報告渲染 ──────────────────────────────────────────────
 def render_report(
     report_date: date,
-    plan,                    # analyze.DailyPlan
+    plan,                    # analyze.DailyPlan（主策略，向下相容）
     yesterday_results: list[dict],
     bankroll: dict,
     perf: dict,
+    plans: dict | None = None,
 ) -> tuple[str, str]:
     """
     渲染 Markdown 與 HTML 報告。
@@ -202,7 +203,7 @@ def render_report(
     env   = _make_jinja_env()
     stats = bankroll_stats(bankroll)
 
-    ctx = _build_context(report_date, plan, yesterday_results, stats, perf)
+    ctx = _build_context(report_date, plan, yesterday_results, stats, perf, plans=plans)
 
     md_tmpl   = env.get_template("report.md.j2")
     html_tmpl = env.get_template("report.html.j2")
@@ -213,6 +214,7 @@ def render_report(
 def _build_context(
     d: date, plan, results: list[dict],
     stats: dict, perf: dict,
+    plans: dict | None = None,
 ) -> dict:
     """組合模板所需的所有變數。"""
     yesterday = d - timedelta(days=1)
@@ -259,6 +261,53 @@ def _build_context(
 
     total_today = sum(s["amount"] for s in singles) + sum(p["amount"] for p in parlays)
 
+    # 三策略資料
+    _STRATEGY_LABELS = {
+        "conservative": "穩健型",
+        "aggressive":   "激進型",
+        "underdog":     "冷門獵人型",
+    }
+    strategies = []
+    if plans:
+        for slug, label in _STRATEGY_LABELS.items():
+            p = plans.get(slug)
+            if p is None:
+                strategies.append({"name": label, "singles": [], "parlays": [], "total": 0, "no_picks": True})
+                continue
+            s_list = []
+            for pick in p.single_picks:
+                amt = pick.bet_amount(stats["current"])
+                s_list.append({
+                    "label":     pick.bet_label,
+                    "sport":     pick.sport,
+                    "matchup":   f"{pick.away_team}@{pick.home_team}",
+                    "odds":      pick.odds,
+                    "true_prob": pick.true_prob,
+                    "edge":      pick.edge,
+                    "grade":     pick.grade,
+                    "amount":    amt,
+                    "potential": round(amt * (pick.odds - 1), 0),
+                })
+            pa_list = []
+            for par in p.parlays:
+                amt = par.bet_amount(stats["current"])
+                pa_list.append({
+                    "label":       par.label,
+                    "legs":        [{"label": lg.bet_label, "odds": lg.odds} for lg in par.legs],
+                    "parlay_odds": par.parlay_odds,
+                    "parlay_ev":   par.parlay_ev,
+                    "amount":      amt,
+                    "potential":   round(amt * (par.parlay_odds - 1), 0),
+                })
+            total = sum(x["amount"] for x in s_list) + sum(x["amount"] for x in pa_list)
+            strategies.append({
+                "name":     label,
+                "singles":  s_list,
+                "parlays":  pa_list,
+                "total":    total,
+                "no_picks": len(s_list) == 0 and len(pa_list) == 0,
+            })
+
     # 整體勝率
     win_rate_single = (perf["single_wins"] / perf["single_bets"] * 100
                        if perf["single_bets"] > 0 else 0)
@@ -302,6 +351,9 @@ def _build_context(
         "perf_nba_wins":     perf["by_sport"]["NBA"]["wins"],
         "perf_mlb_bets":     perf["by_sport"]["MLB"]["bets"],
         "perf_mlb_wins":     perf["by_sport"]["MLB"]["wins"],
+
+        # 三策略明細
+        "strategies": strategies,
 
         # 給首頁圖表用的 JSON（最近 30 天本金曲線）
         "chart_data": json.dumps(_build_chart_data()),
@@ -356,11 +408,16 @@ def update_index_html(perf: dict, bankroll: dict) -> Path:
 
 
 # ── 主流程 ────────────────────────────────────────────────
-def run(plan=None, report_date: date | str | None = None) -> dict:
+def run(plan=None, plans: dict | None = None, report_date: date | str | None = None) -> dict:
     """
     執行完整報告生成流程。
-    plan: analyze.DailyPlan（今日計劃，若 None 則報告顯示「今日無選場」）
+    plans: dict 含三策略 {"conservative": DailyPlan, "aggressive": DailyPlan, "underdog": DailyPlan}
+    plan:  單一 DailyPlan（向下相容舊呼叫方式）
     """
+    # 向下相容：若只傳 plan，包成 plans dict
+    if plans is None:
+        plans = {"conservative": plan, "aggressive": None, "underdog": None}
+
     d         = parse_date(report_date) if report_date else today_tw()
     yesterday = d - timedelta(days=1)
 
@@ -382,7 +439,8 @@ def run(plan=None, report_date: date | str | None = None) -> dict:
     perf = update_performance(yesterday, results)
 
     # 4. 渲染報告
-    md_str, html_str = render_report(d, plan, results, bankroll, perf)
+    plan = plans.get("conservative") if plans else None
+    md_str, html_str = render_report(d, plan, results, bankroll, perf, plans=plans)
 
     # 5. 寫入檔案
     md_path, html_path = write_daily_report(d, md_str, html_str)
