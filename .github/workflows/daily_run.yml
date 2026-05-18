@@ -23,6 +23,8 @@ jobs:
   daily-analysis:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
