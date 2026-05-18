@@ -40,6 +40,23 @@ _KELLY_SINGLE      = 0.25    # 單關凱利係數
 _KELLY_PARLAY      = 0.15    # 串關凱利係數
 _HARD_CAP_PCT      = 0.08    # 單注上限（本金 %）
 
+# ── 停利停損設定 ──────────────────────────────────────────
+_INITIAL_BANKROLL  = 3000.0  # 起始本金
+_TARGET_BANKROLL   = 6000.0  # 停利目標（翻倍）
+_RUIN_THRESHOLD    = 10.0    # 視為歸零門檻（NT$10 以下停止）
+
+
+def check_stop_condition(bankroll: float) -> tuple[bool, str]:
+    """
+    檢查是否達到停利或停損條件。
+    回傳 (should_stop, reason)
+    """
+    if bankroll >= _TARGET_BANKROLL:
+        return True, f"🎯 達到停利目標！本金 NT${bankroll:,.0f} ≥ 目標 NT${_TARGET_BANKROLL:,.0f}"
+    if bankroll <= _RUIN_THRESHOLD:
+        return True, f"⛔ 本金歸零！本金 NT${bankroll:,.0f} ≤ 門檻 NT${_RUIN_THRESHOLD:,.0f}"
+    return False, ""
+
 
 # ── 數據結構 ───────────────────────────────────────────────
 @dataclass
@@ -467,6 +484,12 @@ def build_parlays(picks: list[Pick], bankroll: float) -> list[Parlay]:
 # ── 本金區間凱利係數調整 ──────────────────────────────────
 def bankroll_kelly_multiplier(bankroll: float) -> float:
     """根據本金餘額動態調整凱利係數倍率。"""
+    # 先檢查停利停損
+    should_stop, reason = check_stop_condition(bankroll)
+    if should_stop:
+        logger.warning(reason)
+        return 0.0
+
     if bankroll >= 2000:
         return 1.00
     if bankroll >= 1500:

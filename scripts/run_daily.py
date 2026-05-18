@@ -64,6 +64,22 @@ def run(report_date: date | str | None = None, dry_run: bool = False) -> None:
          else {"current": 3000.0}
     bankroll = bk.get("current", 3000.0)
 
+    # ── 停利停損檢查 ────────────────────────────────────────
+    from analyze import check_stop_condition, _TARGET_BANKROLL, _RUIN_THRESHOLD
+    should_stop, stop_reason = check_stop_condition(bankroll)
+    if should_stop:
+        logger.warning(f"===== 停止交易 =====")
+        logger.warning(stop_reason)
+        # 更新 bankroll.json 狀態
+        bk["status"] = "target_reached" if bankroll >= _TARGET_BANKROLL else "ruined"
+        bk["stop_date"] = d.isoformat()
+        bk["stop_reason"] = stop_reason
+        save_json(bk, DATA_DIR / "bankroll.json")
+        # 仍生成報告（但無下注計劃）
+        import report_gen
+        report_gen.run(plan=None, report_date=d)
+        return
+
     plan = analyze_run(nba_games, mlb_games, bankroll, d.isoformat())
 
     # 4. 序列化計劃（Pick / Parlay dataclass → dict）
