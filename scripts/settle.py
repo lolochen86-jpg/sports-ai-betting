@@ -279,7 +279,10 @@ def run(settle_date: date | str | None = None) -> dict:
     plan_path = LIVE_DIR / f"plan_{d.isoformat()}.json"
     if not json_exists(plan_path):
         logger.warning(f"找不到計劃檔：{plan_path.name}，略過結算")
-        return {"pnl": 0.0, "wins": 0, "losses": 0}
+        bk_path = DATA_DIR / "bankroll.json"
+        cur_bk  = (load_json(bk_path) if json_exists(bk_path) else {}).get("current", 0.0)
+        return {"pnl": 0.0, "wins": 0, "losses": 0, "voids": 0, "bets": 0,
+                "date": d.isoformat(), "bankroll_before": cur_bk, "bankroll_after": cur_bk}
 
     plan     = load_json(plan_path)
     bankroll = float(plan.get("bankroll", 3000.0))
