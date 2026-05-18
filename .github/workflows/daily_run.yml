@@ -7,13 +7,28 @@ on:
   workflow_dispatch:
     inputs:
       report_date:
-        description: '指定日期 (YYYY-MM-DD)，留空使用今日'
+        description: '📅 指定日期 (YYYY-MM-DD)，留空使用今日'
         required: false
         default: ''
       dry_run:
-        description: '乾跑模式（只分析不下注，不更新 bankroll）'
+        description: '🧪 乾跑模式（只分析不下注，不更新 bankroll）'
         required: false
         default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      schedule_hour_tw:
+        description: '⏰ 自訂執行時段（台灣時間），僅供手動觸發紀錄用'
+        required: false
+        default: '21'
+        type: choice
+        options:
+          - '9'    # 早上 09:00
+          - '12'   # 中午 12:00
+          - '15'   # 下午 15:00
+          - '18'   # 傍晚 18:00
+          - '21'   # 晚上 21:00（預設排程時間）
 
 env:
   ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
@@ -58,6 +73,15 @@ jobs:
             echo "date=$(TZ=Asia/Taipei date '+%Y-%m-%d')" >> $GITHUB_OUTPUT
           fi
           echo "yesterday=$(TZ=Asia/Taipei date -d 'yesterday' '+%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+          # 顯示觸發資訊
+          TRIGGER="${{ github.event_name }}"
+          HOUR="${{ github.event.inputs.schedule_hour_tw }}"
+          if [ "$TRIGGER" = "workflow_dispatch" ]; then
+            echo "🖐️ 手動觸發：台灣時間 ${HOUR:-21}:00" | tee -a $GITHUB_STEP_SUMMARY
+          else
+            echo "⏰ 排程觸發：台灣時間 21:00" | tee -a $GITHUB_STEP_SUMMARY
+          fi
 
       # ── P9：整合測試（快速驗證模型未崩潰）──────────────
       - name: Integration tests
@@ -168,4 +192,4 @@ jobs:
           " >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "⏰ 執行時間：台灣時間 09:00 | 策略：凱利注碼 | 起始：NT\$3,000 | 停利：NT\$6,000 | 停損：歸零" >> $GITHUB_STEP_SUMMARY
+          echo "⏰ 排程時間：台灣時間 21:00 | 策略：凱利注碼 | 起始：NT\$3,000 | 停利：NT\$6,000 | 停損：歸零" >> $GITHUB_STEP_SUMMARY
