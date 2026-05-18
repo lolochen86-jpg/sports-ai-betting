@@ -9,8 +9,21 @@
   "parlay_bets": 0,
   "parlay_wins": 0,
   "by_sport": {
-    "NBA": {"bets": 0, "wins": 0},
-    "MLB": {"bets": 0, "wins": 0}
+    "NBA": {
+      "bets": 0,
+      "wins": 0
+    },
+    "MLB": {
+      "bets": 0,
+      "wins": 0
+    }
   },
-  "daily": []
+  "daily": [
+    {
+      "date": "2026-05-17",
+      "bets": 0,
+      "wins": 0,
+      "pnl": 0
+    }
+  ]
 }

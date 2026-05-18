@@ -1,0 +1,27 @@
+[
+  {
+    "game_id": "465746f51ad349641512f36c52306968",
+    "sport": "NBA",
+    "game_date": "2026-05-18",
+    "home_team_abbr": "DET",
+    "away_team_abbr": "CLE",
+    "home_team_name": "Detroit Pistons",
+    "away_team_name": "Cleveland Cavaliers",
+    "source": "pinnacle",
+    "timestamp": "2026-05-18T08:55:46.620994+08:00",
+    "home_odds_raw": 3.01,
+    "away_odds_raw": 1.38,
+    "spread_away_odds_raw": 1.87,
+    "spread": 5.5,
+    "spread_home_odds_raw": 1.92,
+    "total_line": 202.0,
+    "over_odds_raw": 1.87,
+    "under_odds_raw": 1.91,
+    "home_odds": 2.944,
+    "away_odds": 1.35,
+    "spread_home_odds": 1.878,
+    "spread_away_odds": 1.829,
+    "over_odds": 1.829,
+    "under_odds": 1.868
+  }
+]

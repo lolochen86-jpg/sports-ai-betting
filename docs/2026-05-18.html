@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>運彩AI分析師 — 2026-05-18</title>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3e;
+    --text: #e2e8f0; --muted: #718096; --accent: #63b3ed;
+    --green: #48bb78; --red: #fc8181; --yellow: #f6e05e;
+    --purple: #b794f4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.6; padding: 1rem; }
+  .container { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; color: var(--accent); padding: 1rem 0 0.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
+  h2 { font-size: 1.1rem; color: var(--accent); margin: 1.5rem 0 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+  .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.25rem; }
+
+  /* Cards */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem 1rem; }
+  .card-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.2rem; }
+  .card-value { font-size: 1.2rem; font-weight: 600; }
+  .card-value.green  { color: var(--green); }
+  .card-value.red    { color: var(--red); }
+  .card-value.yellow { color: var(--yellow); }
+  .card-value.accent { color: var(--accent); }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin-bottom: 1rem; }
+  th { background: var(--surface); color: var(--muted); font-weight: 500; text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
+  td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.03); }
+
+  /* Result badges */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+  .badge-win  { background: rgba(72,187,120,0.15); color: var(--green); }
+  .badge-loss { background: rgba(252,129,129,0.15); color: var(--red); }
+  .badge-void { background: rgba(113,128,150,0.15); color: var(--muted); }
+  .badge-A    { background: rgba(99,179,237,0.15); color: var(--accent); }
+  .badge-B    { background: rgba(183,148,244,0.15); color: var(--purple); }
+  .badge-C    { background: rgba(246,224,94,0.15); color: var(--yellow); }
+
+  /* Pick cards */
+  .pick-list { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; }
+  .pick-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+  .pick-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+  .pick-title { font-weight: 600; color: var(--text); }
+  .pick-matchup { font-size: 0.8rem; color: var(--muted); }
+  .pick-stats { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
+  .pick-stat { font-size: 0.8rem; }
+  .pick-stat-label { color: var(--muted); }
+  .pick-stat-value { color: var(--text); font-weight: 500; }
+  .pick-amount { font-size: 1rem; font-weight: 700; color: var(--green); }
+  .edge-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 0.5rem; }
+  .edge-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.3s; }
+
+  /* Parlay */
+  .parlay-card { background: var(--surface); border: 1px solid var(--purple); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
+  .parlay-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+  .parlay-legs { display: flex; flex-direction: column; gap: 0.25rem; }
+  .parlay-leg { font-size: 0.8rem; color: var(--muted); display: flex; gap: 0.5rem; }
+  .parlay-leg::before { content: "└"; }
+
+  /* Data card */
+  details { margin-top: 0.5rem; }
+  summary { cursor: pointer; font-size: 0.8rem; color: var(--accent); user-select: none; }
+  pre { background: #0a0c14; border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; font-size: 0.75rem; overflow-x: auto; margin-top: 0.5rem; white-space: pre-wrap; color: var(--muted); }
+
+  /* No picks */
+  .no-picks { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2rem; text-align: center; color: var(--muted); }
+
+  /* Footer */
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="subtitle">運彩AI分析師</div>
+  <h1>2026-05-18 下注明細</h1>
+
+  <!-- 資金狀況 -->
+  <h2>📊 資金狀況</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-label">目前本金</div>
+      <div class="card-value accent">NT$3,000</div>
+    </div>
+    <div class="card">
+      <div class="card-label">昨日盈虧</div>
+      <div class="card-value green">
+        +NT$0
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">累積報酬率</div>
+      <div class="card-value green">
+        +0.0%
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">距高點回撤</div>
+      <div class="card-value green">
+        -0.0%
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">單關命中率</div>
+      <div class="card-value">0.0%</div>
+    </div>
+    <div class="card">
+      <div class="card-label">串關命中率</div>
+      <div class="card-value">0.0%</div>
+    </div>
+  </div>
+
+  <!-- 昨日成績 -->
+  <h2>✅ 昨日成績（2026-05-17）</h2>
+  
+  <p style="color:var(--muted);font-size:0.875rem">昨日無下注記錄。</p>
+  
+
+  <!-- 今日下注 -->
+  <h2>🎯 今日下注明細（2026-05-18）</h2>
+
+  
+
+  
+  <div class="pick-list">
+    
+    <div class="pick-card">
+      <div class="pick-header">
+        <div>
+          <div class="pick-title">MIA 勝</div>
+          <div class="pick-matchup">ATL@MIA · MLB</div>
+        </div>
+        <div style="text-align:right">
+          <div class="pick-amount">NT$160</div>
+          <div style="font-size:0.75rem;color:var(--muted)">潛在 +NT$144</div>
+        </div>
+      </div>
+      <div class="pick-stats">
+        <div class="pick-stat"><span class="pick-stat-label">賠率 </span><span class="pick-stat-value">1.90</span></div>
+        <div class="pick-stat"><span class="pick-stat-label">勝率 </span><span class="pick-stat-value">62.5%</span></div>
+        <div class="pick-stat"><span class="pick-stat-label">Edge </span><span class="pick-stat-value" style="color:var(--green)">+12.3%</span></div>
+        <div class="pick-stat"><span class="badge badge-A">A 級</span></div>
+      </div>
+      <div class="edge-bar"><div class="edge-fill" style="width:61.39498443350044%"></div></div>
+      <details><summary>查看完整數據卡</summary><pre>【數據卡 — ATL@MIA，下注 MIA 勝】
+
+原始數據：（詳見 raw_data）
+
+模型計算：
+  基礎勝率:     64.8%
+  打線品質調整: -1.0%
+  球場因素調整: -0.0%
+  牛棚調整:     -1.2%
+  最終估算勝率: 62.5%
+
+賠率分析：
+  運彩賠率:     1.90
+  隱含勝率(去莊): 50.3%
+  Edge:         +12.3%  ← 通過 4% 門檻
+
+凱利計算：
+  b=0.90, p=0.625, q=0.375
+  Full Kelly:   20.8%
+  分數Kelly(25%): 5.2%
+  當日本金:     NT$3,000
+  建議注碼:     NT$160
+  信心等級:     A 級</pre></details>
+    </div>
+    
+    <div class="pick-card">
+      <div class="pick-header">
+        <div>
+          <div class="pick-title">KC 勝</div>
+          <div class="pick-matchup">BOS@KC · MLB</div>
+        </div>
+        <div style="text-align:right">
+          <div class="pick-amount">NT$100</div>
+          <div style="font-size:0.75rem;color:var(--muted)">潛在 +NT$93</div>
+        </div>
+      </div>
+      <div class="pick-stats">
+        <div class="pick-stat"><span class="pick-stat-label">賠率 </span><span class="pick-stat-value">1.93</span></div>
+        <div class="pick-stat"><span class="pick-stat-label">勝率 </span><span class="pick-stat-value">58.2%</span></div>
+        <div class="pick-stat"><span class="pick-stat-label">Edge </span><span class="pick-stat-value" style="color:var(--green)">+8.7%</span></div>
+        <div class="pick-stat"><span class="badge badge-A">A 級</span></div>
+      </div>
+      <div class="edge-bar"><div class="edge-fill" style="width:43.529621507179094%"></div></div>
+      <details><summary>查看完整數據卡</summary><pre>【數據卡 — BOS@KC，下注 KC 勝】
+
+原始數據：（詳見 raw_data）
+
+模型計算：
+  基礎勝率:     57.5%
+  打線品質調整: +0.5%
+  球場因素調整: -0.1%
+  牛棚調整:     +0.2%
+  最終估算勝率: 58.2%
+
+賠率分析：
+  運彩賠率:     1.93
+  隱含勝率(去莊): 49.5%
+  Edge:         +8.7%  ← 通過 4% 門檻
+
+凱利計算：
+  b=0.93, p=0.582, q=0.418
+  Full Kelly:   13.1%
+  分數Kelly(25%): 3.3%
+  當日本金:     NT$3,000
+  建議注碼:     NT$100
+  信心等級:     A 級</pre></details>
+    </div>
+    
+  </div>
+  
+
+  
+  <h2 style="margin-top:1rem">🔗 串關</h2>
+  
+  <div class="parlay-card">
+    <div class="parlay-header">
+      <div>
+        <div style="font-weight:600">2-串（MIA 勝、KC 勝）</div>
+        <div style="font-size:0.8rem;color:var(--muted)">總賠率 3.66 · EV 33.1%</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:1rem;font-weight:700;color:var(--purple)">NT$60</div>
+        <div style="font-size:0.75rem;color:var(--muted)">潛在 +NT$159</div>
+      </div>
+    </div>
+    <div class="parlay-legs">
+      
+      <div class="parlay-leg">
+        <span style="color:var(--text)">MIA 勝</span>
+        <span style="color:var(--muted)">@1.90</span>
+        <span style="color:var(--muted)">ATL@MIA</span>
+      </div>
+      
+      <div class="parlay-leg">
+        <span style="color:var(--text)">KC 勝</span>
+        <span style="color:var(--muted)">@1.93</span>
+        <span style="color:var(--muted)">BOS@KC</span>
+      </div>
+      
+    </div>
+  </div>
+  
+  
+
+  <div style="margin-top:1rem;padding:0.75rem 1rem;background:var(--surface);border-radius:8px;font-size:0.875rem">
+    今日合計下注：<strong style="color:var(--accent)">NT$320</strong>
+  </div>
+  
+
+  <footer>
+    數據來源：NBA Stats API · MLB Stats API · 台灣運彩 / Pinnacle<br>
+    模型：Elo+效率差（NBA）· 先發FIP對決（MLB）· ¼ 分數凱利<br>
+    每日 22:00（台灣時間）自動更新 · 本報告不構成投資建議
+  </footer>
+</div>
+</body>
+</html>
