@@ -25,6 +25,7 @@ from utils import (
     kelly_fraction, kelly_bet_amount, validate_nba_game, validate_mlb_game,
     validate_odds
 )
+from team_names import nba_zh, mlb_zh
 
 logger = get_logger("analyze")
 
@@ -101,6 +102,19 @@ AGGRESSIVE = StrategyConfig(
     kelly_single_A=0.20, kelly_single_B=0.15, kelly_single_C=0.08,
     kelly_parlay=0.22,   hard_cap_pct=0.10,    # 串關更積極，上限略高
     max_singles=2,                              # 每日最多 2 場單關
+)
+
+# 冷門獵人型（只押冷門隊伍，賠率 ≥ 2.00）
+UNDERDOG = StrategyConfig(
+    name="冷門獵人型",
+    min_edge=0.05,       min_true_prob=0.40,   # 放寬勝率，冷門本來就低
+    min_odds=2.00,       max_odds=6.00,         # 只下真正冷門
+    single_min_edge=0.05,                       # 單關需明確 edge
+    parlay_min_ev=0.10,  parlay_4_min_ev=0.15, # 串關要求較高 EV
+    max_parlay_odds=20.0, max_parlays_per_n=2,  # 少量冷門串關
+    kelly_single_A=0.15, kelly_single_B=0.12, kelly_single_C=0.08,
+    kelly_parlay=0.10,   hard_cap_pct=0.08,    # 保守 Kelly（冷門波動大）
+    max_singles=4,                              # 每日最多 4 場單關
 )
 
 
@@ -366,11 +380,9 @@ def analyze_nba_game(game: dict,
     a_edge = calc_edge(away_win_prob, a_fair)
 
     picks = []
-    for (side, prob, fair, edge_val, odds, label) in [
-        ("home", home_win_prob, h_fair, h_edge, h_odds,
-         f"{game['home_team']} 勝"),
-        ("away", away_win_prob, a_fair, a_edge, a_odds,
-         f"{game['away_team']} 勝"),
+    for (side, prob, fair, edge_val, odds, abbr) in [
+        ("home", home_win_prob, h_fair, h_edge, h_odds, game["home_team"]),
+        ("away", away_win_prob, a_fair, a_edge, a_odds, game["away_team"]),
     ]:
         if edge_val < c.min_edge:
             continue
@@ -381,6 +393,7 @@ def analyze_nba_game(game: dict,
 
         frac = _kelly_frac_for_edge(edge_val, prob, odds, c)
         grade = _grade(edge_val, game)
+        label = f"{nba_zh(abbr)} 勝"
 
         # 客隊勝率對應的 breakdown 要翻轉
         if side == "away":
@@ -434,11 +447,9 @@ def analyze_mlb_game(game: dict,
     a_edge = calc_edge(away_win_prob, a_fair)
 
     picks = []
-    for (side, prob, fair, edge_val, odds, label) in [
-        ("home", home_win_prob, h_fair, h_edge, h_odds,
-         f"{game['home_team']} 勝"),
-        ("away", away_win_prob, a_fair, a_edge, a_odds,
-         f"{game['away_team']} 勝"),
+    for (side, prob, fair, edge_val, odds, abbr) in [
+        ("home", home_win_prob, h_fair, h_edge, h_odds, game["home_team"]),
+        ("away", away_win_prob, a_fair, a_edge, a_odds, game["away_team"]),
     ]:
         if edge_val < c.min_edge:
             continue
@@ -449,6 +460,7 @@ def analyze_mlb_game(game: dict,
 
         frac = _kelly_frac_for_edge(edge_val, prob, odds, c)
         grade = _grade(edge_val, game)
+        label = f"{mlb_zh(abbr)} 勝"
 
         if side == "away":
             bd_use = ProbBreakdown(

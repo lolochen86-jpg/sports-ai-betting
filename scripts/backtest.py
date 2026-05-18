@@ -28,7 +28,7 @@ from utils import (
 )
 from analyze import (
     DailyPlan, Pick, Parlay, run as analyze_run,
-    CONSERVATIVE, AGGRESSIVE, StrategyConfig,
+    CONSERVATIVE, AGGRESSIVE, UNDERDOG, StrategyConfig,
 )
 
 logger = get_logger("backtest")
@@ -492,10 +492,12 @@ def generate_report(
     init_bankroll: float,
     res_c: dict,   # 穩健型結果
     res_a: dict,   # 激進型結果
+    res_u: dict,   # 冷門獵人型結果
 ) -> str:
-    """讀取雙策略 CSV，產生對比 Markdown 報告。"""
+    """讀取三策略 CSV，產生對比 Markdown 報告。"""
     c = _load_strategy_stats(res_c, init_bankroll)
     a = _load_strategy_stats(res_a, init_bankroll)
+    u = _load_strategy_stats(res_u, init_bankroll)
 
     def _sr(wins, total):
         return f"{wins/total*100:.1f}%" if total else "N/A"
@@ -522,61 +524,59 @@ def generate_report(
         if dtt == float("inf") or dtt <= 0: return "N/A"
         return f"約 {dtt:.0f} 個下注日"
 
-    c_avg_bet = sum(c["amounts"]) / len(c["amounts"]) if c["amounts"] else 0
-    a_avg_bet = sum(a["amounts"]) / len(a["amounts"]) if a["amounts"] else 0
-    c_avg_odds = sum(c["odds_vals"]) / len(c["odds_vals"]) if c["odds_vals"] else 0
-    a_avg_odds = sum(a["odds_vals"]) / len(a["odds_vals"]) if a["odds_vals"] else 0
+    def _avg(lst): return sum(lst) / len(lst) if lst else 0
 
-    c_bet_freq = c["bet_days"] / c["total_days"] * 100 if c["total_days"] else 0
-    a_bet_freq = a["bet_days"] / a["total_days"] * 100 if a["total_days"] else 0
+    c_avg_bet  = _avg(c["amounts"]);   a_avg_bet  = _avg(a["amounts"]);   u_avg_bet  = _avg(u["amounts"])
+    c_avg_odds = _avg(c["odds_vals"]); a_avg_odds = _avg(a["odds_vals"]); u_avg_odds = _avg(u["odds_vals"])
 
-    winner = "穩健型" if c["final_bankroll"] >= a["final_bankroll"] else "激進型"
-    winner_emoji = "🏆"
+    # 決定冠軍
+    scores = [
+        (c["final_bankroll"], "🛡️ 穩健型"),
+        (a["final_bankroll"], "⚡ 激進型"),
+        (u["final_bankroll"], "🎯 冷門獵人型"),
+    ]
+    winner_name = max(scores, key=lambda x: x[0])[1]
 
-    md = f"""# 運彩AI分析師 — 雙策略回測對比報告
+    def _crown(label): return "**🏆 勝出**" if label == winner_name else ""
 
-**測試期間**：{start} 起
-**起始本金**：NT${init_bankroll:,.0f}（兩策略各自獨立）
-**停利目標**：NT${_TARGET:,.0f}（{_TARGET/init_bankroll:.0f}倍）｜**停損**：本金歸零
+    md = f"""# 運彩AI分析師 — 三策略回測對比報告
+
+**測試期間**：{start} 起　｜　**起始本金**：各 NT${init_bankroll:,.0f}（三策略各自獨立）
+**停利目標**：NT${_TARGET:,.0f}（{_TARGET/init_bankroll:.0f}倍）　｜　**停損**：本金歸零
 
 ---
 
-## 🥊 策略對決總覽
+## 🥊 三策略對決總覽
 
-| 指標 | 🛡️ 穩健型 | ⚡ 激進型 |
-|---|---|---|
-| 最終本金 | **NT${c['final_bankroll']:,.0f}** | **NT${a['final_bankroll']:,.0f}** |
-| 結束原因 | {c['end_reason_text']} | {a['end_reason_text']} |
-| 總損益 | NT${c['total_pnl']:+,.0f} | NT${a['total_pnl']:+,.0f} |
-| ROI | {c['roi']:+.1f}% | {a['roi']:+.1f}% |
-| 本金高點 | NT${c['peak']:,.0f} | NT${a['peak']:,.0f} |
-| 最大回撤 | -{c['max_dd']:.1f}% | -{a['max_dd']:.1f}% |
-| 下注天數 | {c['bet_days']}/{c['total_days']} 天 | {a['bet_days']}/{a['total_days']} 天 |
-| 單關命中率 | {_sr(c['s_wins'], c['s_total'])} | {_sr(a['s_wins'], a['s_total'])} |
-| 串關命中率 | {_sr(c['p_wins'], c['p_total'])} | {_sr(a['p_wins'], a['p_total'])} |
-| 平均單注 | NT${c_avg_bet:,.0f} | NT${a_avg_bet:,.0f} |
-| 平均賠率 | {c_avg_odds:.2f} | {a_avg_odds:.2f} |
-| 預估達標 | {_target_str(c)} | {_target_str(a)} |
-| **勝出** | {'**{winner_emoji} 勝**' if winner == '穩健型' else ''} | {'**{winner_emoji} 勝**' if winner == '激進型' else ''} |
+| 指標 | 🛡️ 穩健型 | ⚡ 激進型 | 🎯 冷門獵人型 |
+|---|---|---|---|
+| 最終本金 | **NT${c['final_bankroll']:,.0f}** | **NT${a['final_bankroll']:,.0f}** | **NT${u['final_bankroll']:,.0f}** |
+| 結束原因 | {c['end_reason_text']} | {a['end_reason_text']} | {u['end_reason_text']} |
+| 總損益 | NT${c['total_pnl']:+,.0f} | NT${a['total_pnl']:+,.0f} | NT${u['total_pnl']:+,.0f} |
+| ROI | {c['roi']:+.1f}% | {a['roi']:+.1f}% | {u['roi']:+.1f}% |
+| 本金高點 | NT${c['peak']:,.0f} | NT${a['peak']:,.0f} | NT${u['peak']:,.0f} |
+| 最大回撤 | -{c['max_dd']:.1f}% | -{a['max_dd']:.1f}% | -{u['max_dd']:.1f}% |
+| 下注天數 | {c['bet_days']}/{c['total_days']} 天 | {a['bet_days']}/{a['total_days']} 天 | {u['bet_days']}/{u['total_days']} 天 |
+| 單關命中率 | {_sr(c['s_wins'], c['s_total'])} | {_sr(a['s_wins'], a['s_total'])} | {_sr(u['s_wins'], u['s_total'])} |
+| 串關命中率 | {_sr(c['p_wins'], c['p_total'])} | {_sr(a['p_wins'], a['p_total'])} | {_sr(u['p_wins'], u['p_total'])} |
+| 平均單注 | NT${c_avg_bet:,.0f} | NT${a_avg_bet:,.0f} | NT${u_avg_bet:,.0f} |
+| 平均賠率 | {c_avg_odds:.2f} | {a_avg_odds:.2f} | {u_avg_odds:.2f} |
+| 預估達標 | {_target_str(c)} | {_target_str(a)} | {_target_str(u)} |
+| **本輪冠軍** | {_crown('🛡️ 穩健型')} | {_crown('⚡ 激進型')} | {_crown('🎯 冷門獵人型')} |
 
 ---
 
 ## 🛡️ 穩健型策略詳情
 
-> **策略**：Edge ≥ 4% 單關、串關 EV ≥ 8%，凱利 A/25% B/20% C/12%，每日最多 4 場單關
-
-### 整體績效
+> Edge ≥ 4% 單關、串關 EV ≥ 8%，凱利 A/25% B/20% C/12%，每日最多 4 場單關
 
 | 指標 | 數值 |
 |---|---|
-| 最終本金 | NT${c['final_bankroll']:,.0f} |
-| 總損益 | NT${c['total_pnl']:+,.0f}（ROI {c['roi']:+.1f}%） |
+| 最終本金 | NT${c['final_bankroll']:,.0f}（ROI {c['roi']:+.1f}%） |
 | 最大回撤 | -{c['max_dd']:.1f}% |
 | 最長連勝/連敗 | {c['max_streak_win']} 勝 / {c['max_streak_loss']} 敗 |
 | 最佳單注 | {_best(c)} |
 | 最差單注 | {_worst(c)} |
-
-### 球種分析
 
 | 球種 | 注數 | 命中率 | 盈虧 |
 |---|---|---|---|
@@ -592,20 +592,15 @@ def generate_report(
 
 ## ⚡ 激進型策略詳情
 
-> **策略**：串關為主（EV ≥ 4%，賠率上限 30），單關需 Edge ≥ 8%，每日最多 5 組串關，最多 2 場單關
-
-### 整體績效
+> 串關為主（EV ≥ 4%，賠率上限 30），單關需 Edge ≥ 8%，每日最多 5 組串關 + 2 場單關
 
 | 指標 | 數值 |
 |---|---|
-| 最終本金 | NT${a['final_bankroll']:,.0f} |
-| 總損益 | NT${a['total_pnl']:+,.0f}（ROI {a['roi']:+.1f}%） |
+| 最終本金 | NT${a['final_bankroll']:,.0f}（ROI {a['roi']:+.1f}%） |
 | 最大回撤 | -{a['max_dd']:.1f}% |
 | 最長連勝/連敗 | {a['max_streak_win']} 勝 / {a['max_streak_loss']} 敗 |
 | 最佳單注 | {_best(a)} |
 | 最差單注 | {_worst(a)} |
-
-### 球種分析
 
 | 球種 | 注數 | 命中率 | 盈虧 |
 |---|---|---|---|
@@ -616,6 +611,30 @@ def generate_report(
 ### 📒 逐日下注明細
 
 {a['detail_md']}
+
+---
+
+## 🎯 冷門獵人型策略詳情
+
+> 只押冷門（賠率 ≥ 2.00），Edge ≥ 5%，保守凱利 A/15% B/12% C/8%，最多 4 場單關 + 少量冷門串關
+
+| 指標 | 數值 |
+|---|---|
+| 最終本金 | NT${u['final_bankroll']:,.0f}（ROI {u['roi']:+.1f}%） |
+| 最大回撤 | -{u['max_dd']:.1f}% |
+| 最長連勝/連敗 | {u['max_streak_win']} 勝 / {u['max_streak_loss']} 敗 |
+| 最佳單注 | {_best(u)} |
+| 最差單注 | {_worst(u)} |
+
+| 球種 | 注數 | 命中率 | 盈虧 |
+|---|---|---|---|
+| NBA 單關 | {len(u['nba_bets'])} | {_wr(u['nba_bets'])} | NT${_pnl(u['nba_bets']):+,.0f} |
+| MLB 單關 | {len(u['mlb_bets'])} | {_wr(u['mlb_bets'])} | NT${_pnl(u['mlb_bets']):+,.0f} |
+| 串關 | {len(u['par_bets'])} | {_wr(u['par_bets'])} | NT${_pnl(u['par_bets']):+,.0f} |
+
+### 📒 逐日下注明細
+
+{u['detail_md']}
 
 ---
 
@@ -716,13 +735,17 @@ def run(
     logger.info("\n▶ 穩健型策略開始...")
     res_c = _run_strategy(s, today, init_bankroll, CONSERVATIVE, auto_fetch)
 
-    # ── 激進型（數據已快取，auto_fetch 設 False 加速）──
+    # ── 激進型（數據已快取）──
     logger.info("\n▶ 激進型策略開始...")
     res_a = _run_strategy(s, today, init_bankroll, AGGRESSIVE, False)
 
+    # ── 冷門獵人型（數據已快取）──
+    logger.info("\n▶ 冷門獵人型策略開始...")
+    res_u = _run_strategy(s, today, init_bankroll, UNDERDOG, False)
+
     # ── 合併報告 ──
     try:
-        report_md = generate_report(s, init_bankroll, res_c, res_a)
+        report_md = generate_report(s, init_bankroll, res_c, res_a, res_u)
         report_path.write_text(report_md, encoding="utf-8")
         logger.info(f"\n報告已存至：{report_path}")
     except Exception as e:
@@ -731,7 +754,8 @@ def run(
             f"# 回測報告（錯誤摘要）\n\n"
             f"**起始日期**：{s}\n"
             f"**穩健型最終**：NT${res_c['final_bankroll']:,.0f}（{res_c['end_reason']}）\n"
-            f"**激進型最終**：NT${res_a['final_bankroll']:,.0f}（{res_a['end_reason']}）\n\n"
+            f"**激進型最終**：NT${res_a['final_bankroll']:,.0f}（{res_a['end_reason']}）\n"
+            f"**冷門獵人型最終**：NT${res_u['final_bankroll']:,.0f}（{res_u['end_reason']}）\n\n"
             f"> ⚠️ 完整報告生成失敗：{e}\n"
         )
         report_path.write_text(fallback, encoding="utf-8")
@@ -740,6 +764,7 @@ def run(
         "report_path":  str(report_path),
         "conservative": res_c,
         "aggressive":   res_a,
+        "underdog":     res_u,
     }
 
 
@@ -827,7 +852,9 @@ if __name__ == "__main__":
     result = run(start_date=start, init_bankroll=init_b)
     rc = result["conservative"]
     ra = result["aggressive"]
+    ru = result["underdog"]
     print(f"\n{'='*55}")
-    print(f"穩健型：NT${rc['final_bankroll']:,.0f}  ({rc['end_reason']})")
-    print(f"激進型：NT${ra['final_bankroll']:,.0f}  ({ra['end_reason']})")
+    print(f"穩健型：    NT${rc['final_bankroll']:,.0f}  ({rc['end_reason']})")
+    print(f"激進型：    NT${ra['final_bankroll']:,.0f}  ({ra['end_reason']})")
+    print(f"冷門獵人型：NT${ru['final_bankroll']:,.0f}  ({ru['end_reason']})")
     print(f"報告：{result['report_path']}")
