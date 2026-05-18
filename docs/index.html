@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>運彩AI分析師</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+           max-width: 900px; margin: 40px auto; padding: 0 20px; color: #333; }
+    h1   { color: #1a1a2e; border-bottom: 3px solid #e94560; padding-bottom: 8px; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 12px;
+             font-size: 0.85em; font-weight: 600; }
+    .green  { background: #d4edda; color: #155724; }
+    .yellow { background: #fff3cd; color: #856404; }
+    .red    { background: #f8d7da; color: #721c24; }
+    table  { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #ddd; }
+    th     { background: #f8f9fa; font-weight: 600; }
+    tr:hover { background: #f5f5f5; }
+    .bankroll-card { background: linear-gradient(135deg, #1a1a2e, #16213e);
+                     color: white; border-radius: 12px; padding: 24px 32px;
+                     margin: 24px 0; display: flex; gap: 40px; flex-wrap: wrap; }
+    .stat { display: flex; flex-direction: column; }
+    .stat-val { font-size: 2em; font-weight: 700; }
+    .stat-lbl { font-size: 0.8em; opacity: 0.7; margin-top: 4px; }
+    .note { background: #fff8e1; border-left: 4px solid #ffc107;
+            padding: 12px 16px; border-radius: 4px; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <h1>運彩AI分析師</h1>
+
+  <div class="note">
+    報告每日台灣時間 22:00 由 GitHub Actions 自動更新。
+    首次部署後，明日起將顯示實際下注紀錄與本金曲線。
+  </div>
+
+  <div class="bankroll-card" id="bankroll-card">
+    <div class="stat">
+      <span class="stat-val" id="current-bankroll">載入中…</span>
+      <span class="stat-lbl">目前本金 (NT$)</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val" id="roi">—</span>
+      <span class="stat-lbl">累計 ROI</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val" id="report-date">—</span>
+      <span class="stat-lbl">最後更新</span>
+    </div>
+  </div>
+
+  <h2>近期下注紀錄</h2>
+  <p id="no-reports">尚無報告，明日自動生成後將在此顯示。</p>
+  <table id="reports-table" style="display:none">
+    <thead><tr><th>日期</th><th>運動</th><th>比賽</th><th>下注方</th><th>賠率</th><th>金額</th><th>結果</th></tr></thead>
+    <tbody id="reports-body"></tbody>
+  </table>
+
+  <script>
+    async function loadBankroll() {
+      try {
+        const res = await fetch('../data/bankroll.json');
+        if (!res.ok) return;
+        const bk = await res.json();
+        const cur = bk.current ?? bk.bankroll ?? 0;
+        const init = bk.initial ?? 3000;
+        const roi = ((cur - init) / init * 100).toFixed(1);
+        document.getElementById('current-bankroll').textContent =
+          cur.toLocaleString('zh-TW');
+        document.getElementById('roi').textContent =
+          (roi >= 0 ? '+' : '') + roi + '%';
+        document.getElementById('report-date').textContent =
+          bk.last_updated ?? bk.date ?? '—';
+      } catch(e) { /* silently fail */ }
+    }
+    loadBankroll();
+  </script>
+</body>
+</html>
