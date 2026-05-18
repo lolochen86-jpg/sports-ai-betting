@@ -118,6 +118,11 @@ def run(report_date: date | str | None = None, dry_run: bool = False) -> None:
         save_json(_plan_to_dict(plan, dry_run), plan_path)
         logger.info(f"計劃已儲存：{plan_path.name}  單關 {len(plan.single_picks)} 注，串關 {len(plan.parlays)} 組")
 
+    # 冷門獵人型為預設策略（settle.py 讀取無後綴的計劃檔）
+    default_path = LIVE_DIR / f"plan_{d.isoformat()}.json"
+    save_json(_plan_to_dict(plan_u, dry_run), default_path)
+    logger.info(f"預設策略（冷門獵人型）已儲存：{default_path.name}")
+
     # 5. 報告生成（傳入三個策略計劃）
     import report_gen
     report_gen.run(plans=plans, report_date=d)

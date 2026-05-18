@@ -1,0 +1,42 @@
+[
+  {
+    "game_id": "0042500116",
+    "game_date": "2026-04-30",
+    "home_team_id": 1610612755,
+    "away_team_id": 1610612738,
+    "home_team_abbr": "PHI",
+    "away_team_abbr": "BOS",
+    "game_status": 1,
+    "arena": "Xfinity Mobile Arena"
+  },
+  {
+    "game_id": "0042500126",
+    "game_date": "2026-04-30",
+    "home_team_id": 1610612737,
+    "away_team_id": 1610612752,
+    "home_team_abbr": "ATL",
+    "away_team_abbr": "NYK",
+    "game_status": 1,
+    "arena": "State Farm Arena"
+  },
+  {
+    "game_id": "0042500156",
+    "game_date": "2026-04-30",
+    "home_team_id": 1610612757,
+    "away_team_id": 1610612759,
+    "home_team_abbr": "POR",
+    "away_team_abbr": "SAS",
+    "game_status": 1,
+    "arena": "Moda Center"
+  },
+  {
+    "game_id": "0042500166",
+    "game_date": "2026-04-30",
+    "home_team_id": 1610612750,
+    "away_team_id": 1610612743,
+    "home_team_abbr": "MIN",
+    "away_team_abbr": "DEN",
+    "game_status": 1,
+    "arena": "Target Center"
+  }
+]
