@@ -1,0 +1,104 @@
+name: 📊 回測分析
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: '📅 回測起始日期 (YYYY-MM-DD)'
+        required: true
+        default: '2026-05-01'
+      init_bankroll:
+        description: '💰 起始本金（新台幣）'
+        required: true
+        default: '3000'
+        type: choice
+        options:
+          - '3000'
+          - '5000'
+          - '10000'
+      target_bankroll:
+        description: '🎯 停利目標（新台幣）'
+        required: true
+        default: '6000'
+        type: choice
+        options:
+          - '6000'
+          - '9000'
+          - '15000'
+          - '20000'
+
+env:
+  ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+  TZ: Asia/Taipei
+
+jobs:
+  backtest:
+    name: 回測 ${{ github.event.inputs.start_date }} ～ 今日
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 執行回測
+        id: backtest
+        run: |
+          cd scripts
+          python backtest.py \
+            ${{ github.event.inputs.start_date }} \
+            ${{ github.event.inputs.init_bankroll }} \
+            2>&1 | tee /tmp/backtest_output.txt
+
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+
+      - name: 讀取回測結果
+        if: always()
+        run: |
+          # 找最新的報告
+          REPORT=$(ls -t data/backtest/backtest_report_*.md 2>/dev/null | head -1)
+          DAILY=$(ls -t data/backtest/daily_summary_*.csv 2>/dev/null | head -1)
+          BET_LOG=$(ls -t data/backtest/backtest_log_*.csv 2>/dev/null | head -1)
+
+          echo "## 📊 回測報告 — ${{ github.event.inputs.start_date }} 起" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 設定 | 數值 |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| 起始日期 | ${{ github.event.inputs.start_date }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 起始本金 | NT\$${{ github.event.inputs.init_bankroll }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 停利目標 | NT\$${{ github.event.inputs.target_bankroll }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 停損門檻 | NT\$0（歸零） |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "$REPORT" ]; then
+            echo "---" >> $GITHUB_STEP_SUMMARY
+            cat "$REPORT" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ 回測報告未生成，請查看上方 log" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -50 /tmp/backtest_output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 儲存回測資料
+        if: always()
+        run: |
+          git config --global user.name  "Sports AI Bot"
+          git config --global user.email "bot@users.noreply.github.com"
+          git add data/backtest/ data/nba/ data/mlb/ 2>/dev/null || true
+          git diff --staged --quiet || \
+            git commit -m "📊 回測結果 ${{ github.event.inputs.start_date }} NT\$${{ github.event.inputs.init_bankroll }}"
+          git push || true
