@@ -324,12 +324,41 @@ def _settle_strategy_plan(
             "bankroll_after": bk_after,
         }
 
+    def _apply_pnl_to_bankroll(rows: list, bk_data: dict) -> tuple[float, float]:
+        """計算並更新本金，回傳 (old_bal, new_bal)。若該日已在 history 則不重複加。"""
+        already = any(h.get("date") == d.isoformat() for h in bk_data.get("history", []))
+        old_bal = float(bk_data.get("current", 3000.0))
+        if already:
+            return old_bal, old_bal   # 本金已正確，不重複加
+        pnl = sum(float(r.get("pnl", 0)) for r in rows)
+        new_bal = old_bal + pnl
+        bk_data["current"] = new_bal
+        bk_data["peak"]    = max(float(bk_data.get("peak", new_bal)), new_bal)
+        wins   = sum(1 for r in rows if r.get("result") == "WIN")
+        losses = sum(1 for r in rows if r.get("result") == "LOSS")
+        voids  = sum(1 for r in rows if r.get("result") == "VOID")
+        bk_data.setdefault("history", []).append({
+            "date": d.isoformat(), "open": old_bal, "close": new_bal,
+            "pnl": pnl, "bets": len(rows),
+            "wins": wins, "losses": losses, "voids": voids,
+        })
+        save_json(bk_data, bk_path)
+        logger.info(f"  [{slug}] 本金補同步：NT${old_bal:,.0f} → NT${new_bal:,.0f}")
+        return old_bal, new_bal
+
     # ── 幂等：已有策略結算檔 ──────────────────────────────
     if json_exists(settled_path):
         existing = load_json(settled_path)
         if any(r.get("result") in ("WIN", "LOSS") for r in existing):
-            logger.info(f"  [{slug}] 已結算，略過重複扣款")
-            return existing, _make_stats(existing, _cur_bk())
+            # 結算已完成，但檢查本金是否需要補同步（例如上次跑完未 commit）
+            bk_data = load_json(bk_path) if json_exists(bk_path) else {
+                "initial": 3000.0, "current": 3000.0, "peak": 3000.0,
+                "strategy": slug, "history": [],
+            }
+            old_bal, new_bal = _apply_pnl_to_bankroll(existing, bk_data)
+            if old_bal == new_bal:
+                logger.info(f"  [{slug}] 已結算，略過重複扣款")
+            return existing, _make_stats(existing, float(bk_data["current"]))
 
     # ── 向下相容：underdog 首次遷移預設結算檔 ────────────
     if slug == "underdog":
@@ -339,7 +368,13 @@ def _settle_strategy_plan(
             if any(r.get("result") in ("WIN", "LOSS") for r in existing):
                 logger.info(f"  [underdog] 從預設結算檔遷移（backward compat）")
                 save_json(existing, settled_path)
-                return existing, _make_stats(existing, _cur_bk())
+                # 補同步本金
+                bk_data = load_json(bk_path) if json_exists(bk_path) else {
+                    "initial": 3000.0, "current": 3000.0, "peak": 3000.0,
+                    "strategy": slug, "history": [],
+                }
+                _apply_pnl_to_bankroll(existing, bk_data)
+                return existing, _make_stats(existing, float(bk_data.get("current", 3000.0)))
 
     # ── 讀取計劃 ─────────────────────────────────────────
     plan_path = LIVE_DIR / f"plan_{d.isoformat()}_{slug}.json"

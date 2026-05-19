@@ -1,1 +1,1 @@
-{"initial":3000.0,"current":3000.0,"peak":3000.0,"target":12000.0,"ruin_threshold":10.0,"status":"active","start_date":"2026-05-19","strategy":"aggressive","history":[]}
+{"initial":3000.0,"current":2730.0,"peak":3000.0,"target":12000.0,"ruin_threshold":10.0,"status":"active","start_date":"2026-05-18","strategy":"aggressive","history":[{"date":"2026-05-18","open":3000.0,"close":2730.0,"pnl":-270.0,"bets":4,"wins":0,"losses":3,"voids":1}]}
