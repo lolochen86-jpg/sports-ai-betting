@@ -228,45 +228,63 @@ def fetch_today_games(as_of_date: date | str) -> Optional[list]:
     取得指定日期的 NBA 賽事列表。
     來源：NBA Stats API scoreboardv3（季後賽相容）
     回傳：[{game_id, home_team, away_team, game_time_et, arena}, ...]
+    快取：只有成功且有場次才快取（空資料不快取，讓下次重試）
     """
     d = parse_date(as_of_date)
     cache_path = NBA_DIR / f"schedule_{d.isoformat()}.json"
 
     if json_exists(cache_path):
-        logger.info(f"賽程快取命中：{d}")
-        return load_json(cache_path)
+        cached = load_json(cache_path)
+        if cached:  # 有場次才算有效快取
+            logger.info(f"賽程快取命中：{d}（{len(cached)} 場）")
+            return cached
+        logger.info(f"賽程快取為空，重新抓取：{d}")
 
     logger.info(f"抓取 NBA 賽程：{d}")
-    try:
-        from nba_api.stats.endpoints import scoreboardv3
 
-        time.sleep(_API_DELAY)
-        board = scoreboardv3.ScoreboardV3(game_date=d.strftime("%Y-%m-%d"))
-        data = board.get_dict()
-        raw_games = data.get("scoreboard", {}).get("games", [])
+    # ── 最多重試 3 次，timeout 逐次加長 ──────────────────
+    for attempt, timeout_sec in enumerate([30, 60, 90], start=1):
+        try:
+            import nba_api
+            # 動態設定 timeout
+            nba_api.stats.library.parameters.Timeout = timeout_sec
 
-        games = []
-        for g in raw_games:
-            home = g.get("homeTeam", {})
-            away = g.get("awayTeam", {})
-            games.append({
-                "game_id":        str(g.get("gameId", "")),
-                "game_date":      d.isoformat(),
-                "home_team_id":   home.get("teamId", 0),
-                "away_team_id":   away.get("teamId", 0),
-                "home_team_abbr": home.get("teamTricode", ""),
-                "away_team_abbr": away.get("teamTricode", ""),
-                "game_status":    g.get("gameStatus", 1),
-                "arena":          g.get("arena", {}).get("arenaName", ""),
-            })
+            from nba_api.stats.endpoints import scoreboardv3
 
-        save_json(games, cache_path)
-        logger.info(f"今日 NBA 賽程：{len(games)} 場")
-        return games
+            time.sleep(_API_DELAY * attempt)
+            board = scoreboardv3.ScoreboardV3(game_date=d.strftime("%Y-%m-%d"),
+                                              timeout=timeout_sec)
+            data = board.get_dict()
+            raw_games = data.get("scoreboard", {}).get("games", [])
 
-    except Exception as e:
-        logger.error(f"fetch_today_games 失敗：{e}")
-        return None
+            games = []
+            for g in raw_games:
+                home = g.get("homeTeam", {})
+                away = g.get("awayTeam", {})
+                games.append({
+                    "game_id":        str(g.get("gameId", "")),
+                    "game_date":      d.isoformat(),
+                    "home_team_id":   home.get("teamId", 0),
+                    "away_team_id":   away.get("teamId", 0),
+                    "home_team_abbr": home.get("teamTricode", ""),
+                    "away_team_abbr": away.get("teamTricode", ""),
+                    "game_status":    g.get("gameStatus", 1),
+                    "arena":          g.get("arena", {}).get("arenaName", ""),
+                })
+
+            if games:
+                save_json(games, cache_path)  # 有場次才寫快取
+            logger.info(f"今日 NBA 賽程：{len(games)} 場（第{attempt}次嘗試）")
+            return games
+
+        except Exception as e:
+            logger.warning(f"fetch_today_games 第{attempt}次嘗試失敗（timeout={timeout_sec}s）：{e}")
+            if attempt == 3:
+                logger.error("fetch_today_games 全部重試失敗，今日無 NBA 資料")
+                return None
+            time.sleep(5 * attempt)  # 重試前等待
+
+    return None
 
 
 # ── Elo 評分（從歷史戰績計算）────────────────────────────
