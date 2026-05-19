@@ -1,8 +1,8 @@
 {
   "date": "2026-05-19",
-  "bankroll": 2900.0,
+  "bankroll": 2730.0,
   "total_bet": 0,
   "single_picks": [],
   "parlays": [],
-  "dry_run": true
+  "dry_run": false
 }
