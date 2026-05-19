@@ -254,7 +254,7 @@
           <td>{{ loop.index }}</td>
           <td>{{ r.bet_label }}</td>
           <td>{{ r.sport }}</td>
-          <td>{{ "{:.2f}".format(r.odds | float) if r.odds else "—" }}</td>
+          <td>{% set _o = r.odds | default(r.parlay_odds | default(0)) | float %}{{ "{:.2f}".format(_o) if _o > 0 else "—" }}</td>
           <td>NT${{ "{:,.0f}".format(r.bet_amount | float) }}</td>
           <td>
             {% if r.result == "WIN" %}<span class="badge badge-win">✅ 命中</span>

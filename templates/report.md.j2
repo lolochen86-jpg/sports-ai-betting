@@ -49,7 +49,7 @@
 {% else %}
 | # | 下注內容 | 球種 | 賠率 | 下注額 | 結果 | 盈虧 |
 |---|---|---|---|---|---|---|
-{% for r in strat.yesterday_results %}| {{ loop.index }} | {{ r.bet_label }} | {{ r.sport }} | {{ r.odds | float | round(2) }} | {{ r.bet_amount | float | ntd }} | {{ r.result }} | {{ r.pnl | float | sign_ntd }} |
+{% for r in strat.yesterday_results %}| {{ loop.index }} | {{ r.bet_label }} | {{ r.sport }} | {{ r.odds | default(r.parlay_odds | default(0)) | float | round(2) }} | {{ r.bet_amount | float | ntd }} | {{ r.result }} | {{ r.pnl | float | sign_ntd }} |
 {% endfor %}
 合計：{{ strat.yesterday_total }} 注，命中 {{ strat.yesterday_wins }}/{{ strat.yesterday_total }}，盈虧 {{ strat.yesterday_pnl | sign_ntd }}
 {% endif %}
