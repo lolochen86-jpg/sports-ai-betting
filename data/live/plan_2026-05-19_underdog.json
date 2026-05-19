@@ -1,7 +1,7 @@
 {
   "date": "2026-05-19",
-  "bankroll": 3000.0,
-  "total_bet": 60,
+  "bankroll": 2900.0,
+  "total_bet": 50,
   "single_picks": [
     {
       "sport": "MLB",
@@ -71,5 +71,5 @@
     }
   ],
   "parlays": [],
-  "dry_run": false
+  "dry_run": true
 }
