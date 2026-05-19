@@ -27,6 +27,16 @@
       "wins": 0,
       "losses": 0,
       "voids": 3
+    },
+    {
+      "date": "2026-05-18",
+      "open": 3000.0,
+      "close": 3000.0,
+      "pnl": 0.0,
+      "bets": 3,
+      "wins": 0,
+      "losses": 0,
+      "voids": 3
     }
   ]
 }
