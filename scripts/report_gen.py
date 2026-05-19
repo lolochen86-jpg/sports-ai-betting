@@ -100,17 +100,65 @@ def _compute_streak(history: list) -> int:
 def load_yesterday_results(yesterday: date) -> list[dict]:
     """
     讀取昨日每注的結算結果。
-    來源：data/backtest/backtest_log_*.csv 或 data/live/picks_YYYY-MM-DD.json
+    若已結算：從 settled_YYYY-MM-DD.json 讀取。
+    若未結算但有計劃：從三策略計劃產生「待結算」記錄。
     """
     from utils import BACKTEST_DIR
     import csv
 
-    # 優先讀取 live picks 結算檔
-    live_path = DATA_DIR / "live" / f"settled_{yesterday.isoformat()}.json"
-    if json_exists(live_path):
-        return load_json(live_path)
+    LIVE_DIR = DATA_DIR / "live"
 
-    # 回測模式：從 CSV 讀取
+    # 1. 優先讀取 live 結算檔
+    live_path = LIVE_DIR / f"settled_{yesterday.isoformat()}.json"
+    if json_exists(live_path):
+        data = load_json(live_path)
+        if data:  # 非空才回傳（空代表強制跳過）
+            return data
+
+    # 2. 有計劃但未結算 → 產生「待結算」記錄
+    pending = []
+    for slug in ["conservative", "aggressive", "underdog"]:
+        plan_path = LIVE_DIR / f"plan_{yesterday.isoformat()}_{slug}.json"
+        if not json_exists(plan_path):
+            continue
+        plan = load_json(plan_path)
+        bk   = float(plan.get("bankroll", 3000.0))
+        slug_label = {"conservative": "穩健型", "aggressive": "激進型",
+                      "underdog": "冷門獵人型"}.get(slug, slug)
+        for p in plan.get("single_picks", []):
+            kf  = float(p.get("kelly_frac", 0))
+            amt = max(10.0, round(kf * bk / 10) * 10)
+            pending.append({
+                "date":       yesterday.isoformat(),
+                "strategy":   slug_label,
+                "sport":      p.get("sport", ""),
+                "game_id":    str(p.get("game_id", "")),
+                "bet_label":  p.get("bet_label", ""),
+                "odds":       p.get("odds", 0),
+                "bet_amount": amt,
+                "result":     "PENDING",
+                "pnl":        0.0,
+            })
+        for par in plan.get("parlays", []):
+            kf  = float(par.get("kelly_frac", 0))
+            amt = max(10.0, round(kf * bk / 10) * 10)
+            legs = par.get("legs", [])
+            label = f"{len(legs)}-串（{'、'.join(lg.get('bet_label','') for lg in legs)}）"
+            pending.append({
+                "date":       yesterday.isoformat(),
+                "strategy":   slug_label,
+                "sport":      "PARLAY",
+                "game_id":    "",
+                "bet_label":  label,
+                "odds":       par.get("parlay_odds", 0),
+                "bet_amount": amt,
+                "result":     "PENDING",
+                "pnl":        0.0,
+            })
+    if pending:
+        return pending
+
+    # 3. 回測模式：從 CSV 讀取
     for csv_path in sorted((BACKTEST_DIR).glob("backtest_log_*.csv"), reverse=True):
         try:
             with open(csv_path, newline="", encoding="utf-8") as f:

@@ -105,6 +105,7 @@ def get_nba_winner(game_id: str, game_date: date) -> Optional[str]:
 def get_mlb_winner(game_pk: int, game_date: date) -> Optional[str]:
     """
     從 MLB Stats API 取得比賽勝隊縮寫。
+    使用 /linescore 端點（/feed/live 可能回傳 404）。
     """
     cache_path = MLB_DIR / f"result_{game_pk}_{game_date.isoformat()}.json"
     if json_exists(cache_path):
@@ -112,28 +113,35 @@ def get_mlb_winner(game_pk: int, game_date: date) -> Optional[str]:
         return data.get("winner")
 
     try:
-        # 取比賽狀態
-        url  = f"{_MLB_API}/game/{game_pk}/feed/live"
-        resp = requests.get(url, headers=_HEADERS, timeout=20)
-        resp.raise_for_status()
-        data = resp.json()
+        # 先從 schedule 取隊名縮寫與狀態
+        sched_url = f"{_MLB_API}/schedule?sportId=1&gamePk={game_pk}"
+        sr = requests.get(sched_url, headers=_HEADERS, timeout=15)
+        sr.raise_for_status()
+        sched = sr.json()
+        games = sched.get("dates", [{}])[0].get("games", [])
+        if not games:
+            logger.warning(f"  MLB {game_pk}：schedule 找不到此場次")
+            return None
 
-        status = data.get("gameData", {}).get("status", {}).get("abstractGameState", "")
+        g = games[0]
+        status = g.get("status", {}).get("abstractGameState", "")
         if status != "Final":
             logger.info(f"  MLB {game_pk}：比賽尚未結束（{status}）")
             return None
 
-        linescore = data.get("liveData", {}).get("linescore", {})
-        home_runs = linescore.get("teams", {}).get("home", {}).get("runs")
-        away_runs = linescore.get("teams", {}).get("away", {}).get("runs")
+        home_abbr = g.get("teams", {}).get("home", {}).get("team", {}).get("abbreviation", "")
+        away_abbr = g.get("teams", {}).get("away", {}).get("team", {}).get("abbreviation", "")
+
+        # 用 linescore 取得比分
+        ls_url = f"{_MLB_API}/game/{game_pk}/linescore"
+        lr = requests.get(ls_url, headers=_HEADERS, timeout=15)
+        lr.raise_for_status()
+        ls = lr.json()
+        home_runs = ls.get("teams", {}).get("home", {}).get("runs")
+        away_runs = ls.get("teams", {}).get("away", {}).get("runs")
 
         if home_runs is None or away_runs is None:
             return None
-
-        # 取隊名縮寫
-        game_data  = data.get("gameData", {})
-        home_abbr  = game_data.get("teams", {}).get("home", {}).get("abbreviation", "")
-        away_abbr  = game_data.get("teams", {}).get("away", {}).get("abbreviation", "")
 
         winner = home_abbr if home_runs > away_runs else away_abbr
         loser  = away_abbr if home_runs > away_runs else home_abbr
@@ -287,8 +295,19 @@ def run(settle_date: date | str | None = None) -> dict:
     plan     = load_json(plan_path)
     bankroll = float(plan.get("bankroll", 3000.0))
 
-    # ── 抓取所有涉及賽事的結果 ──────────────────────────────
+    # ── 抓取所有策略計劃中涉及的賽事 ───────────────────────
+    # 同時讀三個策略，確保 winners dict 涵蓋所有賽事
     game_ids: set[str] = set()
+    all_slugs = ["conservative", "aggressive", "underdog"]
+    for slug in all_slugs:
+        p2 = LIVE_DIR / f"plan_{d.isoformat()}_{slug}.json"
+        extra = load_json(p2) if json_exists(p2) else {}
+        for p in extra.get("single_picks", []):
+            game_ids.add(str(p.get("game_id", "")))
+        for par in extra.get("parlays", []):
+            for leg in par.get("legs", []):
+                game_ids.add(str(leg.get("game_id", "")))
+    # 預設計劃也加入
     for p in plan.get("single_picks", []):
         game_ids.add(str(p.get("game_id", "")))
     for par in plan.get("parlays", []):

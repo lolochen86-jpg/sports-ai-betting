@@ -41,9 +41,10 @@
 
   /* Badges */
   .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 600; }
-  .badge-win  { background: rgba(72,187,120,0.15); color: var(--green); }
-  .badge-loss { background: rgba(252,129,129,0.15); color: var(--red); }
-  .badge-void { background: rgba(113,128,150,0.15); color: var(--muted); }
+  .badge-win     { background: rgba(72,187,120,0.15); color: var(--green); }
+  .badge-loss    { background: rgba(252,129,129,0.15); color: var(--red); }
+  .badge-void    { background: rgba(113,128,150,0.15); color: var(--muted); }
+  .badge-pending { background: rgba(246,173,85,0.15); color: var(--orange); }
   .badge-A    { background: rgba(99,179,237,0.15); color: var(--accent); }
   .badge-B    { background: rgba(183,148,244,0.15); color: var(--purple); }
   .badge-C    { background: rgba(246,224,94,0.15); color: var(--yellow); }
@@ -169,12 +170,13 @@
   {% if yesterday_results %}
   <table>
     <thead>
-      <tr><th>#</th><th>下注方向</th><th>球種</th><th>賠率</th><th>下注額</th><th>結果</th><th>盈虧</th></tr>
+      <tr><th>#</th><th>策略</th><th>下注方向</th><th>球種</th><th>賠率</th><th>下注額</th><th>結果</th><th>盈虧</th></tr>
     </thead>
     <tbody>
       {% for r in yesterday_results %}
       <tr>
         <td>{{ loop.index }}</td>
+        <td style="font-size:0.75rem;color:var(--muted)">{{ r.strategy if r.strategy is defined else "—" }}</td>
         <td>{{ r.bet_label }}</td>
         <td>{{ r.sport }}</td>
         <td>{{ "{:.2f}".format(r.odds | float) }}</td>
@@ -182,20 +184,28 @@
         <td>
           {% if r.result == "WIN" %}<span class="badge badge-win">✅ 命中</span>
           {% elif r.result == "LOSS" %}<span class="badge badge-loss">❌ 未中</span>
+          {% elif r.result == "PENDING" %}<span class="badge badge-pending">⏳ 待結算</span>
           {% else %}<span class="badge badge-void">⚪ 取消</span>{% endif %}
         </td>
-        <td style="color:{% if r.pnl | float >= 0 %}var(--green){% else %}var(--red){% endif %}">
-          {% if r.pnl | float >= 0 %}+{% endif %}NT${{ "{:,.0f}".format(r.pnl | float) }}
+        <td style="color:{% if r.result == 'PENDING' %}var(--orange){% elif r.pnl | float >= 0 %}var(--green){% else %}var(--red){% endif %}">
+          {% if r.result == "PENDING" %}—
+          {% elif r.pnl | float >= 0 %}+NT${{ "{:,.0f}".format(r.pnl | float) }}
+          {% else %}NT${{ "{:,.0f}".format(r.pnl | float) }}{% endif %}
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
   <p style="font-size:0.85rem;color:var(--muted)">
-    合計：投入 NT${{ "{:,.0f}".format(yesterday_total_bet) }}，
-    命中 {{ yesterday_wins }}/{{ yesterday_total }}，
-    盈虧 <strong style="color:{% if yesterday_pnl >= 0 %}var(--green){% else %}var(--red){% endif %}">
-    {% if yesterday_pnl >= 0 %}+{% endif %}NT${{ "{:,.0f}".format(yesterday_pnl) }}</strong>
+    合計：投入 NT${{ "{:,.0f}".format(yesterday_total_bet) }}
+    {% set has_pending = yesterday_results | selectattr("result", "eq", "PENDING") | list %}
+    {% if has_pending %}
+    · <span style="color:var(--orange)">⏳ {{ has_pending | length }} 注待結算（比賽進行中）</span>
+    {% else %}
+    · 命中 {{ yesterday_wins }}/{{ yesterday_total }}
+    · 盈虧 <strong style="color:{% if yesterday_pnl >= 0 %}var(--green){% else %}var(--red){% endif %}">
+      {% if yesterday_pnl >= 0 %}+{% endif %}NT${{ "{:,.0f}".format(yesterday_pnl) }}</strong>
+    {% endif %}
   </p>
   {% else %}
   <p style="color:var(--muted);font-size:0.875rem">昨日無下注記錄（起始日）。</p>
