@@ -40,7 +40,7 @@
 
 {% if strategies %}
 {% for strat in strategies %}
-### {{ strat.name }}
+### {{ strat.name }}{% if strat.bankroll_current is defined %} · 本金 NT${{ "{:,.0f}".format(strat.bankroll_current) }}（{% if strat.bankroll_roi >= 0 %}+{% endif %}{{ "{:.1f}".format(strat.bankroll_roi) }}%）{% endif %}
 
 {% if strat.no_picks %}
 > 今日無符合門檻的選場。

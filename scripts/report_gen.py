@@ -32,8 +32,36 @@ TEMPLATE_DIR = ROOT_DIR / "templates"
 BANKROLL_PATH    = DATA_DIR / "bankroll.json"
 PERFORMANCE_PATH = DATA_DIR / "performance.json"
 
+_STRATEGY_SLUGS  = ["conservative", "aggressive", "underdog"]
+_STRATEGY_LABELS = {"conservative": "穩健型", "aggressive": "激進型", "underdog": "冷門獵人型"}
+
 REPORTS_DIR.mkdir(exist_ok=True)
 DOCS_DIR.mkdir(exist_ok=True)
+
+
+# ── 策略本金帳本 ──────────────────────────────────────────
+def load_strategy_bankroll(slug: str) -> dict:
+    """讀取單一策略的本金帳本。"""
+    path = DATA_DIR / f"bankroll_{slug}.json"
+    if json_exists(path):
+        return load_json(path)
+    # fallback：使用共用帳本
+    return load_bankroll()
+
+
+def load_all_strategy_bankrolls() -> dict[str, dict]:
+    """載入三個策略的本金帳本。"""
+    return {slug: load_strategy_bankroll(slug) for slug in _STRATEGY_SLUGS}
+
+
+def strategy_bankroll_stats(bk: dict) -> dict:
+    """計算策略本金的 ROI / drawdown 等統計。"""
+    cur  = float(bk.get("current", 3000.0))
+    init = float(bk.get("initial", 3000.0))
+    peak = float(bk.get("peak", cur))
+    roi  = (cur - init) / init * 100 if init > 0 else 0.0
+    dd   = (peak - cur) / peak * 100 if peak > 0 else 0.0
+    return {"current": cur, "initial": init, "peak": peak, "roi": roi, "drawdown": dd}
 
 
 # ── 本金帳本 ──────────────────────────────────────────────
@@ -261,22 +289,28 @@ def _build_context(
 
     total_today = sum(s["amount"] for s in singles) + sum(p["amount"] for p in parlays)
 
-    # 三策略資料
-    _STRATEGY_LABELS = {
-        "conservative": "穩健型",
-        "aggressive":   "激進型",
-        "underdog":     "冷門獵人型",
-    }
+    # 三策略資料（各自使用策略本金計算下注額）
+    strat_bankrolls = load_all_strategy_bankrolls()
     strategies = []
     if plans:
         for slug, label in _STRATEGY_LABELS.items():
-            p = plans.get(slug)
+            p        = plans.get(slug)
+            strat_bk = strat_bankrolls.get(slug, {})
+            bk_stats = strategy_bankroll_stats(strat_bk)
+            cur_bk   = bk_stats["current"]   # 策略自己的本金
+
             if p is None:
-                strategies.append({"name": label, "singles": [], "parlays": [], "total": 0, "no_picks": True})
+                strategies.append({
+                    "name": label, "slug": slug,
+                    "singles": [], "parlays": [], "total": 0, "no_picks": True,
+                    "bankroll_current": cur_bk,
+                    "bankroll_roi":     bk_stats["roi"],
+                    "bankroll_dd":      bk_stats["drawdown"],
+                })
                 continue
             s_list = []
             for pick in p.single_picks:
-                amt = pick.bet_amount(stats["current"])
+                amt = pick.bet_amount(cur_bk)   # ← 用策略本金
                 s_list.append({
                     "label":     pick.bet_label,
                     "sport":     pick.sport,
@@ -290,7 +324,7 @@ def _build_context(
                 })
             pa_list = []
             for par in p.parlays:
-                amt = par.bet_amount(stats["current"])
+                amt = par.bet_amount(cur_bk)    # ← 用策略本金
                 pa_list.append({
                     "label":       par.label,
                     "legs":        [{"label": lg.bet_label, "odds": lg.odds} for lg in par.legs],
@@ -302,10 +336,14 @@ def _build_context(
             total = sum(x["amount"] for x in s_list) + sum(x["amount"] for x in pa_list)
             strategies.append({
                 "name":     label,
+                "slug":     slug,
                 "singles":  s_list,
                 "parlays":  pa_list,
                 "total":    total,
                 "no_picks": len(s_list) == 0 and len(pa_list) == 0,
+                "bankroll_current": cur_bk,
+                "bankroll_roi":     bk_stats["roi"],
+                "bankroll_dd":      bk_stats["drawdown"],
             })
 
     # 整體勝率

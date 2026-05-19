@@ -58,32 +58,44 @@ def run(report_date: date | str | None = None, dry_run: bool = False) -> None:
             else:
                 mlb_games = []
 
-    # 3. 分析引擎
-    from utils import load_json as lj
-    bk = lj(DATA_DIR / "bankroll.json") if json_exists(DATA_DIR / "bankroll.json") \
-         else {"current": 3000.0}
-    bankroll = bk.get("current", 3000.0)
+    # 3. 分析引擎（三策略各自讀取獨立本金）
+    def _load_strategy_bankroll(slug: str) -> float:
+        """讀取策略專屬本金帳本，若不存在則 fallback 到共用帳本。"""
+        path = DATA_DIR / f"bankroll_{slug}.json"
+        if json_exists(path):
+            return float(load_json(path).get("current", 3000.0))
+        # fallback：讀共用帳本
+        bk_path = DATA_DIR / "bankroll.json"
+        return float((load_json(bk_path) if json_exists(bk_path) else {}).get("current", 3000.0))
 
-    # ── 停利停損檢查 ────────────────────────────────────────
+    bankroll_c = _load_strategy_bankroll("conservative")
+    bankroll_a = _load_strategy_bankroll("aggressive")
+    bankroll_u = _load_strategy_bankroll("underdog")
+    logger.info(f"  本金 穩健型 NT${bankroll_c:,.0f} / 激進型 NT${bankroll_a:,.0f} / 冷門型 NT${bankroll_u:,.0f}")
+
+    # ── 停利停損檢查（以 underdog 本金為基準）──────────────
     from analyze import check_stop_condition, _TARGET_BANKROLL, _RUIN_THRESHOLD
-    should_stop, stop_reason = check_stop_condition(bankroll)
+    should_stop, stop_reason = check_stop_condition(bankroll_u)
     if should_stop:
         logger.warning(f"===== 停止交易 =====")
         logger.warning(stop_reason)
-        # 更新 bankroll.json 狀態
-        bk["status"] = "target_reached" if bankroll >= _TARGET_BANKROLL else "ruined"
-        bk["stop_date"] = d.isoformat()
-        bk["stop_reason"] = stop_reason
-        save_json(bk, DATA_DIR / "bankroll.json")
+        # 更新 bankroll_underdog.json 狀態
+        bk_u = load_json(DATA_DIR / "bankroll_underdog.json") if json_exists(DATA_DIR / "bankroll_underdog.json") else {}
+        bk_u["status"]      = "target_reached" if bankroll_u >= _TARGET_BANKROLL else "ruined"
+        bk_u["stop_date"]   = d.isoformat()
+        bk_u["stop_reason"] = stop_reason
+        save_json(bk_u, DATA_DIR / "bankroll_underdog.json")
+        # 同步 bankroll.json
+        save_json(bk_u, DATA_DIR / "bankroll.json")
         # 仍生成報告（但無下注計劃）
         import report_gen
         report_gen.run(plan=None, report_date=d)
         return
 
-    # 三個策略分別執行
-    plan_c = analyze_run(nba_games, mlb_games, bankroll, d.isoformat(), cfg=CONSERVATIVE)
-    plan_a = analyze_run(nba_games, mlb_games, bankroll, d.isoformat(), cfg=AGGRESSIVE)
-    plan_u = analyze_run(nba_games, mlb_games, bankroll, d.isoformat(), cfg=UNDERDOG)
+    # 三個策略分別執行，使用各自本金
+    plan_c = analyze_run(nba_games, mlb_games, bankroll_c, d.isoformat(), cfg=CONSERVATIVE)
+    plan_a = analyze_run(nba_games, mlb_games, bankroll_a, d.isoformat(), cfg=AGGRESSIVE)
+    plan_u = analyze_run(nba_games, mlb_games, bankroll_u, d.isoformat(), cfg=UNDERDOG)
 
     plans = {
         "conservative": plan_c,

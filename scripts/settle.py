@@ -265,112 +265,110 @@ def _estimate_amount(pick: dict) -> float:
     return max(10.0, round(amount / 10) * 10)
 
 
-# ── 每日結算主流程 ─────────────────────────────────────────
-def run(settle_date: date | str | None = None) -> dict:
-    """
-    結算指定日期的所有下注。
-    settle_date：要結算的比賽日期（通常是昨天）。
-    回傳：{"pnl": ..., "wins": ..., "losses": ..., "bankroll": ...}
-    """
-    d = parse_date(settle_date) if settle_date else today_tw() - timedelta(days=1)
-    logger.info(f"===== 結算日期：{d} =====")
-
-    # ── 已結算則跳過（避免重複扣款）──────────────────────────
-    settled_path = LIVE_DIR / f"settled_{d.isoformat()}.json"
-    if json_exists(settled_path):
-        existing = load_json(settled_path)
-        if any(r.get("result") in ("WIN", "LOSS") for r in existing):
-            logger.info(f"  已結算（{settled_path.name}），略過重複扣款")
-            bk_path = DATA_DIR / "bankroll.json"
-            cur_bk  = (load_json(bk_path) if json_exists(bk_path) else {}).get("current", 0.0)
-            pnl     = sum(float(r.get("pnl", 0)) for r in existing)
-            wins    = sum(1 for r in existing if r.get("result") == "WIN")
-            losses  = sum(1 for r in existing if r.get("result") == "LOSS")
-            return {"pnl": pnl, "wins": wins, "losses": losses, "voids": 0,
-                    "bets": len(existing), "date": d.isoformat(),
-                    "bankroll_before": cur_bk, "bankroll_after": cur_bk}
-
-    # 讀取計劃
-    plan_path = LIVE_DIR / f"plan_{d.isoformat()}.json"
-    if not json_exists(plan_path):
-        logger.warning(f"找不到計劃檔：{plan_path.name}，略過結算")
-        bk_path = DATA_DIR / "bankroll.json"
-        cur_bk  = (load_json(bk_path) if json_exists(bk_path) else {}).get("current", 0.0)
-        return {"pnl": 0.0, "wins": 0, "losses": 0, "voids": 0, "bets": 0,
-                "date": d.isoformat(), "bankroll_before": cur_bk, "bankroll_after": cur_bk}
-
-    plan     = load_json(plan_path)
-    bankroll = float(plan.get("bankroll", 3000.0))
-
-    # ── 抓取所有涉及賽事的結果 ──────────────────────────────
-    game_ids: set[str] = set()
+# ── 輔助：收集計劃中所有 game_id ──────────────────────────
+def _collect_game_ids(plan: dict) -> set[str]:
+    ids: set[str] = set()
     for p in plan.get("single_picks", []):
-        game_ids.add(str(p.get("game_id", "")))
+        ids.add(str(p.get("game_id", "")))
     for par in plan.get("parlays", []):
         for leg in par.get("legs", []):
-            game_ids.add(str(leg.get("game_id", "")))
+            ids.add(str(leg.get("game_id", "")))
+    ids.discard("")
+    return ids
 
+
+# ── 輔助：批次抓取所有比賽勝隊 ──────────────────────────────
+def _fetch_winners(game_ids: set[str], d: date) -> dict[str, Optional[str]]:
     winners: dict[str, Optional[str]] = {}
     for gid in game_ids:
-        if not gid:
-            continue
-        # 從 NBA 快取或即時抓取判斷 sport
         nba_result = NBA_DIR / f"result_{gid}_{d.isoformat()}.json"
         mlb_result = MLB_DIR / f"result_{gid}_{d.isoformat()}.json"
-
         if json_exists(nba_result):
             winners[gid] = load_json(nba_result).get("winner")
         elif json_exists(mlb_result):
             winners[gid] = load_json(mlb_result).get("winner")
         else:
-            # 先嘗試 NBA
             w = get_nba_winner(gid, d)
             if w:
                 winners[gid] = w
             else:
-                # 嘗試 MLB（game_id 可能是 game_pk 數字）
                 try:
-                    w = get_mlb_winner(int(gid), d)
-                    winners[gid] = w
+                    winners[gid] = get_mlb_winner(int(gid), d)
                 except ValueError:
                     winners[gid] = None
+    return winners
 
-    logger.info(f"結果取得：{sum(1 for v in winners.values() if v)} / {len(winners)} 場")
 
-    # ── 逐注結算 ──────────────────────────────────────────
-    settled_rows = []
-    total_pnl    = 0.0
+# ── 單策略結算（含幂等保護 + 獨立本金更新）────────────────
+def _settle_strategy_plan(
+    d: date, slug: str, winners: dict[str, Optional[str]]
+) -> tuple[list, dict]:
+    """
+    結算一個策略的計劃，更新對應 bankroll_{slug}.json。
+    回傳 (settled_rows, stats_dict)。
+    """
+    settled_path = LIVE_DIR / f"settled_{d.isoformat()}_{slug}.json"
+    bk_path      = DATA_DIR / f"bankroll_{slug}.json"
+
+    def _cur_bk() -> float:
+        return (load_json(bk_path) if json_exists(bk_path) else {}).get("current", 3000.0)
+
+    def _make_stats(rows: list, bk_after: float) -> dict:
+        pnl = sum(float(r.get("pnl", 0)) for r in rows)
+        return {
+            "pnl":     pnl,
+            "wins":    sum(1 for r in rows if r.get("result") == "WIN"),
+            "losses":  sum(1 for r in rows if r.get("result") == "LOSS"),
+            "voids":   sum(1 for r in rows if r.get("result") == "VOID"),
+            "bets":    len(rows),
+            "bankroll_after": bk_after,
+        }
+
+    # ── 幂等：已有策略結算檔 ──────────────────────────────
+    if json_exists(settled_path):
+        existing = load_json(settled_path)
+        if any(r.get("result") in ("WIN", "LOSS") for r in existing):
+            logger.info(f"  [{slug}] 已結算，略過重複扣款")
+            return existing, _make_stats(existing, _cur_bk())
+
+    # ── 向下相容：underdog 首次遷移預設結算檔 ────────────
+    if slug == "underdog":
+        default_settled = LIVE_DIR / f"settled_{d.isoformat()}.json"
+        if json_exists(default_settled):
+            existing = load_json(default_settled)
+            if any(r.get("result") in ("WIN", "LOSS") for r in existing):
+                logger.info(f"  [underdog] 從預設結算檔遷移（backward compat）")
+                save_json(existing, settled_path)
+                return existing, _make_stats(existing, _cur_bk())
+
+    # ── 讀取計劃 ─────────────────────────────────────────
+    plan_path = LIVE_DIR / f"plan_{d.isoformat()}_{slug}.json"
+    if not json_exists(plan_path) and slug == "underdog":
+        plan_path = LIVE_DIR / f"plan_{d.isoformat()}.json"   # backward compat
+    if not json_exists(plan_path):
+        logger.info(f"  [{slug}] 無計劃檔，略過結算")
+        return [], _make_stats([], _cur_bk())
+
+    plan     = load_json(plan_path)
+    bankroll = float(plan.get("bankroll", 3000.0))
+
+    # ── 逐注結算 ─────────────────────────────────────────
+    settled_rows: list = []
+    total_pnl = 0.0
     wins = losses = voids = 0
 
     for p in plan.get("single_picks", []):
         gid    = str(p.get("game_id", ""))
         winner = winners.get(gid)
-
-        # 若尚無結果，嘗試即時再抓一次
-        if winner is None:
-            sport = p.get("sport", "")
-            if sport == "NBA":
-                winner = get_nba_winner(gid, d)
-            elif sport == "MLB":
-                try:
-                    winner = get_mlb_winner(int(gid), d)
-                except ValueError:
-                    pass
-            winners[gid] = winner
-
-        row = settle_single_pick(p, winner)
+        row    = settle_single_pick(p, winner)
         settled_rows.append(row)
         total_pnl += row["pnl"]
-        if row["result"] == "WIN":
-            wins  += 1
-        elif row["result"] == "LOSS":
-            losses += 1
-        else:
-            voids += 1
-
+        if row["result"] == "WIN":    wins   += 1
+        elif row["result"] == "LOSS": losses += 1
+        else:                         voids  += 1
         icon = {"WIN": "✅", "LOSS": "❌", "VOID": "⚪"}[row["result"]]
         logger.info(
-            f"  {icon} {p.get('bet_label')} @{p.get('odds'):.2f} "
+            f"  [{slug}] {icon} {p.get('bet_label')} @{p.get('odds', 0):.2f} "
             f"→ {row['result']} NT${row['pnl']:+,.0f}"
         )
 
@@ -378,58 +376,109 @@ def run(settle_date: date | str | None = None) -> dict:
         row = settle_parlay_pick(par, winners, bankroll)
         settled_rows.append(row)
         total_pnl += row["pnl"]
-        if row["result"] == "WIN":
-            wins  += 1
-        elif row["result"] == "LOSS":
-            losses += 1
-        else:
-            voids += 1
-
+        if row["result"] == "WIN":    wins   += 1
+        elif row["result"] == "LOSS": losses += 1
+        else:                         voids  += 1
         icon = {"WIN": "✅", "LOSS": "❌", "VOID": "⚪"}[row["result"]]
         logger.info(
-            f"  {icon} {par.get('bet_label','串關')} @{par.get('parlay_odds'):.2f} "
+            f"  [{slug}] {icon} 串關 @{par.get('parlay_odds', 0):.2f} "
             f"→ {row['result']} NT${row['pnl']:+,.0f}"
         )
 
-    # ── 更新 bankroll.json ──────────────────────────────────
-    bk_path  = DATA_DIR / "bankroll.json"
-    bankroll_data = load_json(bk_path) if json_exists(bk_path) else {
-        "initial": 3000.0, "current": 3000.0, "peak": 3000.0, "history": []
+    # ── 更新 bankroll_{slug}.json ────────────────────────
+    bk_data = load_json(bk_path) if json_exists(bk_path) else {
+        "initial": 3000.0, "current": 3000.0, "peak": 3000.0,
+        "strategy": slug, "history": [],
     }
-    old_balance = bankroll_data["current"]
-    new_balance = old_balance + total_pnl
-    bankroll_data["current"] = new_balance
-    bankroll_data["peak"]    = max(bankroll_data["peak"], new_balance)
-    bankroll_data["history"].append({
+    old_bal  = float(bk_data.get("current", 3000.0))
+    new_bal  = old_bal + total_pnl
+    bk_data["current"] = new_bal
+    bk_data["peak"]    = max(float(bk_data.get("peak", new_bal)), new_bal)
+    bk_data.setdefault("history", []).append({
         "date":   d.isoformat(),
-        "open":   old_balance,
-        "close":  new_balance,
+        "open":   old_bal,
+        "close":  new_bal,
         "pnl":    total_pnl,
         "bets":   len(settled_rows),
         "wins":   wins,
         "losses": losses,
         "voids":  voids,
     })
-    save_json(bankroll_data, bk_path)
+    save_json(bk_data, bk_path)
 
-    # ── 儲存結算結果 ────────────────────────────────────────
-    settled_path = LIVE_DIR / f"settled_{d.isoformat()}.json"
+    # ── 寫入策略結算檔 ────────────────────────────────────
     save_json(settled_rows, settled_path)
 
-    logger.info(f"===== 結算完成 =====")
-    logger.info(f"  勝 {wins} / 負 {losses} / 取消 {voids}")
-    logger.info(f"  今日盈虧：NT${total_pnl:+,.0f}")
-    logger.info(f"  本金：NT${old_balance:,.0f} → NT${new_balance:,.0f}")
+    logger.info(
+        f"  [{slug}] 勝{wins}/負{losses}/取消{voids} "
+        f"| NT${total_pnl:+,.0f} | NT${old_bal:,.0f}→NT${new_bal:,.0f}"
+    )
+
+    stats = _make_stats(settled_rows, new_bal)
+    stats["bankroll_before"] = old_bal
+    return settled_rows, stats
+
+
+# ── 每日結算主流程 ─────────────────────────────────────────
+def run(settle_date: date | str | None = None) -> dict:
+    """
+    結算指定日期三個策略的所有下注，分別更新各自的本金帳本。
+    settle_date：要結算的比賽日期（通常是昨天）。
+    回傳：向下相容的 dict（以 underdog 策略為主），並附加 "strategies" 欄位。
+    """
+    d = parse_date(settle_date) if settle_date else today_tw() - timedelta(days=1)
+    logger.info(f"===== 結算日期：{d}（三策略獨立本金）=====")
+
+    # ── 收集全策略的 game_id，批次抓取勝隊 ────────────────
+    all_game_ids: set[str] = set()
+    for slug in ["conservative", "aggressive", "underdog"]:
+        plan_path = LIVE_DIR / f"plan_{d.isoformat()}_{slug}.json"
+        if not json_exists(plan_path) and slug == "underdog":
+            plan_path = LIVE_DIR / f"plan_{d.isoformat()}.json"
+        if json_exists(plan_path):
+            all_game_ids |= _collect_game_ids(load_json(plan_path))
+
+    winners = _fetch_winners(all_game_ids, d)
+    logger.info(f"結果取得：{sum(1 for v in winners.values() if v)} / {len(winners)} 場")
+
+    # ── 三策略分別結算 ────────────────────────────────────
+    strategy_results: dict[str, tuple[list, dict]] = {}
+    for slug in ["conservative", "aggressive", "underdog"]:
+        rows, stats = _settle_strategy_plan(d, slug, winners)
+        strategy_results[slug] = (rows, stats)
+
+    # ── Backward compat：確保預設結算檔存在（= underdog）─────
+    default_settled = LIVE_DIR / f"settled_{d.isoformat()}.json"
+    if not json_exists(default_settled):
+        underdog_rows, _ = strategy_results["underdog"]
+        save_json(underdog_rows, default_settled)
+
+    # ── Backward compat：同步 bankroll.json = bankroll_underdog.json ──
+    bk_underdog_path = DATA_DIR / "bankroll_underdog.json"
+    bk_default_path  = DATA_DIR / "bankroll.json"
+    if json_exists(bk_underdog_path):
+        save_json(load_json(bk_underdog_path), bk_default_path)
+
+    _, underdog_stats = strategy_results["underdog"]
+
+    logger.info(f"===== 三策略結算完成 =====")
+    for slug in ["conservative", "aggressive", "underdog"]:
+        _, s = strategy_results[slug]
+        logger.info(
+            f"  {slug}: 勝{s['wins']}/負{s['losses']} "
+            f"| 本金 NT${s['bankroll_after']:,.0f}"
+        )
 
     return {
-        "date":        d.isoformat(),
-        "pnl":         total_pnl,
-        "wins":        wins,
-        "losses":      losses,
-        "voids":       voids,
-        "bets":        len(settled_rows),
-        "bankroll_before": old_balance,
-        "bankroll_after":  new_balance,
+        "date":            d.isoformat(),
+        "pnl":             underdog_stats.get("pnl", 0),
+        "wins":            underdog_stats.get("wins", 0),
+        "losses":          underdog_stats.get("losses", 0),
+        "voids":           underdog_stats.get("voids", 0),
+        "bets":            underdog_stats.get("bets", 0),
+        "bankroll_before": underdog_stats.get("bankroll_before", 3000.0),
+        "bankroll_after":  underdog_stats.get("bankroll_after", 3000.0),
+        "strategies": {slug: s for slug, (_, s) in strategy_results.items()},
     }
 
 

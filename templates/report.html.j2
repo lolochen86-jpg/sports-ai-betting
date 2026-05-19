@@ -210,12 +210,18 @@
     {% set slugs = ['conservative', 'aggressive', 'underdog'] %}
     {% set icons = ['🛡️', '⚔️', '🎯'] %}
     {% for st in strategies %}
-    <button class="tab-btn tab-{{ slugs[loop.index0] }} {% if loop.first %}active{% endif %}"
+    <button class="tab-btn tab-{{ st.slug if st.slug is defined else slugs[loop.index0] }} {% if loop.first %}active{% endif %}"
             onclick="switchTab({{ loop.index0 }}, this)">
       {{ icons[loop.index0] }} {{ st.name }}
       <span class="tab-sub">
+        {% if st.bankroll_current is defined %}
+          NT${{ "{:,.0f}".format(st.bankroll_current) }}
+          ({% if st.bankroll_roi >= 0 %}+{% endif %}{{ "{:.1f}".format(st.bankroll_roi) }}%)
+        {% endif %}
+      </span>
+      <span class="tab-sub" style="margin-top:1px">
         {% if st.no_picks %}今日空手
-        {% else %}{{ st.singles | length }}單{{ "+" ~ (st.parlays | length) ~ "串" if st.parlays else "" }} · NT${{ "{:,.0f}".format(st.total) }}
+        {% else %}{{ st.singles | length }}單{% if st.parlays %}+{{ st.parlays | length }}串{% endif %} · NT${{ "{:,.0f}".format(st.total) }}
         {% endif %}
       </span>
     </button>
@@ -293,7 +299,14 @@
     {% endif %}
 
     <div class="summary-bar">
-      <span>{{ st.name }}：{{ st.singles | length }} 單關{% if st.parlays %} + {{ st.parlays | length }} 串關{% endif %}</span>
+      <span>{{ st.name }}：{{ st.singles | length }} 單關{% if st.parlays %} + {{ st.parlays | length }} 串關{% endif %}
+        {% if st.bankroll_current is defined %}
+        <span style="color:var(--muted);font-size:0.78rem;margin-left:0.5rem">
+          本金 NT${{ "{:,.0f}".format(st.bankroll_current) }}
+          （{% if st.bankroll_roi >= 0 %}+{% endif %}{{ "{:.1f}".format(st.bankroll_roi) }}%）
+        </span>
+        {% endif %}
+      </span>
       <strong style="color:var(--accent)">總下注 NT${{ "{:,.0f}".format(st.total) }}</strong>
     </div>
     {% endif %}
