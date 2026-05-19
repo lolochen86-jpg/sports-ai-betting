@@ -436,14 +436,18 @@ def run(as_of_date: date | str | None = None) -> Optional[list]:
     output_path = NBA_DIR / f"games_{d.isoformat()}.json"
 
     if json_exists(output_path):
-        logger.info(f"今日 NBA 數據包已存在：{d}")
-        return load_json(output_path)
+        cached = load_json(output_path)
+        if cached:          # 有賽事才算有效快取
+            logger.info(f"今日 NBA 數據包已存在：{d}（{len(cached)} 場）")
+            return cached
+        else:
+            logger.info(f"今日 NBA 快取為空，重新嘗試抓取：{d}")
 
     logger.info(f"===== NBA 數據抓取開始：{d} =====")
 
     games     = fetch_today_games(d)
     if not games:
-        logger.info("今日無 NBA 賽事")
+        logger.info("今日無 NBA 賽事（API 回傳 0 場）")
         # 只有明確為空（API 回傳 0 場）才快取，None 表示抓取失敗不快取
         if games is not None:
             save_json([], output_path)
