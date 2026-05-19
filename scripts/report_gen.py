@@ -495,12 +495,8 @@ def run(plan=None, plans: dict | None = None, report_date: date | str | None = N
     yest_pnl = sum(float(r.get("pnl", 0)) for r in results)
     logger.info(f"昨日成績：{len(results)} 注，盈虧 NT${yest_pnl:+,.0f}")
 
-    # 2. 更新本金帳本
+    # 2. 讀取本金帳本（settle.py 已負責更新，report_gen 只讀不寫，避免重複扣款）
     bankroll = load_bankroll()
-    open_bk  = bankroll["current"]
-    close_bk = open_bk + yest_pnl
-    bankroll  = update_bankroll(bankroll, yesterday, open_bk, close_bk,
-                                yest_pnl, len(results))
 
     # 3. 更新績效統計
     perf = update_performance(yesterday, results)
