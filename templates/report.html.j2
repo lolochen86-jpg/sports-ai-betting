@@ -230,9 +230,58 @@
 
   <!-- Tab panels -->
   {% for st in strategies %}
-  {% set slug = slugs[loop.index0] %}
+  {% set slug = st.slug if st.slug is defined else slugs[loop.index0] %}
   <div class="tab-panel {% if loop.first %}active{% endif %}" id="panel-{{ loop.index0 }}">
 
+    <!-- ── 昨日成績 ────────────────────────────────────── -->
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.5rem;margin-top:0.25rem">
+      📋 昨日成績（{{ yesterday_date }}）
+    </p>
+    {% if st.no_yesterday %}
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.85rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:var(--muted)">
+      昨日此策略無下注記錄（起始日或空手）。
+    </div>
+    {% else %}
+    <table style="margin-bottom:0.5rem">
+      <thead>
+        <tr>
+          <th>#</th><th>下注方向</th><th>球種</th><th>賠率</th><th>下注額</th><th>結果</th><th>盈虧</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in st.yesterday_results %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ r.bet_label }}</td>
+          <td>{{ r.sport }}</td>
+          <td>{{ "{:.2f}".format(r.odds | float) if r.odds else "—" }}</td>
+          <td>NT${{ "{:,.0f}".format(r.bet_amount | float) }}</td>
+          <td>
+            {% if r.result == "WIN" %}<span class="badge badge-win">✅ 命中</span>
+            {% elif r.result == "LOSS" %}<span class="badge badge-loss">❌ 未中</span>
+            {% else %}<span class="badge badge-void">⚪ 取消</span>{% endif %}
+          </td>
+          <td style="color:{% if r.pnl | float >= 0 %}var(--green){% else %}var(--red){% endif %};font-weight:600">
+            {% if r.pnl | float >= 0 %}+{% endif %}NT${{ "{:,.0f}".format(r.pnl | float) }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:1.25rem;padding:0 0.25rem">
+      合計：{{ st.yesterday_total }} 注 ·
+      命中 {{ st.yesterday_wins }}/{{ st.yesterday_total }} ·
+      盈虧
+      <strong style="color:{% if st.yesterday_pnl >= 0 %}var(--green){% else %}var(--red){% endif %}">
+        {% if st.yesterday_pnl >= 0 %}+{% endif %}NT${{ "{:,.0f}".format(st.yesterday_pnl) }}
+      </strong>
+    </div>
+    {% endif %}
+
+    <!-- ── 今日計劃 ────────────────────────────────────── -->
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.5rem">
+      🎯 今日計劃（{{ report_date }}）
+    </p>
     {% if st.no_picks %}
     <div class="no-picks">
       <p style="font-size:1.05rem;margin-bottom:0.5rem">今日無符合門檻的選場</p>
@@ -262,7 +311,7 @@
           <div class="pick-stat"><span class="badge badge-{{ s.grade }}">{{ s.grade }} 級</span></div>
         </div>
         <div class="edge-bar"><div class="edge-fill {{ slug }}" style="width:{{ [s.edge * 500, 100] | min }}%"></div></div>
-        {% if s.data_card is defined %}
+        {% if s.data_card is defined and s.data_card %}
         <details><summary>查看完整數據卡</summary><pre>{{ s.data_card }}</pre></details>
         {% endif %}
       </div>
@@ -299,15 +348,8 @@
     {% endif %}
 
     <div class="summary-bar">
-      <span>{{ st.name }}：{{ st.singles | length }} 單關{% if st.parlays %} + {{ st.parlays | length }} 串關{% endif %}
-        {% if st.bankroll_current is defined %}
-        <span style="color:var(--muted);font-size:0.78rem;margin-left:0.5rem">
-          本金 NT${{ "{:,.0f}".format(st.bankroll_current) }}
-          （{% if st.bankroll_roi >= 0 %}+{% endif %}{{ "{:.1f}".format(st.bankroll_roi) }}%）
-        </span>
-        {% endif %}
-      </span>
-      <strong style="color:var(--accent)">總下注 NT${{ "{:,.0f}".format(st.total) }}</strong>
+      <span>{{ st.singles | length }} 單關{% if st.parlays %} + {{ st.parlays | length }} 串關{% endif %}</span>
+      <strong style="color:var(--accent)">今日下注 NT${{ "{:,.0f}".format(st.total) }}</strong>
     </div>
     {% endif %}
 

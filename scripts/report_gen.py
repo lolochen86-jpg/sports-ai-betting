@@ -127,8 +127,8 @@ def _compute_streak(history: list) -> int:
 # ── 昨日成績讀取 ──────────────────────────────────────────
 def load_yesterday_results(yesterday: date) -> list[dict]:
     """
-    讀取昨日每注的結算結果。
-    來源：data/backtest/backtest_log_*.csv 或 data/live/picks_YYYY-MM-DD.json
+    讀取昨日每注的結算結果（underdog 策略，向下相容）。
+    來源：data/live/settled_YYYY-MM-DD.json 或 backtest CSV。
     """
     from utils import BACKTEST_DIR
     import csv
@@ -149,6 +149,24 @@ def load_yesterday_results(yesterday: date) -> list[dict]:
         except Exception:
             continue
     return []
+
+
+def load_strategy_yesterday_results(yesterday: date) -> dict[str, list[dict]]:
+    """
+    讀取昨日三個策略各自的結算明細。
+    回傳 {"conservative": [...], "aggressive": [...], "underdog": [...]}
+    """
+    out: dict[str, list[dict]] = {}
+    for slug in _STRATEGY_SLUGS:
+        path = DATA_DIR / "live" / f"settled_{yesterday.isoformat()}_{slug}.json"
+        if json_exists(path):
+            out[slug] = load_json(path)
+        elif slug == "underdog":
+            # backward compat：讀預設結算檔
+            out[slug] = load_yesterday_results(yesterday)
+        else:
+            out[slug] = []
+    return out
 
 
 # ── 績效統計更新 ──────────────────────────────────────────
@@ -290,7 +308,8 @@ def _build_context(
     total_today = sum(s["amount"] for s in singles) + sum(p["amount"] for p in parlays)
 
     # 三策略資料（各自使用策略本金計算下注額）
-    strat_bankrolls = load_all_strategy_bankrolls()
+    strat_bankrolls       = load_all_strategy_bankrolls()
+    strat_yest_results    = load_strategy_yesterday_results(yesterday)
     strategies = []
     if plans:
         for slug, label in _STRATEGY_LABELS.items():
@@ -299,41 +318,40 @@ def _build_context(
             bk_stats = strategy_bankroll_stats(strat_bk)
             cur_bk   = bk_stats["current"]   # 策略自己的本金
 
-            if p is None:
-                strategies.append({
-                    "name": label, "slug": slug,
-                    "singles": [], "parlays": [], "total": 0, "no_picks": True,
-                    "bankroll_current": cur_bk,
-                    "bankroll_roi":     bk_stats["roi"],
-                    "bankroll_dd":      bk_stats["drawdown"],
-                })
-                continue
-            s_list = []
-            for pick in p.single_picks:
-                amt = pick.bet_amount(cur_bk)   # ← 用策略本金
-                s_list.append({
-                    "label":     pick.bet_label,
-                    "sport":     pick.sport,
-                    "matchup":   f"{pick.away_team}@{pick.home_team}",
-                    "odds":      pick.odds,
-                    "true_prob": pick.true_prob,
-                    "edge":      pick.edge,
-                    "grade":     pick.grade,
-                    "amount":    amt,
-                    "potential": round(amt * (pick.odds - 1), 0),
-                })
-            pa_list = []
-            for par in p.parlays:
-                amt = par.bet_amount(cur_bk)    # ← 用策略本金
-                pa_list.append({
-                    "label":       par.label,
-                    "legs":        [{"label": lg.bet_label, "odds": lg.odds} for lg in par.legs],
-                    "parlay_odds": par.parlay_odds,
-                    "parlay_ev":   par.parlay_ev,
-                    "amount":      amt,
-                    "potential":   round(amt * (par.parlay_odds - 1), 0),
-                })
+            # 昨日成績
+            yest_rows  = strat_yest_results.get(slug, [])
+            yest_pnl   = sum(float(r.get("pnl", 0))   for r in yest_rows)
+            yest_wins  = sum(1 for r in yest_rows if r.get("result") == "WIN")
+
+            # ── 今日計劃 ──────────────────────────────────────
+            s_list: list = []
+            pa_list: list = []
+            if p is not None:
+                for pick in p.single_picks:
+                    amt = pick.bet_amount(cur_bk)
+                    s_list.append({
+                        "label":     pick.bet_label,
+                        "sport":     pick.sport,
+                        "matchup":   f"{pick.away_team}@{pick.home_team}",
+                        "odds":      pick.odds,
+                        "true_prob": pick.true_prob,
+                        "edge":      pick.edge,
+                        "grade":     pick.grade,
+                        "amount":    amt,
+                        "potential": round(amt * (pick.odds - 1), 0),
+                    })
+                for par in p.parlays:
+                    amt = par.bet_amount(cur_bk)
+                    pa_list.append({
+                        "label":       par.label,
+                        "legs":        [{"label": lg.bet_label, "odds": lg.odds} for lg in par.legs],
+                        "parlay_odds": par.parlay_odds,
+                        "parlay_ev":   par.parlay_ev,
+                        "amount":      amt,
+                        "potential":   round(amt * (par.parlay_odds - 1), 0),
+                    })
             total = sum(x["amount"] for x in s_list) + sum(x["amount"] for x in pa_list)
+
             strategies.append({
                 "name":     label,
                 "slug":     slug,
@@ -341,9 +359,16 @@ def _build_context(
                 "parlays":  pa_list,
                 "total":    total,
                 "no_picks": len(s_list) == 0 and len(pa_list) == 0,
+                # 本金
                 "bankroll_current": cur_bk,
                 "bankroll_roi":     bk_stats["roi"],
                 "bankroll_dd":      bk_stats["drawdown"],
+                # 昨日明細
+                "yesterday_results": yest_rows,
+                "yesterday_pnl":     yest_pnl,
+                "yesterday_wins":    yest_wins,
+                "yesterday_total":   len(yest_rows),
+                "no_yesterday":      len(yest_rows) == 0,
             })
 
     # 整體勝率

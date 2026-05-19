@@ -42,6 +42,20 @@
 {% for strat in strategies %}
 ### {{ strat.name }}{% if strat.bankroll_current is defined %} · 本金 NT${{ "{:,.0f}".format(strat.bankroll_current) }}（{% if strat.bankroll_roi >= 0 %}+{% endif %}{{ "{:.1f}".format(strat.bankroll_roi) }}%）{% endif %}
 
+**昨日成績（{{ yesterday_date }}）**
+
+{% if strat.no_yesterday %}
+*昨日此策略無下注記錄。*
+{% else %}
+| # | 下注內容 | 球種 | 賠率 | 下注額 | 結果 | 盈虧 |
+|---|---|---|---|---|---|---|
+{% for r in strat.yesterday_results %}| {{ loop.index }} | {{ r.bet_label }} | {{ r.sport }} | {{ r.odds | float | round(2) }} | {{ r.bet_amount | float | ntd }} | {{ r.result }} | {{ r.pnl | float | sign_ntd }} |
+{% endfor %}
+合計：{{ strat.yesterday_total }} 注，命中 {{ strat.yesterday_wins }}/{{ strat.yesterday_total }}，盈虧 {{ strat.yesterday_pnl | sign_ntd }}
+{% endif %}
+
+**今日計劃（{{ report_date }}）**
+
 {% if strat.no_picks %}
 > 今日無符合門檻的選場。
 
