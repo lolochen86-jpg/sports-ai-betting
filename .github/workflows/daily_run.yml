@@ -120,6 +120,7 @@ jobs:
           git config --global user.name  "Sports AI Bot"
           git config --global user.email "bot@users.noreply.github.com"
           git add reports/ docs/ data/bankroll.json data/performance.json \
+                  data/bankroll_conservative.json data/bankroll_aggressive.json data/bankroll_underdog.json \
                   data/live/ data/nba/ data/mlb/ data/odds/
           git diff --staged --quiet || git commit -m "📊 每日報告 ${{ steps.date.outputs.date }}"
           git push
