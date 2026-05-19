@@ -275,6 +275,21 @@ def run(settle_date: date | str | None = None) -> dict:
     d = parse_date(settle_date) if settle_date else today_tw() - timedelta(days=1)
     logger.info(f"===== 結算日期：{d} =====")
 
+    # ── 已結算則跳過（避免重複扣款）──────────────────────────
+    settled_path = LIVE_DIR / f"settled_{d.isoformat()}.json"
+    if json_exists(settled_path):
+        existing = load_json(settled_path)
+        if any(r.get("result") in ("WIN", "LOSS") for r in existing):
+            logger.info(f"  已結算（{settled_path.name}），略過重複扣款")
+            bk_path = DATA_DIR / "bankroll.json"
+            cur_bk  = (load_json(bk_path) if json_exists(bk_path) else {}).get("current", 0.0)
+            pnl     = sum(float(r.get("pnl", 0)) for r in existing)
+            wins    = sum(1 for r in existing if r.get("result") == "WIN")
+            losses  = sum(1 for r in existing if r.get("result") == "LOSS")
+            return {"pnl": pnl, "wins": wins, "losses": losses, "voids": 0,
+                    "bets": len(existing), "date": d.isoformat(),
+                    "bankroll_before": cur_bk, "bankroll_after": cur_bk}
+
     # 讀取計劃
     plan_path = LIVE_DIR / f"plan_{d.isoformat()}.json"
     if not json_exists(plan_path):
