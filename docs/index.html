@@ -76,7 +76,7 @@
       <div class="site-title">🏀⚾ 運彩AI分析師</div>
       <div class="site-sub">NBA · MLB · 數據驅動 · 每日 22:00 更新</div>
     </div>
-    <a href="2026-05-20.html" class="today-link">📋 今日報告 →</a>
+    <a href="2026-05-21.html" class="today-link">📋 今日報告 →</a>
   </header>
 
   <!-- 整體績效 -->
@@ -124,7 +124,7 @@
   </div>
 
   <!-- 今日三策略摘要 -->
-  <h2>🎯 今日下注計劃（2026-05-20）</h2>
+  <h2>🎯 今日下注計劃（2026-05-21）</h2>
   
   <div class="picks-grid">
     
@@ -133,20 +133,7 @@
     <div class="picks-card">
       <div class="picks-card-header conservative">🛡️ 穩健型</div>
       
-        
-        <div class="pick-row">
-          <div>
-            <div class="pick-team">遊騎兵 勝</div>
-            <div class="pick-meta">TEX@COL</div>
-          </div>
-          <div style="text-align:right">
-            <div class="pick-odds">@1.93</div>
-            <div class="pick-meta">NT$80</div>
-          </div>
-        </div>
-        
-        
-        <div class="picks-total">總投入 NT$80</div>
+        <div class="no-pick-msg">今日空手</div>
       
     </div>
     
@@ -160,26 +147,13 @@
     <div class="picks-card">
       <div class="picks-card-header underdog">🎯 冷門獵人型</div>
       
-        
-        <div class="pick-row">
-          <div>
-            <div class="pick-team">白襪 勝</div>
-            <div class="pick-meta">CWS@SEA</div>
-          </div>
-          <div style="text-align:right">
-            <div class="pick-odds">@2.28</div>
-            <div class="pick-meta">NT$80</div>
-          </div>
-        </div>
-        
-        
-        <div class="picks-total">總投入 NT$80</div>
+        <div class="no-pick-msg">今日空手</div>
       
     </div>
     
   </div>
   <p style="text-align:right;margin-top:-0.5rem;margin-bottom:1.5rem">
-    <a href="2026-05-20.html" style="font-size:0.85rem;color:var(--accent)">查看完整分析 →</a>
+    <a href="2026-05-21.html" style="font-size:0.85rem;color:var(--accent)">查看完整分析 →</a>
   </p>
   
 
@@ -187,10 +161,18 @@
   <h2>📅 近期報告</h2>
   <div class="report-list">
     
+    <a href="2026-05-21.html" class="report-item">
+      <span class="report-date">
+        2026-05-21
+        <span class="badge badge-today">今日</span>
+      </span>
+      <span class="report-arrow">→</span>
+    </a>
+    
     <a href="2026-05-20.html" class="report-item">
       <span class="report-date">
         2026-05-20
-        <span class="badge badge-today">今日</span>
+        
       </span>
       <span class="report-arrow">→</span>
     </a>
@@ -221,12 +203,12 @@
 </div>
 
 <script>
-const raw = {"labels": ["2026-05-18", "2026-05-19"], "values": [2900.0, 2900.0], "initial": 3000.0};
+const raw = {"labels": ["2026-05-18", "2026-05-19", "2026-05-20"], "values": [2900.0, 2900.0, 2900.0], "initial": 3000.0};
 const ctx = document.getElementById('bankrollChart').getContext('2d');
 new Chart(ctx, {
   type: 'line',
   data: {
-    labels: raw.labels.length ? raw.labels : ['2026-05-20'],
+    labels: raw.labels.length ? raw.labels : ['2026-05-21'],
     datasets: [{
       label: '本金 (NT$)',
       data: raw.values.length ? raw.values : [raw.initial],
@@ -239,7 +221,7 @@ new Chart(ctx, {
       tension: 0.3,
     }, {
       label: '起始本金',
-      data: (raw.labels.length ? raw.labels : ['2026-05-20']).map(() => raw.initial),
+      data: (raw.labels.length ? raw.labels : ['2026-05-21']).map(() => raw.initial),
       borderColor: 'rgba(113,128,150,0.4)',
       borderDash: [4, 4],
       borderWidth: 1,
