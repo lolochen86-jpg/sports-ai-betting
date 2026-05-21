@@ -76,7 +76,7 @@
       <div class="site-title">🏀⚾ 運彩AI分析師</div>
       <div class="site-sub">NBA · MLB · 數據驅動 · 每日 22:00 更新</div>
     </div>
-    <a href="2026-05-21.html" class="today-link">📋 今日報告 →</a>
+    <a href="2026-05-22.html" class="today-link">📋 今日報告 →</a>
   </header>
 
   <!-- 整體績效 -->
@@ -124,7 +124,7 @@
   </div>
 
   <!-- 今日三策略摘要 -->
-  <h2>🎯 今日下注計劃（2026-05-21）</h2>
+  <h2>🎯 今日下注計劃（2026-05-22）</h2>
   
   <div class="picks-grid">
     
@@ -153,7 +153,7 @@
     
   </div>
   <p style="text-align:right;margin-top:-0.5rem;margin-bottom:1.5rem">
-    <a href="2026-05-21.html" style="font-size:0.85rem;color:var(--accent)">查看完整分析 →</a>
+    <a href="2026-05-22.html" style="font-size:0.85rem;color:var(--accent)">查看完整分析 →</a>
   </p>
   
 
@@ -161,10 +161,18 @@
   <h2>📅 近期報告</h2>
   <div class="report-list">
     
+    <a href="2026-05-22.html" class="report-item">
+      <span class="report-date">
+        2026-05-22
+        <span class="badge badge-today">今日</span>
+      </span>
+      <span class="report-arrow">→</span>
+    </a>
+    
     <a href="2026-05-21.html" class="report-item">
       <span class="report-date">
         2026-05-21
-        <span class="badge badge-today">今日</span>
+        
       </span>
       <span class="report-arrow">→</span>
     </a>
@@ -203,12 +211,12 @@
 </div>
 
 <script>
-const raw = {"labels": ["2026-05-18", "2026-05-19", "2026-05-20"], "values": [2900.0, 2900.0, 2900.0], "initial": 3000.0};
+const raw = {"labels": ["2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21"], "values": [2900.0, 2900.0, 2900.0, 2900.0], "initial": 3000.0};
 const ctx = document.getElementById('bankrollChart').getContext('2d');
 new Chart(ctx, {
   type: 'line',
   data: {
-    labels: raw.labels.length ? raw.labels : ['2026-05-21'],
+    labels: raw.labels.length ? raw.labels : ['2026-05-22'],
     datasets: [{
       label: '本金 (NT$)',
       data: raw.values.length ? raw.values : [raw.initial],
@@ -221,7 +229,7 @@ new Chart(ctx, {
       tension: 0.3,
     }, {
       label: '起始本金',
-      data: (raw.labels.length ? raw.labels : ['2026-05-21']).map(() => raw.initial),
+      data: (raw.labels.length ? raw.labels : ['2026-05-22']).map(() => raw.initial),
       borderColor: 'rgba(113,128,150,0.4)',
       borderDash: [4, 4],
       borderWidth: 1,

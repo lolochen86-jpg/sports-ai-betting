@@ -1,0 +1,27 @@
+[
+  {
+    "game_id": "dc45982e3723fb38d8477a1a75395594",
+    "sport": "NBA",
+    "game_date": "2026-05-22",
+    "home_team_abbr": "NYK",
+    "away_team_abbr": "CLE",
+    "home_team_name": "New York Knicks",
+    "away_team_name": "Cleveland Cavaliers",
+    "source": "pinnacle",
+    "timestamp": "2026-05-22T00:17:10.532710+08:00",
+    "home_odds_raw": 1.48,
+    "away_odds_raw": 2.83,
+    "spread_away_odds_raw": 1.89,
+    "spread": -6.0,
+    "spread_home_odds_raw": 2.02,
+    "total_line": 215.5,
+    "over_odds_raw": 1.99,
+    "under_odds_raw": 1.89,
+    "home_odds": 1.448,
+    "away_odds": 2.768,
+    "spread_home_odds": 1.976,
+    "spread_away_odds": 1.849,
+    "over_odds": 1.946,
+    "under_odds": 1.849
+  }
+]
