@@ -112,28 +112,34 @@ def get_mlb_winner(game_pk: int, game_date: date) -> Optional[str]:
         return data.get("winner")
 
     try:
-        # 取比賽狀態
-        url  = f"{_MLB_API}/game/{game_pk}/feed/live"
-        resp = requests.get(url, headers=_HEADERS, timeout=20)
-        resp.raise_for_status()
-        data = resp.json()
+        # 用 /schedule?gamePk= 取狀態（/feed/live 已棄用，回傳 404）
+        sched_url = f"{_MLB_API}/schedule?sportId=1&gamePk={game_pk}"
+        sr = requests.get(sched_url, headers=_HEADERS, timeout=20)
+        sr.raise_for_status()
+        games = sr.json().get("dates", [{}])[0].get("games", [])
+        if not games:
+            logger.warning(f"  MLB {game_pk}：schedule API 查無比賽")
+            return None
 
-        status = data.get("gameData", {}).get("status", {}).get("abstractGameState", "")
+        g = games[0]
+        status = g.get("status", {}).get("abstractGameState", "")
         if status != "Final":
             logger.info(f"  MLB {game_pk}：比賽尚未結束（{status}）")
             return None
 
-        linescore = data.get("liveData", {}).get("linescore", {})
-        home_runs = linescore.get("teams", {}).get("home", {}).get("runs")
-        away_runs = linescore.get("teams", {}).get("away", {}).get("runs")
+        home_abbr = g.get("teams", {}).get("home", {}).get("team", {}).get("abbreviation", "")
+        away_abbr = g.get("teams", {}).get("away", {}).get("team", {}).get("abbreviation", "")
+
+        # 用 /linescore 取分數
+        ls_url = f"{_MLB_API}/game/{game_pk}/linescore"
+        lr = requests.get(ls_url, headers=_HEADERS, timeout=20)
+        lr.raise_for_status()
+        ls = lr.json()
+        home_runs = ls.get("teams", {}).get("home", {}).get("runs")
+        away_runs = ls.get("teams", {}).get("away", {}).get("runs")
 
         if home_runs is None or away_runs is None:
             return None
-
-        # 取隊名縮寫
-        game_data  = data.get("gameData", {})
-        home_abbr  = game_data.get("teams", {}).get("home", {}).get("abbreviation", "")
-        away_abbr  = game_data.get("teams", {}).get("away", {}).get("abbreviation", "")
 
         winner = home_abbr if home_runs > away_runs else away_abbr
         loser  = away_abbr if home_runs > away_runs else home_abbr

@@ -629,7 +629,182 @@ def _parse_pinnacle_response(data: list, sport: str, game_date: date) -> list:
     return games
 
 
-# ── 層級 3：oddsportal 爬蟲 ──────────────────────────────
+# ── 層級 3：Pinnacle Guest API（不需要 API Key）─────────────
+_PIN_GUEST_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0",
+    "Accept": "application/json",
+    "X-API-Key": "CmX2KcMrXuFmNg6YFbmTxE0y9CblvHKK",
+}
+_PIN_LEAGUE_IDS = {"NBA": 487, "MLB": 246}
+
+# Pinnacle 全名 → 縮寫對照
+_PIN_NBA_NAME_TO_ABBR: dict[str, str] = {
+    "Atlanta Hawks": "ATL", "Boston Celtics": "BOS", "Brooklyn Nets": "BKN",
+    "Charlotte Hornets": "CHA", "Chicago Bulls": "CHI", "Cleveland Cavaliers": "CLE",
+    "Dallas Mavericks": "DAL", "Denver Nuggets": "DEN", "Detroit Pistons": "DET",
+    "Golden State Warriors": "GSW", "Houston Rockets": "HOU", "Indiana Pacers": "IND",
+    "Los Angeles Clippers": "LAC", "Los Angeles Lakers": "LAL", "Memphis Grizzlies": "MEM",
+    "Miami Heat": "MIA", "Milwaukee Bucks": "MIL", "Minnesota Timberwolves": "MIN",
+    "New Orleans Pelicans": "NOP", "New York Knicks": "NYK", "Oklahoma City Thunder": "OKC",
+    "Orlando Magic": "ORL", "Philadelphia 76ers": "PHI", "Phoenix Suns": "PHX",
+    "Portland Trail Blazers": "POR", "Sacramento Kings": "SAC", "San Antonio Spurs": "SAS",
+    "Toronto Raptors": "TOR", "Utah Jazz": "UTA", "Washington Wizards": "WAS",
+}
+_PIN_MLB_NAME_TO_ABBR: dict[str, str] = {
+    "Arizona Diamondbacks": "ARI", "Atlanta Braves": "ATL", "Baltimore Orioles": "BAL",
+    "Boston Red Sox": "BOS", "Chicago Cubs": "CHC", "Chicago White Sox": "CWS",
+    "Cincinnati Reds": "CIN", "Cleveland Guardians": "CLE", "Colorado Rockies": "COL",
+    "Detroit Tigers": "DET", "Houston Astros": "HOU", "Kansas City Royals": "KC",
+    "Los Angeles Angels": "LAA", "Los Angeles Dodgers": "LAD", "Miami Marlins": "MIA",
+    "Milwaukee Brewers": "MIL", "Minnesota Twins": "MIN", "New York Mets": "NYM",
+    "New York Yankees": "NYY", "Oakland Athletics": "OAK", "Philadelphia Phillies": "PHI",
+    "Pittsburgh Pirates": "PIT", "San Diego Padres": "SD", "San Francisco Giants": "SF",
+    "Seattle Mariners": "SEA", "St. Louis Cardinals": "STL", "Tampa Bay Rays": "TB",
+    "Texas Rangers": "TEX", "Toronto Blue Jays": "TOR", "Washington Nationals": "WSH",
+}
+
+
+def _american_to_decimal(american: int | float) -> float:
+    """美國盤口 → 小數賠率。"""
+    if american > 0:
+        return round(american / 100 + 1, 4)
+    else:
+        return round(100 / abs(american) + 1, 4)
+
+
+def fetch_pinnacle_direct(sport: str, game_date: date | str) -> list:
+    """
+    直接呼叫 Pinnacle Guest API 取得賠率（不需要 The-Odds-API key）。
+    作為第三層備援。
+    """
+    d = parse_date(game_date)
+    cache_path = ODDS_DIR / f"pinnacle_{sport.lower()}_{d.isoformat()}.json"
+
+    if json_exists(cache_path):
+        cached = load_json(cache_path)
+        if cached:
+            logger.info(f"Pinnacle Direct 快取命中：{sport} {d}（{len(cached)} 場）")
+            return cached
+
+    league_id = _PIN_LEAGUE_IDS.get(sport)
+    if not league_id:
+        return []
+
+    name_map = _PIN_NBA_NAME_TO_ABBR if sport == "NBA" else _PIN_MLB_NAME_TO_ABBR
+
+    logger.info(f"抓取 Pinnacle Guest API 賠率：{sport} {d}")
+    base = "https://guest.api.arcadia.pinnacle.com/0.1"
+
+    try:
+        r = requests.get(f"{base}/leagues/{league_id}/matchups",
+                         headers=_PIN_GUEST_HEADERS, timeout=15)
+        r.raise_for_status()
+        all_matchups = r.json()
+    except Exception as e:
+        logger.warning(f"Pinnacle Guest API matchups 失敗：{e}")
+        return []
+
+    # 篩選當日 home/away 盤
+    # NBA 用美東時間（UTC-4 夏令）：美東日期 d 的比賽 UTC 為 d 00:00~(d+1) 03:59
+    # 用寬鬆 UTC 視窗：d 前一天 12:00 ~ d+1 12:00，涵蓋所有時區
+    from datetime import datetime, timezone, timedelta
+    utc = timezone.utc
+    date_start = datetime(d.year, d.month, d.day, 12, 0, 0, tzinfo=utc) - timedelta(days=1)
+    date_end   = datetime(d.year, d.month, d.day, 12, 0, 0, tzinfo=utc) + timedelta(days=1)
+
+    games = []
+    for m in all_matchups:
+        parts = m.get("participants", [])
+        aln = [p.get("alignment") for p in parts]
+        if "home" not in aln or "away" not in aln:
+            continue
+        start_str = m.get("startTime", "")
+        try:
+            start_dt = datetime.fromisoformat(start_str.replace("Z", "+00:00"))
+        except Exception:
+            continue
+        if not (date_start <= start_dt <= date_end):
+            continue
+
+        home_name = next((p["name"] for p in parts if p.get("alignment") == "home"), "")
+        away_name = next((p["name"] for p in parts if p.get("alignment") == "away"), "")
+        home_abbr = name_map.get(home_name, home_name[:3].upper())
+        away_abbr = name_map.get(away_name, away_name[:3].upper())
+
+        try:
+            time.sleep(0.3)
+            mr = requests.get(f"{base}/matchups/{m['id']}/markets/straight",
+                              headers=_PIN_GUEST_HEADERS, timeout=15)
+            mr.raise_for_status()
+            markets = mr.json()
+        except Exception as e:
+            logger.warning(f"  {away_abbr}@{home_abbr} markets 失敗：{e}")
+            continue
+
+        rec: dict = {
+            "game_id":        f"pin_{m['id']}",
+            "sport":          sport,
+            "game_date":      d.isoformat(),
+            "home_team_abbr": home_abbr,
+            "away_team_abbr": away_abbr,
+            "home_team_name": home_name,
+            "away_team_name": away_name,
+            "source":         "pinnacle_direct",
+            "timestamp":      datetime.now(tz=timezone(timedelta(hours=8))).isoformat(),
+        }
+
+        for mkt in markets:
+            if mkt.get("isAlternate"):
+                continue
+            mtype  = mkt.get("type")
+            period = mkt.get("period", 0)
+            if period != 0:
+                continue
+            prices = {p["designation"]: p for p in mkt.get("prices", [])}
+            if mtype == "moneyline":
+                h = prices.get("home", {}).get("price")
+                a = prices.get("away", {}).get("price")
+                if h and a:
+                    rec["home_odds_raw"] = _american_to_decimal(h)
+                    rec["away_odds_raw"] = _american_to_decimal(a)
+            elif mtype == "spread":
+                h = prices.get("home", {})
+                a = prices.get("away", {})
+                if h.get("price") and a.get("price"):
+                    rec["spread"]               = h.get("points")
+                    rec["spread_home_odds_raw"] = _american_to_decimal(h["price"])
+                    rec["spread_away_odds_raw"] = _american_to_decimal(a["price"])
+            elif mtype == "total":
+                ov = prices.get("over", {})
+                un = prices.get("under", {})
+                if ov.get("price") and un.get("price"):
+                    rec["total_line"]     = ov.get("points")
+                    rec["over_odds_raw"]  = _american_to_decimal(ov["price"])
+                    rec["under_odds_raw"] = _american_to_decimal(un["price"])
+
+        if "home_odds_raw" not in rec:
+            logger.info(f"  {away_abbr}@{home_abbr} 無賠率，跳過")
+            continue
+
+        # 換算為台灣運彩等效賠率
+        for fr, ft in [
+            ("home_odds_raw", "home_odds"), ("away_odds_raw", "away_odds"),
+            ("spread_home_odds_raw", "spread_home_odds"),
+            ("spread_away_odds_raw", "spread_away_odds"),
+            ("over_odds_raw", "over_odds"), ("under_odds_raw", "under_odds"),
+        ]:
+            rec[ft] = pinnacle_to_tw_equiv(rec.get(fr))
+
+        games.append(rec)
+        logger.info(f"  {away_abbr}@{home_abbr}: 主{rec.get('home_odds'):.2f} 客{rec.get('away_odds'):.2f}")
+
+    if games:
+        save_json(games, cache_path)
+        logger.info(f"Pinnacle Direct 完成：{sport} {d}（{len(games)} 場）")
+    return games
+
+
+# ── 層級 4：oddsportal 爬蟲 ──────────────────────────────
 _OP_BASE = "https://www.oddsportal.com"
 _OP_SPORT_PATH = {
     "NBA": "/basketball/usa/nba",
@@ -861,7 +1036,13 @@ def run(sport: str, game_date: date | str | None = None,
         logger.info(f"賠率來源：Pinnacle（{len(odds)} 場，已換算為運彩等效）")
         return odds
 
-    # 層級 3：oddsportal
+    # 層級 3：Pinnacle Guest API（不需要 API Key）
+    odds = fetch_pinnacle_direct(sport, d)
+    if odds:
+        logger.info(f"賠率來源：Pinnacle Direct（{len(odds)} 場）")
+        return odds
+
+    # 層級 4：oddsportal
     odds = fetch_oddsportal(sport, d)
     if odds:
         logger.info(f"賠率來源：oddsportal（{len(odds)} 場）")

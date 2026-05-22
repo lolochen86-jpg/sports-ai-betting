@@ -1,12 +1,11 @@
 {
   "initial": 3000.0,
-  "current": 2900.0,
+  "current": 2840.0,
   "peak": 3000.0,
   "target": 12000.0,
   "ruin_threshold": 10.0,
   "status": "active",
   "start_date": "2026-05-18",
-  "strategy": "underdog",
   "history": [
     {
       "date": "2026-05-18",
@@ -17,6 +16,17 @@
       "wins": 0,
       "losses": 1,
       "voids": 0
+    },
+    {
+      "date": "2026-05-19",
+      "open": 2900.0,
+      "close": 2840.0,
+      "pnl": -60.0,
+      "bets": 1,
+      "wins": 0,
+      "losses": 1,
+      "voids": 0
     }
-  ]
+  ],
+  "strategy": "underdog"
 }

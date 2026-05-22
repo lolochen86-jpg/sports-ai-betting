@@ -245,10 +245,6 @@ def fetch_today_games(as_of_date: date | str) -> Optional[list]:
     # ── 最多重試 3 次，timeout 逐次加長 ──────────────────
     for attempt, timeout_sec in enumerate([30, 60, 90], start=1):
         try:
-            import nba_api
-            # 動態設定 timeout
-            nba_api.stats.library.parameters.Timeout = timeout_sec
-
             from nba_api.stats.endpoints import scoreboardv3
 
             time.sleep(_API_DELAY * attempt)
