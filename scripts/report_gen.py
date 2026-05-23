@@ -374,6 +374,7 @@ def _build_context(
                         "fixed_bet":   getattr(par, "fixed_bet", 0.0),
                     })
             total = sum(x["amount"] for x in s_list) + sum(x["amount"] for x in pa_list)
+            required_5_leg_note = getattr(p, "required_5_leg_note", "") if p is not None else ""
 
             strategies.append({
                 "name":     label,
@@ -382,6 +383,7 @@ def _build_context(
                 "parlays":  pa_list,
                 "total":    total,
                 "no_picks": len(s_list) == 0 and len(pa_list) == 0,
+                "required_5_leg_note": required_5_leg_note,
                 # 本金
                 "bankroll_current": cur_bk,
                 "bankroll_roi":     bk_stats["roi"],
@@ -521,6 +523,7 @@ class _DictPlan:
     def __init__(self, d: dict):
         self._d = d
         self.bankroll = d.get("bankroll", 3000.0)
+        self.required_5_leg_note = d.get("required_5_leg_note", "")
 
         class _Pick:
             def __init__(self, p):

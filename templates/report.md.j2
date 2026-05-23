@@ -59,7 +59,14 @@
 {% if strat.no_picks %}
 > 今日無符合門檻的選場。
 
+{% if strat.required_5_leg_note %}> required_5_leg: {{ strat.required_5_leg_note }}
+
+{% endif %}
 {% else %}
+{% if strat.required_5_leg_note %}
+> required_5_leg: {{ strat.required_5_leg_note }}
+
+{% endif %}
 {% if strat.singles %}
 **單關**
 

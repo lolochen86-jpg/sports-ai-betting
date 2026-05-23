@@ -227,7 +227,7 @@ def settle_single_pick(pick: dict, winner: Optional[str]) -> dict:
     amount   = float(pick.get("raw_data", {}).get("bet_amount", 0)) or \
                _estimate_amount(pick)
 
-    if winner is None:
+    if not winner:
         return {**pick, "result": "VOID",  "pnl": 0.0,
                 "settled_winner": None, "bet_amount": amount}
     elif winner == expected:
@@ -259,17 +259,36 @@ def settle_parlay_pick(parlay: dict, winners: dict[str, Optional[str]],
 
     all_win = True
     voided  = False
+    leg_results = []
     for leg in legs:
         gid      = str(leg.get("game_id", ""))
         bet_side = leg.get("bet_side", "home")
         expected = leg.get("home_team") if bet_side == "home" else leg.get("away_team")
         w = winners.get(gid)
-        if w is None:
+        if not w:
             voided = True
+            leg_results.append({
+                "game_id": gid,
+                "expected": expected,
+                "winner": None,
+                "result": "VOID",
+            })
             break
         if w != expected:
             all_win = False
+            leg_results.append({
+                "game_id": gid,
+                "expected": expected,
+                "winner": w,
+                "result": "LOSS",
+            })
             break
+        leg_results.append({
+            "game_id": gid,
+            "expected": expected,
+            "winner": w,
+            "result": "WIN",
+        })
 
     if voided:
         result, pnl = "VOID", 0.0
@@ -289,6 +308,7 @@ def settle_parlay_pick(parlay: dict, winners: dict[str, Optional[str]],
         "bet_amount":  amount,
         "result":      result,
         "pnl":         pnl,
+        "leg_results": leg_results,
         "legs":        legs,
     }
 

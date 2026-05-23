@@ -15,6 +15,8 @@
 """
 
 import csv
+import html
+import shutil
 import sys
 from datetime import date, timedelta
 from dataclasses import asdict
@@ -22,7 +24,7 @@ from pathlib import Path
 from typing import Optional
 
 from utils import (
-    BACKTEST_DIR, get_logger, save_json, load_json, json_exists,
+    ROOT_DIR, BACKTEST_DIR, get_logger, save_json, load_json, json_exists,
     parse_date, date_range, today_tw, NBA_DIR, MLB_DIR, ODDS_DIR
 )
 from analyze import (
@@ -36,7 +38,7 @@ logger = get_logger("backtest")
 _START_DATE     = date(2026, 4, 1)
 _INIT_BANKROLL  = 3000.0
 _TARGET         = 12000.0   # 達標本金（4倍）
-_RUIN_THRESHOLD = 0.0       # 破產門檻
+_RUIN_THRESHOLD = 10.0      # 最低下注門檻；本金低於或等於 NT$10 視為無法續押
 _STOP_RUINED_ANALYSTS = 2
 
 # ── CSV 欄位定義 ──────────────────────────────────────────
@@ -51,7 +53,7 @@ _BET_LOG_FIELDS = [
 _DAILY_FIELDS = [
     "date", "bankroll_open", "total_bet", "total_pnl",
     "bankroll_close", "bets_count", "wins", "losses",
-    "single_bets", "parlay_bets",
+    "voids", "single_bets", "parlay_bets",
     "highest_odds_hit", "notes",
 ]
 
@@ -132,7 +134,8 @@ def fetch_game_result_mlb(game_pk: int, game_date: date) -> Optional[str]:
                     save_json({"game_pk": game_pk, "winner": winner,
                                "home_runs": home_runs, "away_runs": away_runs}, cache_path)
                     return winner
-        return winner_side   # fallback
+        logger.warning(f"MLB {game_pk} 缺少 schedule 隊名縮寫，略過結算避免誤判")
+        return None
 
     except Exception as e:
         logger.warning(f"MLB 結果抓取失敗 {game_pk}：{e}")
@@ -192,7 +195,7 @@ def settle_parlay(parlay: Parlay, bankroll_before: float,
 
     for leg in parlay.legs:
         w = winners.get(leg.game_id)
-        if w is None:
+        if not w:
             voided = True
             break
         expected_winner = leg.home_team if leg.bet_side == "home" else leg.away_team
@@ -261,7 +264,7 @@ def run_one_day(
         daily_writer.writerow({
             "date": d, "bankroll_open": bankroll, "total_bet": 0,
             "total_pnl": 0, "bankroll_close": bankroll, "bets_count": 0,
-            "wins": 0, "losses": 0, "single_bets": 0, "parlay_bets": 0,
+            "wins": 0, "losses": 0, "voids": 0, "single_bets": 0, "parlay_bets": 0,
             "highest_odds_hit": 0, "notes": "無賽事",
         })
         return bankroll, ""
@@ -281,7 +284,7 @@ def run_one_day(
         daily_writer.writerow({
             "date": d, "bankroll_open": bankroll, "total_bet": 0,
             "total_pnl": 0, "bankroll_close": bankroll, "bets_count": 0,
-            "wins": 0, "losses": 0, "single_bets": 0, "parlay_bets": 0,
+            "wins": 0, "losses": 0, "voids": 0, "single_bets": 0, "parlay_bets": 0,
             "highest_odds_hit": 0, "notes": "無 Edge≥4% 選場",
         })
         return bankroll, ""
@@ -302,7 +305,7 @@ def run_one_day(
     # 4. 結算
     bankroll_open = bankroll
     total_pnl = 0.0
-    wins = losses = 0
+    wins = losses = voids = 0
     highest_odds_hit = 0.0
     rows = []
 
@@ -317,6 +320,8 @@ def run_one_day(
             highest_odds_hit = max(highest_odds_hit, pick.odds)
         elif row["result"] == "LOSS":
             losses += 1
+        else:
+            voids += 1
         logger.info(
             f"  單關 {pick.bet_label} @{pick.odds:.2f} → "
             f"{row['result']} NT${row['pnl']:+,.0f} | 本金 NT${bankroll:,.0f}"
@@ -333,6 +338,8 @@ def run_one_day(
             highest_odds_hit = max(highest_odds_hit, parlay.parlay_odds)
         elif row["result"] == "LOSS":
             losses += 1
+        else:
+            voids += 1
         logger.info(
             f"  {parlay.label} @{parlay.parlay_odds:.2f} → "
             f"{row['result']} NT${row['pnl']:+,.0f} | 本金 NT${bankroll:,.0f}"
@@ -350,6 +357,7 @@ def run_one_day(
         "bets_count":      len(rows),
         "wins":            wins,
         "losses":          losses,
+        "voids":           voids,
         "single_bets":     len(plan.single_picks),
         "parlay_bets":     len(plan.parlays),
         "highest_odds_hit": highest_odds_hit,
@@ -833,6 +841,7 @@ def run(
     try:
         report_md = generate_report(s, init_bankroll, res_c, res_a, res_u)
         report_path.write_text(report_md, encoding="utf-8")
+        docs_report_path = _publish_backtest_to_docs(s, report_path)
         logger.info(f"\n報告已存至：{report_path}")
     except Exception as e:
         logger.error(f"報告生成失敗：{e}")
@@ -845,14 +854,63 @@ def run(
             f"> ⚠️ 完整報告生成失敗：{e}\n"
         )
         report_path.write_text(fallback, encoding="utf-8")
+        docs_report_path = _publish_backtest_to_docs(s, report_path)
 
     return {
         "report_path":  str(report_path),
+        "docs_report_path": str(docs_report_path),
         "conservative": res_c,
         "aggressive":   res_a,
         "underdog":     res_u,
         "global_stop":  global_stop_reason,
     }
+
+
+def _publish_backtest_to_docs(start_date: date, report_path: Path) -> Path:
+    """Publish the latest backtest markdown and CSV artifacts to GitHub Pages."""
+    docs_dir = ROOT_DIR / "docs"
+    docs_backtest_dir = docs_dir / "backtest"
+    docs_backtest_dir.mkdir(parents=True, exist_ok=True)
+
+    for csv_path in BACKTEST_DIR.glob(f"*_{start_date.isoformat()}*.csv"):
+        shutil.copy2(csv_path, docs_backtest_dir / csv_path.name)
+    shutil.copy2(report_path, docs_backtest_dir / report_path.name)
+
+    md = report_path.read_text(encoding="utf-8")
+    escaped = html.escape(md)
+    html_body = f"""<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>運彩 AI 回測報告 {start_date.isoformat()}</title>
+  <style>
+    body {{ margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f6f7f9; color: #172033; }}
+    main {{ max-width: 1120px; margin: 0 auto; padding: 24px; }}
+    nav {{ display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }}
+    a {{ color: #155eef; text-decoration: none; font-weight: 700; }}
+    .panel {{ background: #fff; border: 1px solid #d9dee8; border-radius: 8px; padding: 18px; }}
+    pre {{ white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.55; }}
+  </style>
+</head>
+<body>
+<main>
+  <nav>
+    <a href="index.html">回首頁</a>
+    <a href="backtest/backtest_report_{start_date.isoformat()}.md">Markdown</a>
+    <a href="backtest/">CSV / 原始紀錄</a>
+  </nav>
+  <section class="panel"><pre>{escaped}</pre></section>
+</main>
+</body>
+</html>
+"""
+    out_path = docs_dir / f"backtest-{start_date.isoformat()}.html"
+    if not out_path.exists():
+        out_path.write_text(html_body, encoding="utf-8")
+    alias_path = docs_dir / "backtest.html"
+    alias_path.write_text(out_path.read_text(encoding="utf-8"), encoding="utf-8")
+    return out_path
 
 
 def _inject_synthetic_odds(games: list, sport: str) -> list:

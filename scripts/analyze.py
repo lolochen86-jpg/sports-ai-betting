@@ -648,9 +648,12 @@ class DailyPlan:
     parlays:     list[Parlay]
     total_bet:   float
     reserved:    float              # 保留 10% 不動
+    required_5_leg_note: str = ""
 
     def summary_lines(self) -> list[str]:
         lines = [f"本金：NT${self.bankroll:,.0f}，今日投入：NT${self.total_bet:,.0f}"]
+        if self.required_5_leg_note:
+            lines.append(f"  required_5_leg: {self.required_5_leg_note}")
         for p in self.single_picks:
             amt = p.bet_amount(self.bankroll)
             lines.append(f"  單關 {p.bet_label} @{p.odds:.2f}  NT${amt:,.0f}  [Edge {p.edge:+.1%} / {p.grade}級]")
@@ -683,6 +686,14 @@ def make_daily_plan(picks: list[Pick], bankroll: float, game_date: str,
     picks_limited     = []
     parlay_candidates = all_sorted[:12]
     parlays_list      = build_parlays(parlay_candidates, bankroll, c)
+    required_5_leg_note = _required_5_leg_note(parlay_candidates, c)
+
+    # Keep serialized plans and settlement aligned: the risk multiplier is
+    # baked into normal parlay fractions, while fixed NT$10 parlays stay fixed.
+    if km != 1.0:
+        for par in parlays_list:
+            if par.fixed_bet <= 0:
+                par.kelly_frac *= km
 
     # 計算各注碼
     total = 0.0
@@ -693,7 +704,7 @@ def make_daily_plan(picks: list[Pick], bankroll: float, game_date: str,
 
     for par in parlays_list:
         amt = par.bet_amount(bankroll, c)
-        total += amt if par.fixed_bet > 0 else amt * km
+        total += amt
 
     # 若超出可用資金，等比縮減
     if total > available and total > 0:
@@ -714,7 +725,21 @@ def make_daily_plan(picks: list[Pick], bankroll: float, game_date: str,
         parlays=parlays_list,
         total_bet=round(total / 10) * 10,
         reserved=reserved,
+        required_5_leg_note=required_5_leg_note,
     )
+
+
+def _required_5_leg_note(picks: list[Pick], cfg: StrategyConfig) -> str:
+    """Explain whether the mandatory fixed NT$10 five-leg parlay was created."""
+    if cfg.required_5_leg_bet <= 0:
+        return "disabled"
+    if cfg.max_parlay_legs < 5:
+        return "skipped; max_parlay_legs < 5"
+
+    unique_games = {pick.game_id for pick in picks}
+    if len(unique_games) < 5:
+        return f"skipped; only {len(unique_games)} unique candidate games (<5)"
+    return f"created; fixed_bet=NT${cfg.required_5_leg_bet:.0f}"
 
 
 # ── 主流程 ────────────────────────────────────────────────

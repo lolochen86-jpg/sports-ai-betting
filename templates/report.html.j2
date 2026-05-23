@@ -334,7 +334,13 @@
 
         {% if st.no_picks %}
           <div class="empty">今日沒有符合門檻的串關</div>
+          {% if st.required_5_leg_note %}
+            <div class="empty">required_5_leg: {{ st.required_5_leg_note }}</div>
+          {% endif %}
         {% else %}
+          {% if st.required_5_leg_note %}
+            <div class="empty">required_5_leg: {{ st.required_5_leg_note }}</div>
+          {% endif %}
           <div class="parlay-grid">
           {% for p in st.parlays %}
             <div class="parlay">
