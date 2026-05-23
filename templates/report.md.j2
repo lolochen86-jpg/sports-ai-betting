@@ -26,7 +26,7 @@
 {% if yesterday_results %}
 | # | 下注內容 | 球種 | 賠率 | 下注額 | 結果 | 盈虧 |
 |---|---|---|---|---|---|---|
-{% for r in yesterday_results %}| {{ loop.index }} | {{ r.bet_label }} | {{ r.sport }} | {{ r.odds | float | round(2) }} | {{ r.bet_amount | float | ntd }} | {{ r.result | result_icon }} {{ r.result }} | {{ r.pnl | float | sign_ntd }} |
+{% for r in yesterday_results %}| {{ loop.index }} | {{ r.bet_label }} | {{ r.sport }} | {{ r.odds | default(r.parlay_odds | default(0)) | float | round(2) }} | {{ r.bet_amount | float | ntd }} | {{ r.result | result_icon }} {{ r.result }} | {{ r.pnl | float | sign_ntd }} |
 {% endfor %}
 
 **昨日合計**：投入 {{ yesterday_total_bet | ntd }}，盈虧 {{ yesterday_pnl | sign_ntd }}，命中 {{ yesterday_wins }}/{{ yesterday_total }}
