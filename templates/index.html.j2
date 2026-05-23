@@ -3,244 +3,376 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>運彩AI分析師</title>
+<title>運彩 AI 下注儀表板</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   :root {
-    --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3e;
-    --text: #e2e8f0; --muted: #718096; --accent: #63b3ed;
-    --green: #48bb78; --red: #fc8181; --yellow: #f6e05e;
-    --purple: #b794f4;
+    --bg: #0b0f14;
+    --panel: #121821;
+    --panel-2: #171f2b;
+    --line: #273244;
+    --text: #e7edf5;
+    --muted: #8a97aa;
+    --blue: #56a8e8;
+    --green: #48c78e;
+    --red: #f87171;
+    --amber: #f3c969;
+    --violet: #a78bfa;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.6; padding: 1rem; }
-  .container { max-width: 900px; margin: 0 auto; }
-
-  header { padding: 1.5rem 0 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1.75rem; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 0.5rem; }
-  .site-title { font-size: 1.7rem; font-weight: 700; color: var(--accent); }
-  .site-sub   { color: var(--muted); font-size: 0.85rem; margin-top: 0.2rem; }
-  .today-link { font-size: 0.85rem; background: rgba(99,179,237,0.15); color: var(--accent); padding: 0.35rem 0.85rem; border-radius: 20px; text-decoration: none; white-space: nowrap; }
-  .today-link:hover { background: rgba(99,179,237,0.25); }
-
-  h2 { font-size: 1.05rem; color: var(--accent); margin: 1.75rem 0 0.85rem; }
-
-  /* Stat grid */
-  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom: 1.75rem; }
-  .stat-card  { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
-  .stat-label { font-size: 0.7rem; color: var(--muted); margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.05em; }
-  .stat-value { font-size: 1.3rem; font-weight: 700; }
-  .green  { color: var(--green); }
-  .red    { color: var(--red); }
-  .yellow { color: var(--yellow); }
-  .accent { color: var(--accent); }
-  .purple { color: var(--purple); }
-
-  /* Chart */
-  .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin-bottom: 1.75rem; }
-  .chart-wrap h3 { font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem; }
-
-  /* Today picks summary */
-  .picks-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.75rem; }
-  @media (max-width: 600px) { .picks-grid { grid-template-columns: 1fr; } }
-  .picks-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
-  .picks-card-header { font-size: 0.78rem; font-weight: 700; margin-bottom: 0.6rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.05em; }
-  .picks-card-header.conservative { color: var(--accent); }
-  .picks-card-header.aggressive   { color: var(--red); }
-  .picks-card-header.underdog     { color: var(--purple); }
-  .pick-row { font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
-  .pick-row:last-child { border-bottom: none; }
-  .pick-team { color: var(--text); font-weight: 500; }
-  .pick-meta { color: var(--muted); font-size: 0.73rem; }
-  .pick-odds { color: var(--green); font-weight: 600; font-size: 0.85rem; }
-  .no-pick-msg { font-size: 0.8rem; color: var(--muted); text-align: center; padding: 0.75rem 0; }
-  .picks-total { font-size: 0.75rem; color: var(--muted); margin-top: 0.6rem; text-align: right; }
-
-  /* Report list */
-  .report-list { display: flex; flex-direction: column; gap: 0.5rem; }
-  .report-item { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: var(--text); transition: border-color 0.15s; }
-  .report-item:hover { border-color: var(--accent); }
-  .report-date  { font-size: 0.875rem; }
-  .report-arrow { color: var(--muted); }
-
-  .badge { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin-left: 0.5rem; }
-  .badge-today { background: rgba(99,179,237,0.15); color: var(--accent); }
-
-  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.72rem; color: var(--muted); text-align: center; line-height: 1.8; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", "Noto Sans TC", system-ui, sans-serif;
+    line-height: 1.55;
+  }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 22px 18px 42px; }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; flex-direction: column; gap: 4px; }
+  .brand-title { font-size: clamp(1.45rem, 3vw, 2.1rem); font-weight: 800; color: var(--blue); }
+  .brand-sub { color: var(--muted); font-size: 0.9rem; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    color: var(--text);
+    font-size: 0.88rem;
+    font-weight: 650;
+  }
+  .btn.primary { border-color: rgba(86,168,232,0.55); color: var(--blue); background: rgba(86,168,232,0.12); }
+  .section { margin-top: 24px; }
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  h2 { margin: 0; font-size: 1.03rem; color: var(--blue); }
+  .hint { color: var(--muted); font-size: 0.82rem; }
+  .rule-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .rule, .metric, .strategy, .chart, .list-panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .rule { padding: 14px; min-height: 86px; }
+  .rule-k { color: var(--muted); font-size: 0.75rem; }
+  .rule-v { margin-top: 4px; font-size: 1.15rem; font-weight: 800; }
+  .rule-note { margin-top: 3px; color: var(--muted); font-size: 0.78rem; }
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+  }
+  .metric { padding: 14px; }
+  .metric-k { color: var(--muted); font-size: 0.75rem; }
+  .metric-v { margin-top: 4px; font-size: 1.28rem; font-weight: 800; }
+  .blue { color: var(--blue); }
+  .green { color: var(--green); }
+  .red { color: var(--red); }
+  .amber { color: var(--amber); }
+  .violet { color: var(--violet); }
+  .dash-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+    gap: 12px;
+    align-items: start;
+  }
+  .chart { padding: 16px; min-height: 280px; }
+  .strategy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .strategy { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+  .strategy-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+  .strategy-name { font-weight: 800; }
+  .strategy-total { color: var(--muted); font-size: 0.78rem; text-align: right; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.74rem;
+    white-space: nowrap;
+  }
+  .parlay-list { display: flex; flex-direction: column; gap: 8px; }
+  .parlay {
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    background: var(--panel-2);
+  }
+  .parlay-title { font-size: 0.86rem; font-weight: 700; overflow-wrap: anywhere; }
+  .parlay-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+  .empty { padding: 18px 10px; color: var(--muted); text-align: center; font-size: 0.86rem; }
+  .list-panel { overflow: hidden; }
+  .report-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.9rem;
+  }
+  .report-link:last-child { border-bottom: 0; }
+  .report-link:hover { background: var(--panel-2); }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 5px;
+    background: rgba(86,168,232,0.13);
+    color: var(--blue);
+    font-size: 0.72rem;
+    margin-left: 6px;
+  }
+  footer {
+    margin-top: 34px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.76rem;
+    text-align: center;
+  }
+  @media (max-width: 900px) {
+    .metrics { grid-template-columns: repeat(3, 1fr); }
+    .rule-strip, .strategy-grid, .dash-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
+    .wrap { padding: 16px 12px 32px; }
+    .topbar, .section-head { align-items: flex-start; flex-direction: column; }
+    .actions { justify-content: flex-start; width: 100%; }
+    .btn { flex: 1; justify-content: center; }
+    .metrics { grid-template-columns: repeat(2, 1fr); }
+    .metric-v { font-size: 1.08rem; }
+    .parlay-meta { flex-direction: column; gap: 2px; }
+  }
 </style>
 </head>
 <body>
-<div class="container">
-
-  <header>
-    <div>
-      <div class="site-title">🏀⚾ 運彩AI分析師</div>
-      <div class="site-sub">NBA · MLB · 數據驅動 · 每日 22:00 更新</div>
+<main class="wrap">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-title">運彩 AI 下注儀表板</div>
+      <div class="brand-sub">NBA / MLB 串關策略，三位分析師各自追蹤本金與績效</div>
     </div>
-    <a href="{{ today }}.html" class="today-link">📋 今日報告 →</a>
+    <nav class="actions">
+      <a class="btn primary" href="{{ today }}.html">今日報告</a>
+      <a class="btn" href="backtest-2026-04-01.html">回測紀錄</a>
+    </nav>
   </header>
 
-  <!-- 整體績效 -->
-  <h2>📊 整體績效</h2>
-  <div class="stat-grid">
-    <div class="stat-card">
-      <div class="stat-label">目前本金</div>
-      <div class="stat-value accent">NT${{ "{:,.0f}".format(stats.current) }}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">起始本金</div>
-      <div class="stat-value">NT${{ "{:,.0f}".format(stats.initial) }}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">累積報酬率</div>
-      <div class="stat-value {% if stats.roi >= 0 %}green{% else %}red{% endif %}">
-        {% if stats.roi >= 0 %}+{% endif %}{{ "{:.1f}".format(stats.roi) }}%
+  <section class="section">
+    <div class="rule-strip">
+      <div class="rule">
+        <div class="rule-k">下注型態</div>
+        <div class="rule-v">只做串關</div>
+        <div class="rule-note">正式單關已停用</div>
+      </div>
+      <div class="rule">
+        <div class="rule-k">最低門檻</div>
+        <div class="rule-v">2 關以上</div>
+        <div class="rule-note">每注都必須至少串 2 關</div>
+      </div>
+      <div class="rule">
+        <div class="rule-k">每日固定</div>
+        <div class="rule-v">5 關 NT$10</div>
+        <div class="rule-note">候選足夠時自動加入</div>
+      </div>
+      <div class="rule">
+        <div class="rule-k">回測起點</div>
+        <div class="rule-v">2026-04-01</div>
+        <div class="rule-note">兩位歸零即停止</div>
       </div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">最大回撤</div>
-      <div class="stat-value {% if stats.drawdown > 20 %}red{% elif stats.drawdown > 10 %}yellow{% else %}green{% endif %}">
-        -{{ "{:.1f}".format(stats.drawdown) }}%
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">單關命中率</div>
-      <div class="stat-value">
-        {% if perf.single_bets > 0 %}{{ "{:.1f}".format(perf.single_wins / perf.single_bets * 100) }}%
-        {% else %}—{% endif %}
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">串關命中率</div>
-      <div class="stat-value purple">
-        {% if perf.parlay_bets > 0 %}{{ "{:.1f}".format(perf.parlay_wins / perf.parlay_bets * 100) }}%
-        {% else %}—{% endif %}
-      </div>
-    </div>
-  </div>
+  </section>
 
-  <!-- 本金曲線 -->
-  <div class="chart-wrap">
-    <h3>本金曲線（最近 30 天）</h3>
-    <canvas id="bankrollChart" height="80"></canvas>
-  </div>
+  <section class="section">
+    <div class="section-head">
+      <h2>資金總覽</h2>
+      <div class="hint">目前統計以已結算紀錄為準</div>
+    </div>
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-k">目前本金</div>
+        <div class="metric-v blue">NT${{ "{:,.0f}".format(stats.current) }}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-k">起始本金</div>
+        <div class="metric-v">NT${{ "{:,.0f}".format(stats.initial) }}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-k">累積報酬率</div>
+        <div class="metric-v {% if stats.roi >= 0 %}green{% else %}red{% endif %}">
+          {% if stats.roi >= 0 %}+{% endif %}{{ "{:.1f}".format(stats.roi) }}%
+        </div>
+      </div>
+      <div class="metric">
+        <div class="metric-k">距高點回撤</div>
+        <div class="metric-v {% if stats.drawdown > 20 %}red{% elif stats.drawdown > 10 %}amber{% else %}green{% endif %}">
+          -{{ "{:.1f}".format(stats.drawdown) }}%
+        </div>
+      </div>
+      <div class="metric">
+        <div class="metric-k">單關命中率</div>
+        <div class="metric-v">停用</div>
+      </div>
+      <div class="metric">
+        <div class="metric-k">串關命中率</div>
+        <div class="metric-v violet">
+          {% if perf.parlay_bets > 0 %}{{ "{:.1f}".format(perf.parlay_wins / perf.parlay_bets * 100) }}%
+          {% else %}0.0%{% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <!-- 今日三策略摘要 -->
-  <h2>🎯 今日下注計劃（{{ today }}）</h2>
-  {% if today_strategies %}
-  <div class="picks-grid">
-    {% set slugs  = ['conservative', 'aggressive', 'underdog'] %}
-    {% set icons  = ['🛡️', '⚔️', '🎯'] %}
-    {% for st in today_strategies %}
-    <div class="picks-card">
-      <div class="picks-card-header {{ slugs[loop.index0] }}">{{ icons[loop.index0] }} {{ st.name }}</div>
-      {% if st.no_picks %}
-        <div class="no-pick-msg">今日空手</div>
+  <section class="section dash-grid">
+    <div>
+      <div class="section-head">
+        <h2>今日下注計畫</h2>
+        <div class="hint">{{ today }}</div>
+      </div>
+      {% if today_strategies %}
+      <div class="strategy-grid">
+        {% for st in today_strategies %}
+        <article class="strategy">
+          <div class="strategy-top">
+            <div>
+              <div class="strategy-name">{{ st.name }}</div>
+              <span class="pill">本金 NT${{ "{:,.0f}".format(st.bankroll_current) }}</span>
+            </div>
+            <div class="strategy-total">
+              {% if st.no_picks %}今日空手{% else %}下注 NT${{ "{:,.0f}".format(st.total) }}{% endif %}
+            </div>
+          </div>
+          {% if st.no_picks %}
+            <div class="empty">今日沒有符合門檻的串關</div>
+          {% else %}
+            <div class="parlay-list">
+            {% for p in st.parlays %}
+              <div class="parlay">
+                <div class="parlay-title">
+                  {{ p.label }}
+                  {% if p.fixed_bet | default(0) | float > 0 %}<span class="tag">保底 5 關</span>{% endif %}
+                </div>
+                <div class="parlay-meta">
+                  <span>{{ p.legs | length }} 關 · 總賠率 {{ "{:.2f}".format(p.parlay_odds) }} · EV {% if p.parlay_ev >= 0 %}+{% endif %}{{ "{:.1f}".format(p.parlay_ev * 100) }}%</span>
+                  <strong>NT${{ "{:,.0f}".format(p.amount) }}</strong>
+                </div>
+              </div>
+            {% endfor %}
+            </div>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </div>
       {% else %}
-        {% for s in st.singles %}
-        <div class="pick-row">
-          <div>
-            <div class="pick-team">{{ s.label }}</div>
-            <div class="pick-meta">{{ s.matchup }}</div>
-          </div>
-          <div style="text-align:right">
-            <div class="pick-odds">@{{ "{:.2f}".format(s.odds) }}</div>
-            <div class="pick-meta">NT${{ "{:,.0f}".format(s.amount) }}</div>
-          </div>
-        </div>
-        {% endfor %}
-        {% for p in st.parlays %}
-        <div class="pick-row">
-          <div>
-            <div class="pick-team" style="color:var(--purple)">🔗 {{ p.label }}</div>
-            <div class="pick-meta">EV +{{ "{:.1f}".format(p.parlay_ev * 100) }}%</div>
-          </div>
-          <div style="text-align:right">
-            <div class="pick-odds" style="color:var(--purple)">@{{ "{:.2f}".format(p.parlay_odds) }}</div>
-            <div class="pick-meta">NT${{ "{:,.0f}".format(p.amount) }}</div>
-          </div>
-        </div>
-        {% endfor %}
-        <div class="picks-total">總投入 NT${{ "{:,.0f}".format(st.total) }}</div>
+        <div class="list-panel empty">今日計畫尚未產生</div>
       {% endif %}
     </div>
-    {% endfor %}
-  </div>
-  <p style="text-align:right;margin-top:-0.5rem;margin-bottom:1.5rem">
-    <a href="{{ today }}.html" style="font-size:0.85rem;color:var(--accent)">查看完整分析 →</a>
-  </p>
-  {% else %}
-  <p style="color:var(--muted);font-size:0.875rem;margin-bottom:1.5rem">今日計劃尚未生成。</p>
-  {% endif %}
 
-  <!-- 回測紀錄 -->
-  <h2>🧪 回測紀錄</h2>
-  <div class="report-list">
-    <a href="backtest-2026-04-01.html" class="report-item">
-      <span class="report-date">2026-04-01 起 · 最少 2 關串回測</span>
-      <span class="report-arrow">→</span>
-    </a>
-  </div>
+    <div>
+      <div class="section-head">
+        <h2>本金走勢</h2>
+        <div class="hint">最近 30 筆</div>
+      </div>
+      <div class="chart">
+        <canvas id="bankrollChart" height="220"></canvas>
+      </div>
+    </div>
+  </section>
 
-  <!-- 近期報告 -->
-  <h2>📅 近期報告</h2>
-  <div class="report-list">
-    {% for rdate in recent_reports %}
-    <a href="{{ rdate }}.html" class="report-item">
-      <span class="report-date">
-        {{ rdate }}
-        {% if rdate == today %}<span class="badge badge-today">今日</span>{% endif %}
-      </span>
-      <span class="report-arrow">→</span>
-    </a>
-    {% endfor %}
-  </div>
+  <section class="section">
+    <div class="section-head">
+      <h2>紀錄入口</h2>
+      <div class="hint">回測與近期每日報告</div>
+    </div>
+    <div class="list-panel">
+      <a class="report-link" href="backtest-2026-04-01.html">
+        <span>2026-04-01 起三策略回測</span>
+        <span class="tag">回測</span>
+      </a>
+      {% for rdate in recent_reports %}
+      <a class="report-link" href="{{ rdate }}.html">
+        <span>{{ rdate }}{% if rdate == today %}<span class="tag">今日</span>{% endif %}</span>
+        <span>查看</span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
 
   <footer>
-    起始本金 NT$3,000 · 起始日期 2026-05-18<br>
-    數據來源：NBA Stats API · MLB Stats API · Pinnacle<br>
-    ¼ 分數凱利 · 本站不構成投資建議
+    資料來源：NBA Stats API / MLB Stats API / Pinnacle 等效賠率。運彩有風險，請理性控管本金。
   </footer>
-</div>
+</main>
 
 <script>
 const raw = {{ chart_data }};
+const labels = raw.labels.length ? raw.labels : ['{{ today }}'];
+const values = raw.values.length ? raw.values : [raw.initial];
 const ctx = document.getElementById('bankrollChart').getContext('2d');
 new Chart(ctx, {
   type: 'line',
   data: {
-    labels: raw.labels.length ? raw.labels : ['{{ today }}'],
+    labels,
     datasets: [{
-      label: '本金 (NT$)',
-      data: raw.values.length ? raw.values : [raw.initial],
-      borderColor: '#63b3ed',
-      backgroundColor: 'rgba(99,179,237,0.08)',
+      label: '本金',
+      data: values,
+      borderColor: '#56a8e8',
+      backgroundColor: 'rgba(86,168,232,0.10)',
       borderWidth: 2,
-      pointRadius: 3,
-      pointBackgroundColor: '#63b3ed',
+      pointRadius: 2,
       fill: true,
-      tension: 0.3,
+      tension: 0.25,
     }, {
       label: '起始本金',
-      data: (raw.labels.length ? raw.labels : ['{{ today }}']).map(() => raw.initial),
-      borderColor: 'rgba(113,128,150,0.4)',
-      borderDash: [4, 4],
+      data: labels.map(() => raw.initial),
+      borderColor: 'rgba(138,151,170,0.55)',
+      borderDash: [5, 5],
       borderWidth: 1,
       pointRadius: 0,
-      fill: false,
     }]
   },
   options: {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
-      legend: { labels: { color: '#718096', font: { size: 11 } } },
+      legend: { labels: { color: '#8a97aa', font: { size: 11 } } },
       tooltip: { callbacks: { label: c => `NT$${c.parsed.y.toLocaleString()}` } }
     },
     scales: {
-      x: { ticks: { color: '#718096', font: { size: 10 } }, grid: { color: '#2a2d3e' } },
-      y: {
-        ticks: { color: '#718096', font: { size: 10 }, callback: v => `$${v.toLocaleString()}` },
-        grid: { color: '#2a2d3e' }
-      }
+      x: { ticks: { color: '#8a97aa', maxRotation: 0, autoSkip: true }, grid: { color: '#273244' } },
+      y: { ticks: { color: '#8a97aa', callback: v => `NT$${Number(v).toLocaleString()}` }, grid: { color: '#273244' } }
     }
   }
 });

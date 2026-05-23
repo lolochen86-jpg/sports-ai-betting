@@ -322,6 +322,7 @@ def _build_context(
                 "parlay_ev":  par.parlay_ev,
                 "amount":     amt,
                 "potential":  round(amt * (par.parlay_odds - 1), 0),
+                "fixed_bet":  getattr(par, "fixed_bet", 0.0),
             })
 
     total_today = sum(s["amount"] for s in singles) + sum(p["amount"] for p in parlays)
@@ -363,11 +364,14 @@ def _build_context(
                     amt = par.bet_amount(cur_bk)
                     pa_list.append({
                         "label":       par.label,
-                        "legs":        [{"label": lg.bet_label, "odds": lg.odds} for lg in par.legs],
+                        "legs":        [{"label": lg.bet_label, "odds": lg.odds,
+                                         "matchup": f"{lg.away_team}@{lg.home_team}"}
+                                        for lg in par.legs],
                         "parlay_odds": par.parlay_odds,
                         "parlay_ev":   par.parlay_ev,
                         "amount":      amt,
                         "potential":   round(amt * (par.parlay_odds - 1), 0),
+                        "fixed_bet":   getattr(par, "fixed_bet", 0.0),
                     })
             total = sum(x["amount"] for x in s_list) + sum(x["amount"] for x in pa_list)
 
@@ -544,6 +548,7 @@ class _DictPlan:
                 self.parlay_ev  = float(p.get("parlay_ev", 0))
                 self._kf        = float(p.get("kelly_frac", 0))
                 self._fixed_bet = float(p.get("fixed_bet", 0) or p.get("bet_amount", 0) or 0)
+                self.fixed_bet  = self._fixed_bet
                 legs_raw = p.get("legs", [])
                 self.legs = [_Pick(lg) for lg in legs_raw]
                 self.label = "·".join(lg.bet_label for lg in self.legs)

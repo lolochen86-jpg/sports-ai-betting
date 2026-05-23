@@ -3,380 +3,390 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>運彩AI分析師 — {{ report_date }}</title>
+<title>{{ report_date }} 下注報告</title>
 <style>
   :root {
-    --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3e;
-    --text: #e2e8f0; --muted: #718096; --accent: #63b3ed;
-    --green: #48bb78; --red: #fc8181; --yellow: #f6e05e;
-    --purple: #b794f4; --orange: #f6ad55;
+    --bg: #0b0f14;
+    --panel: #121821;
+    --panel-2: #171f2b;
+    --line: #273244;
+    --text: #e7edf5;
+    --muted: #8a97aa;
+    --blue: #56a8e8;
+    --green: #48c78e;
+    --red: #f87171;
+    --amber: #f3c969;
+    --violet: #a78bfa;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.6; padding: 1rem; }
-  .container { max-width: 900px; margin: 0 auto; }
-  h1 { font-size: 1.5rem; color: var(--accent); padding: 1rem 0 0.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
-  h2 { font-size: 1.05rem; color: var(--accent); margin: 1.5rem 0 0.75rem; }
-
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  .back-link { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; display: inline-block; }
-
-  /* Stat cards */
-  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem 1rem; }
-  .card-label { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.04em; }
-  .card-value { font-size: 1.2rem; font-weight: 700; }
-  .green  { color: var(--green); }
-  .red    { color: var(--red); }
-  .yellow { color: var(--yellow); }
-  .accent { color: var(--accent); }
-  .purple { color: var(--purple); }
-
-  /* Tables */
-  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin-bottom: 1rem; }
-  th { background: var(--surface); color: var(--muted); font-weight: 500; text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
-  td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(255,255,255,0.03); }
-
-  /* Badges */
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 600; }
-  .badge-win  { background: rgba(72,187,120,0.15); color: var(--green); }
-  .badge-loss { background: rgba(252,129,129,0.15); color: var(--red); }
-  .badge-void { background: rgba(113,128,150,0.15); color: var(--muted); }
-  .badge-A    { background: rgba(99,179,237,0.15); color: var(--accent); }
-  .badge-B    { background: rgba(183,148,244,0.15); color: var(--purple); }
-  .badge-C    { background: rgba(246,224,94,0.15); color: var(--yellow); }
-
-  /* ── Strategy Tabs ───────────────────────────── */
-  .tab-bar {
-    display: flex; gap: 0; margin-bottom: 1.25rem;
-    border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", "Noto Sans TC", system-ui, sans-serif;
+    line-height: 1.55;
   }
-  .tab-btn {
-    flex: 1; padding: 0.6rem 0.5rem; border: none; cursor: pointer;
-    font-size: 0.82rem; font-weight: 600; font-family: inherit;
-    background: var(--surface); color: var(--muted);
-    border-right: 1px solid var(--border); transition: all 0.15s;
-    display: flex; flex-direction: column; align-items: center; gap: 0.1rem;
+  a { color: var(--blue); text-decoration: none; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 22px 18px 42px; }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
   }
-  .tab-btn:last-child { border-right: none; }
-  .tab-btn.active { background: var(--bg); color: var(--text); }
-  .tab-btn.active.tab-conservative { box-shadow: inset 0 -3px 0 var(--accent); color: var(--accent); }
-  .tab-btn.active.tab-aggressive   { box-shadow: inset 0 -3px 0 var(--red);    color: var(--red); }
-  .tab-btn.active.tab-underdog     { box-shadow: inset 0 -3px 0 var(--purple); color: var(--purple); }
-  .tab-sub { font-size: 0.68rem; font-weight: 400; color: var(--muted); }
-
+  .back { color: var(--muted); font-size: 0.86rem; }
+  h1 { margin: 4px 0 0; font-size: clamp(1.35rem, 3vw, 2rem); color: var(--blue); }
+  .sub { color: var(--muted); font-size: 0.88rem; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    color: var(--text);
+    font-size: 0.88rem;
+    font-weight: 650;
+  }
+  .section { margin-top: 24px; }
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  h2 { margin: 0; font-size: 1.03rem; color: var(--blue); }
+  .hint { color: var(--muted); font-size: 0.82rem; }
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+  }
+  .metric, .panel, .strategy {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .metric { padding: 14px; }
+  .metric-k { color: var(--muted); font-size: 0.75rem; }
+  .metric-v { margin-top: 4px; font-size: 1.22rem; font-weight: 800; }
+  .green { color: var(--green); }
+  .red { color: var(--red); }
+  .amber { color: var(--amber); }
+  .blue { color: var(--blue); }
+  .violet { color: var(--violet); }
+  .panel { overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+  th { color: var(--muted); background: var(--panel-2); font-weight: 650; }
+  tr:last-child td { border-bottom: 0; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 999px;
+    font-size: 0.73rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .badge-win { color: var(--green); background: rgba(72,199,142,0.13); }
+  .badge-loss { color: var(--red); background: rgba(248,113,113,0.13); }
+  .badge-void { color: var(--muted); background: rgba(138,151,170,0.13); }
+  .badge-info { color: var(--blue); background: rgba(86,168,232,0.13); }
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .tab {
+    border: 0;
+    border-right: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+    min-height: 62px;
+    padding: 10px;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+  }
+  .tab:last-child { border-right: 0; }
+  .tab.active { background: var(--panel-2); box-shadow: inset 0 -3px 0 var(--blue); }
+  .tab-name { display: block; font-weight: 800; }
+  .tab-sub { display: block; color: var(--muted); font-size: 0.76rem; margin-top: 2px; }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
-
-  /* Pick cards */
-  .pick-list { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; }
-  .pick-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
-  .pick-card.conservative { border-left: 3px solid var(--accent); }
-  .pick-card.aggressive   { border-left: 3px solid var(--red); }
-  .pick-card.underdog     { border-left: 3px solid var(--purple); }
-  .pick-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
-  .pick-title   { font-weight: 700; font-size: 1rem; }
-  .pick-matchup { font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; }
-  .pick-amount  { font-size: 1.05rem; font-weight: 700; color: var(--green); }
-  .pick-potential { font-size: 0.72rem; color: var(--muted); text-align: right; }
-  .pick-stats { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
-  .pick-stat  { font-size: 0.8rem; }
-  .pick-stat-label { color: var(--muted); }
-  .pick-stat-value { color: var(--text); font-weight: 500; }
-  .edge-bar  { height: 4px; background: var(--border); border-radius: 2px; margin-top: 0.6rem; }
-  .edge-fill { height: 100%; border-radius: 2px; }
-  .edge-fill.conservative { background: var(--accent); }
-  .edge-fill.aggressive   { background: var(--red); }
-  .edge-fill.underdog     { background: var(--purple); }
-
-  /* Parlay card */
-  .parlay-card { border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
-  .parlay-card.conservative { background: var(--surface); border: 1px solid var(--accent); }
-  .parlay-card.aggressive   { background: var(--surface); border: 1px solid var(--red); }
-  .parlay-card.underdog     { background: var(--surface); border: 1px solid var(--purple); }
-  .parlay-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
-  .parlay-label-text { font-weight: 600; font-size: 0.9rem; }
-  .parlay-ev { font-size: 0.78rem; color: var(--muted); margin-top: 0.1rem; }
-  .parlay-amount { font-size: 1rem; font-weight: 700; }
-  .parlay-amount.conservative { color: var(--accent); }
-  .parlay-amount.aggressive   { color: var(--red); }
-  .parlay-amount.underdog     { color: var(--purple); }
-  .parlay-legs { display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.5rem; }
-  .parlay-leg { font-size: 0.8rem; color: var(--muted); display: flex; gap: 0.5rem; align-items: center; }
-  .parlay-leg::before { content: "└"; }
-
-  /* Summary bar */
-  .summary-bar {
-    margin-top: 1rem; padding: 0.75rem 1rem;
-    background: var(--surface); border-radius: 8px;
-    font-size: 0.875rem; display: flex; justify-content: space-between; align-items: center;
+  .strategy { padding: 14px; }
+  .strategy-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
   }
-
-  /* No picks */
-  .no-picks { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2rem; text-align: center; color: var(--muted); }
-
-  details { margin-top: 0.5rem; }
-  summary { cursor: pointer; font-size: 0.78rem; color: var(--accent); user-select: none; }
-  pre { background: #0a0c14; border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; font-size: 0.72rem; overflow-x: auto; margin-top: 0.5rem; white-space: pre-wrap; color: var(--muted); }
-
-  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.72rem; color: var(--muted); text-align: center; line-height: 1.8; }
+  .mini {
+    padding: 10px;
+    background: var(--panel-2);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 8px;
+  }
+  .mini-k { color: var(--muted); font-size: 0.72rem; }
+  .mini-v { margin-top: 3px; font-weight: 800; }
+  .parlay-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .parlay {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel-2);
+    padding: 12px;
+  }
+  .parlay-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .parlay-title { font-weight: 800; overflow-wrap: anywhere; }
+  .parlay-meta { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+  .amount { text-align: right; font-size: 1.05rem; font-weight: 850; color: var(--blue); white-space: nowrap; }
+  .potential { color: var(--muted); font-size: 0.75rem; text-align: right; }
+  .legs { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+  .leg {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 7px 8px;
+    border-radius: 7px;
+    background: rgba(11,15,20,0.45);
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .leg strong { color: var(--text); font-weight: 700; }
+  .empty { padding: 28px 14px; text-align: center; color: var(--muted); }
+  .summary-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: var(--panel-2);
+    border: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.9rem;
+  }
+  footer {
+    margin-top: 34px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.76rem;
+    text-align: center;
+  }
+  @media (max-width: 900px) {
+    .metrics { grid-template-columns: repeat(3, 1fr); }
+    .strategy-summary, .parlay-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
+    .wrap { padding: 16px 12px 32px; }
+    .topbar, .section-head { align-items: flex-start; flex-direction: column; }
+    .metrics { grid-template-columns: repeat(2, 1fr); }
+    .tabs { grid-template-columns: 1fr; }
+    .tab { border-right: 0; border-bottom: 1px solid var(--line); }
+    .tab:last-child { border-bottom: 0; }
+    .parlay-head, .summary-line { flex-direction: column; align-items: stretch; }
+    .amount, .potential { text-align: left; }
+    table { font-size: 0.78rem; }
+    th, td { padding: 8px; }
+  }
 </style>
 </head>
 <body>
-<div class="container">
-  <a href="index.html" class="back-link">← 返回首頁</a>
-  <h1>{{ report_date }} 下注明細</h1>
-
-  <!-- 資金狀況 -->
-  <h2>📊 資金狀況</h2>
-  <div class="card-grid">
-    <div class="card">
-      <div class="card-label">目前本金</div>
-      <div class="card-value accent">NT${{ "{:,.0f}".format(bankroll_current) }}</div>
+<main class="wrap">
+  <header class="topbar">
+    <div>
+      <a class="back" href="index.html">返回首頁</a>
+      <h1>{{ report_date }} 下注報告</h1>
+      <div class="sub">正式規則：只做 2 關以上串關；候選足夠時每日固定 5 關 NT$10</div>
     </div>
-    <div class="card">
-      <div class="card-label">昨日盈虧</div>
-      <div class="card-value {% if yesterday_pnl >= 0 %}green{% else %}red{% endif %}">
+    <a class="btn" href="backtest-2026-04-01.html">查看回測</a>
+  </header>
+
+  <section class="section">
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-k">目前本金</div>
+        <div class="metric-v blue">NT${{ "{:,.0f}".format(bankroll_current) }}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-k">昨日盈虧</div>
+        <div class="metric-v {% if yesterday_pnl >= 0 %}green{% else %}red{% endif %}">
+          {% if yesterday_pnl >= 0 %}+{% endif %}NT${{ "{:,.0f}".format(yesterday_pnl) }}
+        </div>
+      </div>
+      <div class="metric">
+        <div class="metric-k">累積報酬率</div>
+        <div class="metric-v {% if bankroll_roi >= 0 %}green{% else %}red{% endif %}">
+          {% if bankroll_roi >= 0 %}+{% endif %}{{ "{:.1f}".format(bankroll_roi) }}%
+        </div>
+      </div>
+      <div class="metric">
+        <div class="metric-k">距高點回撤</div>
+        <div class="metric-v {% if bankroll_dd > 20 %}red{% elif bankroll_dd > 10 %}amber{% else %}green{% endif %}">
+          -{{ "{:.1f}".format(bankroll_dd) }}%
+        </div>
+      </div>
+      <div class="metric">
+        <div class="metric-k">單關命中率</div>
+        <div class="metric-v">停用</div>
+      </div>
+      <div class="metric">
+        <div class="metric-k">串關命中率</div>
+        <div class="metric-v violet">{{ "{:.1f}".format(win_rate_parlay) }}%</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>昨日成績</h2>
+      <div class="hint">{{ yesterday_date }}</div>
+    </div>
+    {% if yesterday_results %}
+    <div class="panel">
+      <table>
+        <thead>
+          <tr><th>#</th><th>下注內容</th><th>球種</th><th>賠率</th><th>下注額</th><th>結果</th><th>盈虧</th></tr>
+        </thead>
+        <tbody>
+          {% for r in yesterday_results %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ r.bet_label }}</td>
+            <td>{{ r.sport }}</td>
+            <td>{% set _ro = r.odds | default(r.parlay_odds | default(0)) | float %}{{ "{:.2f}".format(_ro) if _ro > 0 else "—" }}</td>
+            <td>NT${{ "{:,.0f}".format(r.bet_amount | float) }}</td>
+            <td>
+              {% if r.result == "WIN" %}<span class="badge badge-win">WIN</span>
+              {% elif r.result == "LOSS" %}<span class="badge badge-loss">LOSS</span>
+              {% else %}<span class="badge badge-void">{{ r.result }}</span>{% endif %}
+            </td>
+            <td class="{% if r.pnl | float >= 0 %}green{% else %}red{% endif %}">
+              {% if r.pnl | float >= 0 %}+{% endif %}NT${{ "{:,.0f}".format(r.pnl | float) }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="summary-line">
+      <span>投入 NT${{ "{:,.0f}".format(yesterday_total_bet) }} · 命中 {{ yesterday_wins }}/{{ yesterday_total }}</span>
+      <strong class="{% if yesterday_pnl >= 0 %}green{% else %}red{% endif %}">
         {% if yesterday_pnl >= 0 %}+{% endif %}NT${{ "{:,.0f}".format(yesterday_pnl) }}
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-label">累積報酬率</div>
-      <div class="card-value {% if bankroll_roi >= 0 %}green{% else %}red{% endif %}">
-        {% if bankroll_roi >= 0 %}+{% endif %}{{ "{:.1f}".format(bankroll_roi) }}%
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-label">距高點回撤</div>
-      <div class="card-value {% if bankroll_dd > 20 %}red{% elif bankroll_dd > 10 %}yellow{% else %}green{% endif %}">
-        -{{ "{:.1f}".format(bankroll_dd) }}%
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-label">單關命中率</div>
-      <div class="card-value">{{ "{:.1f}".format(win_rate_single) }}%</div>
-    </div>
-    <div class="card">
-      <div class="card-label">串關命中率</div>
-      <div class="card-value purple">{{ "{:.1f}".format(win_rate_parlay) }}%</div>
-    </div>
-  </div>
-
-  <!-- 昨日成績 -->
-  <h2>✅ 昨日成績（{{ yesterday_date }}）</h2>
-  {% if yesterday_results %}
-  <table>
-    <thead>
-      <tr><th>#</th><th>下注方向</th><th>球種</th><th>賠率</th><th>下注額</th><th>結果</th><th>盈虧</th></tr>
-    </thead>
-    <tbody>
-      {% for r in yesterday_results %}
-      <tr>
-        <td>{{ loop.index }}</td>
-        <td>{{ r.bet_label }}</td>
-        <td>{{ r.sport }}</td>
-        <td>{% set _ro = r.odds | default(r.parlay_odds | default(0)) | float %}{{ "{:.2f}".format(_ro) if _ro > 0 else "—" }}</td>
-        <td>NT${{ "{:,.0f}".format(r.bet_amount | float) }}</td>
-        <td>
-          {% if r.result == "WIN" %}<span class="badge badge-win">✅ 命中</span>
-          {% elif r.result == "LOSS" %}<span class="badge badge-loss">❌ 未中</span>
-          {% else %}<span class="badge badge-void">⚪ 取消</span>{% endif %}
-        </td>
-        <td style="color:{% if r.pnl | float >= 0 %}var(--green){% else %}var(--red){% endif %}">
-          {% if r.pnl | float >= 0 %}+{% endif %}NT${{ "{:,.0f}".format(r.pnl | float) }}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <p style="font-size:0.85rem;color:var(--muted)">
-    合計：投入 NT${{ "{:,.0f}".format(yesterday_total_bet) }}，
-    命中 {{ yesterday_wins }}/{{ yesterday_total }}，
-    盈虧 <strong style="color:{% if yesterday_pnl >= 0 %}var(--green){% else %}var(--red){% endif %}">
-    {% if yesterday_pnl >= 0 %}+{% endif %}NT${{ "{:,.0f}".format(yesterday_pnl) }}</strong>
-  </p>
-  {% else %}
-  <p style="color:var(--muted);font-size:0.875rem">昨日無下注記錄（起始日）。</p>
-  {% endif %}
-
-  <!-- 今日三策略下注 -->
-  <h2>🎯 今日下注計劃（{{ report_date }}）</h2>
-
-  {% if strategies %}
-  <!-- Tab buttons -->
-  <div class="tab-bar">
-    {% set slugs = ['conservative', 'aggressive', 'underdog'] %}
-    {% set icons = ['🛡️', '⚔️', '🎯'] %}
-    {% for st in strategies %}
-    <button class="tab-btn tab-{{ st.slug if st.slug is defined else slugs[loop.index0] }} {% if loop.first %}active{% endif %}"
-            onclick="switchTab({{ loop.index0 }}, this)">
-      {{ icons[loop.index0] }} {{ st.name }}
-      <span class="tab-sub">
-        {% if st.bankroll_current is defined %}
-          NT${{ "{:,.0f}".format(st.bankroll_current) }}
-          ({% if st.bankroll_roi >= 0 %}+{% endif %}{{ "{:.1f}".format(st.bankroll_roi) }}%)
-        {% endif %}
-      </span>
-      <span class="tab-sub" style="margin-top:1px">
-        {% if st.no_picks %}今日空手
-        {% else %}{{ st.singles | length }}單{% if st.parlays %}+{{ st.parlays | length }}串{% endif %} · NT${{ "{:,.0f}".format(st.total) }}
-        {% endif %}
-      </span>
-    </button>
-    {% endfor %}
-  </div>
-
-  <!-- Tab panels -->
-  {% for st in strategies %}
-  {% set slug = st.slug if st.slug is defined else slugs[loop.index0] %}
-  <div class="tab-panel {% if loop.first %}active{% endif %}" id="panel-{{ loop.index0 }}">
-
-    <!-- ── 昨日成績 ────────────────────────────────────── -->
-    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.5rem;margin-top:0.25rem">
-      📋 昨日成績（{{ yesterday_date }}）
-    </p>
-    {% if st.no_yesterday %}
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:0.85rem 1rem;margin-bottom:1rem;font-size:0.85rem;color:var(--muted)">
-      昨日此策略無下注記錄（起始日或空手）。
-    </div>
-    {% else %}
-    <table style="margin-bottom:0.5rem">
-      <thead>
-        <tr>
-          <th>#</th><th>下注方向</th><th>球種</th><th>賠率</th><th>下注額</th><th>結果</th><th>盈虧</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in st.yesterday_results %}
-        <tr>
-          <td>{{ loop.index }}</td>
-          <td>{{ r.bet_label }}</td>
-          <td>{{ r.sport }}</td>
-          <td>{% set _o = r.odds | default(r.parlay_odds | default(0)) | float %}{{ "{:.2f}".format(_o) if _o > 0 else "—" }}</td>
-          <td>NT${{ "{:,.0f}".format(r.bet_amount | float) }}</td>
-          <td>
-            {% if r.result == "WIN" %}<span class="badge badge-win">✅ 命中</span>
-            {% elif r.result == "LOSS" %}<span class="badge badge-loss">❌ 未中</span>
-            {% else %}<span class="badge badge-void">⚪ 取消</span>{% endif %}
-          </td>
-          <td style="color:{% if r.pnl | float >= 0 %}var(--green){% else %}var(--red){% endif %};font-weight:600">
-            {% if r.pnl | float >= 0 %}+{% endif %}NT${{ "{:,.0f}".format(r.pnl | float) }}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <div style="font-size:0.8rem;color:var(--muted);margin-bottom:1.25rem;padding:0 0.25rem">
-      合計：{{ st.yesterday_total }} 注 ·
-      命中 {{ st.yesterday_wins }}/{{ st.yesterday_total }} ·
-      盈虧
-      <strong style="color:{% if st.yesterday_pnl >= 0 %}var(--green){% else %}var(--red){% endif %}">
-        {% if st.yesterday_pnl >= 0 %}+{% endif %}NT${{ "{:,.0f}".format(st.yesterday_pnl) }}
       </strong>
     </div>
+    {% else %}
+    <div class="panel empty">昨日沒有下注紀錄</div>
     {% endif %}
+  </section>
 
-    <!-- ── 今日計劃 ────────────────────────────────────── -->
-    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.5rem">
-      🎯 今日計劃（{{ report_date }}）
-    </p>
-    {% if st.no_picks %}
-    <div class="no-picks">
-      <p style="font-size:1.05rem;margin-bottom:0.5rem">今日無符合門檻的選場</p>
-      <p>所有賽事 Edge 未達此策略門檻，今日空手。</p>
+  <section class="section">
+    <div class="section-head">
+      <h2>今日三策略下注</h2>
+      <div class="hint">{{ report_date }}</div>
     </div>
 
-    {% else %}
-    <!-- Single picks -->
-    {% if st.singles %}
-    <div class="pick-list">
-      {% for s in st.singles %}
-      <div class="pick-card {{ slug }}">
-        <div class="pick-header">
-          <div>
-            <div class="pick-title">{{ s.label }}</div>
-            <div class="pick-matchup">{{ s.matchup }} · {{ s.sport }}</div>
-          </div>
-          <div style="text-align:right">
-            <div class="pick-amount">NT${{ "{:,.0f}".format(s.amount) }}</div>
-            <div class="pick-potential">潛在 +NT${{ "{:,.0f}".format(s.potential) }}</div>
-          </div>
-        </div>
-        <div class="pick-stats">
-          <div class="pick-stat"><span class="pick-stat-label">賠率 </span><span class="pick-stat-value">{{ "{:.2f}".format(s.odds) }}</span></div>
-          <div class="pick-stat"><span class="pick-stat-label">勝率 </span><span class="pick-stat-value">{{ "{:.1f}".format(s.true_prob * 100) }}%</span></div>
-          <div class="pick-stat"><span class="pick-stat-label">Edge </span><span class="pick-stat-value" style="color:var(--green)">+{{ "{:.1f}".format(s.edge * 100) }}%</span></div>
-          <div class="pick-stat"><span class="badge badge-{{ s.grade }}">{{ s.grade }} 級</span></div>
-        </div>
-        <div class="edge-bar"><div class="edge-fill {{ slug }}" style="width:{{ [s.edge * 500, 100] | min }}%"></div></div>
-        {% if s.data_card is defined and s.data_card %}
-        <details><summary>查看完整數據卡</summary><pre>{{ s.data_card }}</pre></details>
-        {% endif %}
-      </div>
+    {% if strategies %}
+    <div class="tabs">
+      {% for st in strategies %}
+      <button class="tab {% if loop.first %}active{% endif %}" onclick="switchTab({{ loop.index0 }}, this)">
+        <span class="tab-name">{{ st.name }}</span>
+        <span class="tab-sub">
+          {% if st.no_picks %}今日空手{% else %}{{ st.parlays | length }} 組串關 · NT${{ "{:,.0f}".format(st.total) }}{% endif %}
+        </span>
+      </button>
       {% endfor %}
     </div>
-    {% endif %}
 
-    <!-- Parlays -->
-    {% if st.parlays %}
-    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem">🔗 串關</p>
-    {% for p in st.parlays %}
-    <div class="parlay-card {{ slug }}">
-      <div class="parlay-header">
-        <div>
-          <div class="parlay-label-text">{{ p.label }}</div>
-          <div class="parlay-ev">總賠率 {{ "{:.2f}".format(p.parlay_odds) }} · EV +{{ "{:.1f}".format(p.parlay_ev * 100) }}%</div>
+    {% for st in strategies %}
+    <div class="tab-panel {% if loop.first %}active{% endif %}" id="panel-{{ loop.index0 }}">
+      <article class="strategy">
+        <div class="strategy-summary">
+          <div class="mini">
+            <div class="mini-k">分析師本金</div>
+            <div class="mini-v blue">NT${{ "{:,.0f}".format(st.bankroll_current) }}</div>
+          </div>
+          <div class="mini">
+            <div class="mini-k">累積報酬率</div>
+            <div class="mini-v {% if st.bankroll_roi >= 0 %}green{% else %}red{% endif %}">
+              {% if st.bankroll_roi >= 0 %}+{% endif %}{{ "{:.1f}".format(st.bankroll_roi) }}%
+            </div>
+          </div>
+          <div class="mini">
+            <div class="mini-k">昨日命中</div>
+            <div class="mini-v">{{ st.yesterday_wins }}/{{ st.yesterday_total }}</div>
+          </div>
+          <div class="mini">
+            <div class="mini-k">今日下注</div>
+            <div class="mini-v">NT${{ "{:,.0f}".format(st.total) }}</div>
+          </div>
         </div>
-        <div style="text-align:right">
-          <div class="parlay-amount {{ slug }}">NT${{ "{:,.0f}".format(p.amount) }}</div>
-          <div class="pick-potential">潛在 +NT${{ "{:,.0f}".format(p.potential) }}</div>
-        </div>
-      </div>
-      <div class="parlay-legs">
-        {% for leg in p.legs %}
-        <div class="parlay-leg">
-          <span style="color:var(--text)">{{ leg.label }}</span>
-          <span>@{{ "{:.2f}".format(leg.odds) }}</span>
-          {% if leg.matchup is defined %}<span>{{ leg.matchup }}</span>{% endif %}
-        </div>
-        {% endfor %}
-      </div>
+
+        {% if st.no_picks %}
+          <div class="empty">今日沒有符合門檻的串關</div>
+        {% else %}
+          <div class="parlay-grid">
+          {% for p in st.parlays %}
+            <div class="parlay">
+              <div class="parlay-head">
+                <div>
+                  <div class="parlay-title">
+                    {{ p.label }}
+                    {% if p.fixed_bet | default(0) | float > 0 %}<span class="badge badge-info">保底 5 關</span>{% endif %}
+                  </div>
+                  <div class="parlay-meta">
+                    {{ p.legs | length }} 關 · 總賠率 {{ "{:.2f}".format(p.parlay_odds) }} · EV {% if p.parlay_ev >= 0 %}+{% endif %}{{ "{:.1f}".format(p.parlay_ev * 100) }}%
+                  </div>
+                </div>
+                <div>
+                  <div class="amount">NT${{ "{:,.0f}".format(p.amount) }}</div>
+                  <div class="potential">可贏 +NT${{ "{:,.0f}".format(p.potential) }}</div>
+                </div>
+              </div>
+              <div class="legs">
+                {% for leg in p.legs %}
+                <div class="leg">
+                  <span><strong>{{ leg.label }}</strong>{% if leg.matchup is defined %} · {{ leg.matchup }}{% endif %}</span>
+                  <span>@{{ "{:.2f}".format(leg.odds) }}</span>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+          </div>
+          <div class="summary-line">
+            <span>{{ st.parlays | length }} 組串關，單關 0 注</span>
+            <strong class="blue">今日投入 NT${{ "{:,.0f}".format(st.total) }}</strong>
+          </div>
+        {% endif %}
+      </article>
     </div>
     {% endfor %}
+    {% else %}
+      <div class="panel empty">今日計畫尚未產生</div>
     {% endif %}
-
-    <div class="summary-bar">
-      <span>{{ st.singles | length }} 單關{% if st.parlays %} + {{ st.parlays | length }} 串關{% endif %}</span>
-      <strong style="color:var(--accent)">今日下注 NT${{ "{:,.0f}".format(st.total) }}</strong>
-    </div>
-    {% endif %}
-
-  </div>
-  {% endfor %}
-
-  {% else %}
-  <!-- Fallback: no strategies data (legacy) -->
-  {% if no_picks %}
-  <div class="no-picks">
-    <p>今日無符合門檻的選場。</p>
-  </div>
-  {% endif %}
-  {% endif %}
+  </section>
 
   <footer>
-    <a href="index.html">← 返回首頁</a><br><br>
-    數據來源：NBA Stats API · MLB Stats API · 台灣運彩 / Pinnacle<br>
-    模型：Elo+效率差（NBA）· 先發FIP對決（MLB）· ¼ 分數凱利<br>
-    每日 22:00（台灣時間）自動更新 · 本報告不構成投資建議
+    <a href="index.html">返回首頁</a><br>
+    資料來源：NBA Stats API / MLB Stats API / Pinnacle 等效賠率。運彩有風險，請理性控管本金。
   </footer>
-</div>
+</main>
 
 <script>
 function switchTab(idx, btn) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(item => item.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(item => item.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('panel-' + idx).classList.add('active');
 }
