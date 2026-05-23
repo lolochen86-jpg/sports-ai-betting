@@ -39,6 +39,23 @@ _MLB_API    = "https://statsapi.mlb.com/api/v1"
 _HEADERS    = {"User-Agent": "Mozilla/5.0 (compatible; SportsAnalyzer/1.0)"}
 
 
+def _mlb_team_abbr_from_schedule(game_pk: int, game_date: date, team_id: int | None) -> str:
+    """從本機 schedule 快取補 MLB team abbreviation。MLB API 有時只回 id/name。"""
+    if team_id is None:
+        return ""
+    schedule_path = MLB_DIR / f"schedule_{game_date.isoformat()}.json"
+    if not json_exists(schedule_path):
+        return ""
+    for game in load_json(schedule_path):
+        if int(game.get("game_pk", 0)) != int(game_pk):
+            continue
+        if int(game.get("home_team_id", 0)) == int(team_id):
+            return str(game.get("home_team_abbr", ""))
+        if int(game.get("away_team_id", 0)) == int(team_id):
+            return str(game.get("away_team_abbr", ""))
+    return ""
+
+
 # ── NBA 結果抓取 ──────────────────────────────────────────
 def get_nba_winner(game_id: str, game_date: date) -> Optional[str]:
     """
@@ -109,7 +126,9 @@ def get_mlb_winner(game_pk: int, game_date: date) -> Optional[str]:
     cache_path = MLB_DIR / f"result_{game_pk}_{game_date.isoformat()}.json"
     if json_exists(cache_path):
         data = load_json(cache_path)
-        return data.get("winner")
+        winner = data.get("winner")
+        if winner:
+            return winner
 
     try:
         # 用 /schedule?gamePk= 取狀態（/feed/live 已棄用，回傳 404）
@@ -127,8 +146,12 @@ def get_mlb_winner(game_pk: int, game_date: date) -> Optional[str]:
             logger.info(f"  MLB {game_pk}：比賽尚未結束（{status}）")
             return None
 
-        home_abbr = g.get("teams", {}).get("home", {}).get("team", {}).get("abbreviation", "")
-        away_abbr = g.get("teams", {}).get("away", {}).get("team", {}).get("abbreviation", "")
+        home_team = g.get("teams", {}).get("home", {}).get("team", {})
+        away_team = g.get("teams", {}).get("away", {}).get("team", {})
+        home_id   = home_team.get("id")
+        away_id   = away_team.get("id")
+        home_abbr = home_team.get("abbreviation") or _mlb_team_abbr_from_schedule(game_pk, game_date, home_id)
+        away_abbr = away_team.get("abbreviation") or _mlb_team_abbr_from_schedule(game_pk, game_date, away_id)
 
         # 用 /linescore 取分數
         ls_url = f"{_MLB_API}/game/{game_pk}/linescore"
@@ -143,6 +166,9 @@ def get_mlb_winner(game_pk: int, game_date: date) -> Optional[str]:
 
         winner = home_abbr if home_runs > away_runs else away_abbr
         loser  = away_abbr if home_runs > away_runs else home_abbr
+        if not winner:
+            logger.warning(f"  MLB {game_pk}：無法解析隊伍縮寫，略過結算")
+            return None
 
         result = {
             "game_pk":   game_pk,
@@ -290,9 +316,12 @@ def _fetch_winners(game_ids: set[str], d: date) -> dict[str, Optional[str]]:
         nba_result = NBA_DIR / f"result_{gid}_{d.isoformat()}.json"
         mlb_result = MLB_DIR / f"result_{gid}_{d.isoformat()}.json"
         if json_exists(nba_result):
-            winners[gid] = load_json(nba_result).get("winner")
+            winners[gid] = load_json(nba_result).get("winner") or get_nba_winner(gid, d)
         elif json_exists(mlb_result):
-            winners[gid] = load_json(mlb_result).get("winner")
+            try:
+                winners[gid] = load_json(mlb_result).get("winner") or get_mlb_winner(int(gid), d)
+            except ValueError:
+                winners[gid] = None
         else:
             w = get_nba_winner(gid, d)
             if w:
@@ -431,11 +460,21 @@ def _settle_strategy_plan(
         "initial": 3000.0, "current": 3000.0, "peak": 3000.0,
         "strategy": slug, "history": [],
     }
-    old_bal  = float(bk_data.get("current", 3000.0))
+    history = bk_data.setdefault("history", [])
+    previous_same_day = [h for h in history if h.get("date") == d.isoformat()]
+    if previous_same_day:
+        history[:] = [h for h in history if h.get("date") != d.isoformat()]
+        old_bal = float(previous_same_day[0].get("open", bk_data.get("current", 3000.0)))
+    else:
+        old_bal = float(bk_data.get("current", 3000.0))
     new_bal  = old_bal + total_pnl
     bk_data["current"] = new_bal
-    bk_data["peak"]    = max(float(bk_data.get("peak", new_bal)), new_bal)
-    bk_data.setdefault("history", []).append({
+    bk_data["peak"]    = max(
+        float(bk_data.get("initial", new_bal)),
+        *(float(h.get("close", new_bal)) for h in history),
+        new_bal,
+    )
+    history.append({
         "date":   d.isoformat(),
         "open":   old_bal,
         "close":  new_bal,

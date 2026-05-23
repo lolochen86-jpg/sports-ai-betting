@@ -1,7 +1,7 @@
 {
   "initial": 3000.0,
-  "current": 1960.0,
-  "peak": 3000.0,
+  "current": 3435.0,
+  "peak": 3435.0,
   "target": 12000.0,
   "ruin_threshold": 10.0,
   "status": "active",
@@ -40,21 +40,11 @@
     {
       "date": "2026-05-22",
       "open": 2700.0,
-      "close": 2700.0,
-      "pnl": 0.0,
-      "bets": 0,
-      "wins": 0,
-      "losses": 0,
-      "voids": 0
-    },
-    {
-      "date": "2026-05-22",
-      "open": 2700.0,
-      "close": 1960.0,
-      "pnl": -740.0,
+      "close": 3435.0,
+      "pnl": 735.0,
       "bets": 5,
-      "wins": 0,
-      "losses": 4,
+      "wins": 3,
+      "losses": 1,
       "voids": 1
     }
   ],

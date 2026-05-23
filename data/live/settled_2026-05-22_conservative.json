@@ -64,10 +64,10 @@
       "odds_source": "pinnacle_direct",
       "odds_timestamp": "2026-05-22T23:09:53.156008+08:00"
     },
-    "result": "LOSS",
-    "pnl": -290,
-    "settled_winner": "",
-    "bet_amount": 290
+    "result": "WIN",
+    "pnl": 354.0,
+    "settled_winner": "HOU",
+    "bet_amount": 290.0
   },
   {
     "sport": "MLB",
@@ -135,9 +135,9 @@
       "odds_timestamp": "2026-05-22T23:10:03.097274+08:00"
     },
     "result": "LOSS",
-    "pnl": -210,
-    "settled_winner": "",
-    "bet_amount": 210
+    "pnl": -210.0,
+    "settled_winner": "BAL",
+    "bet_amount": 210.0
   },
   {
     "sport": "MLB",
@@ -204,10 +204,10 @@
       "odds_source": "pinnacle_direct",
       "odds_timestamp": "2026-05-22T23:09:55.143797+08:00"
     },
-    "result": "LOSS",
-    "pnl": -170,
-    "settled_winner": "",
-    "bet_amount": 170
+    "result": "WIN",
+    "pnl": 264.0,
+    "settled_winner": "CLE",
+    "bet_amount": 170.0
   },
   {
     "sport": "MLB",
@@ -277,7 +277,7 @@
     "result": "VOID",
     "pnl": 0.0,
     "settled_winner": null,
-    "bet_amount": 60
+    "bet_amount": 60.0
   },
   {
     "bet_type": "2-parlay",
@@ -285,8 +285,8 @@
     "sport": "PARLAY",
     "parlay_odds": 5.668,
     "bet_amount": 70,
-    "result": "LOSS",
-    "pnl": -70,
+    "result": "WIN",
+    "pnl": 327.0,
     "legs": [
       {
         "sport": "MLB",

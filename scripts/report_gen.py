@@ -171,7 +171,8 @@ def load_strategy_yesterday_results(yesterday: date) -> dict[str, list[dict]]:
 
 # ── 績效統計更新 ──────────────────────────────────────────
 def update_performance(d: date, results: list[dict]) -> dict:
-    perf = load_json(PERFORMANCE_PATH) if json_exists(PERFORMANCE_PATH) else {
+    existing = load_json(PERFORMANCE_PATH) if json_exists(PERFORMANCE_PATH) else {"daily": []}
+    perf = {
         "total_bets": 0, "wins": 0, "losses": 0,
         "total_wagered": 0.0, "total_pnl": 0.0,
         "single_bets": 0, "single_wins": 0,
@@ -181,6 +182,24 @@ def update_performance(d: date, results: list[dict]) -> dict:
         "daily": [],
     }
 
+    # Report generation is re-runnable. Remove this date before adding the
+    # latest settled rows so totals do not grow every time the report is rebuilt.
+    old_dates = {
+        row.get("date")
+        for row in existing.get("daily", [])
+        if row.get("date") and row.get("date") != d.isoformat()
+    }
+    for old_date in sorted(old_dates):
+        settled = load_yesterday_results(parse_date(old_date))
+        perf = _add_results_to_performance(perf, parse_date(old_date), settled)
+    perf = _add_results_to_performance(perf, d, results)
+    save_json(perf, PERFORMANCE_PATH)
+    return perf
+
+
+def _add_results_to_performance(
+    perf: dict, d: date, results: list[dict], append_daily: bool = True
+) -> dict:
     day_bets  = len(results)
     day_wins  = sum(1 for r in results if r.get("result") == "WIN")
     day_pnl   = sum(float(r.get("pnl", 0)) for r in results)
@@ -208,11 +227,11 @@ def update_performance(d: date, results: list[dict]) -> dict:
             if r.get("result") == "WIN":
                 perf["by_sport"][sport]["wins"] += 1
 
-    perf["daily"].append({
-        "date": d.isoformat(), "bets": day_bets,
-        "wins": day_wins, "pnl": day_pnl,
-    })
-    save_json(perf, PERFORMANCE_PATH)
+    if append_daily:
+        perf["daily"].append({
+            "date": d.isoformat(), "bets": day_bets,
+            "wins": day_wins, "pnl": day_pnl,
+        })
     return perf
 
 

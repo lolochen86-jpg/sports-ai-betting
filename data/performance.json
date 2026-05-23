@@ -1,21 +1,21 @@
 {
-  "total_bets": 21,
-  "wins": 0,
-  "losses": 17,
-  "total_wagered": 2150.0,
-  "total_pnl": -1840.0,
-  "single_bets": 19,
-  "single_wins": 0,
-  "parlay_bets": 2,
-  "parlay_wins": 0,
+  "total_bets": 7,
+  "wins": 3,
+  "losses": 3,
+  "total_wagered": 680.0,
+  "total_pnl": 365.0,
+  "single_bets": 6,
+  "single_wins": 2,
+  "parlay_bets": 1,
+  "parlay_wins": 1,
   "by_sport": {
     "NBA": {
       "bets": 0,
       "wins": 0
     },
     "MLB": {
-      "bets": 19,
-      "wins": 0
+      "bets": 6,
+      "wins": 2
     }
   },
   "daily": [
@@ -26,118 +26,22 @@
       "pnl": 0
     },
     {
-      "date": "2026-05-17",
-      "bets": 0,
-      "wins": 0,
-      "pnl": 0
-    },
-    {
-      "date": "2026-05-17",
-      "bets": 0,
-      "wins": 0,
-      "pnl": 0
-    },
-    {
       "date": "2026-05-18",
+      "bets": 1,
+      "wins": 0,
+      "pnl": -100.0
+    },
+    {
+      "date": "2026-05-19",
+      "bets": 1,
+      "wins": 0,
+      "pnl": -60.0
+    },
+    {
+      "date": "2026-05-20",
       "bets": 1,
       "wins": 0,
       "pnl": 0.0
-    },
-    {
-      "date": "2026-05-18",
-      "bets": 1,
-      "wins": 0,
-      "pnl": 0.0
-    },
-    {
-      "date": "2026-05-18",
-      "bets": 1,
-      "wins": 0,
-      "pnl": -100.0
-    },
-    {
-      "date": "2026-05-18",
-      "bets": 1,
-      "wins": 0,
-      "pnl": -100.0
-    },
-    {
-      "date": "2026-05-18",
-      "bets": 1,
-      "wins": 0,
-      "pnl": -100.0
-    },
-    {
-      "date": "2026-05-18",
-      "bets": 1,
-      "wins": 0,
-      "pnl": -100.0
-    },
-    {
-      "date": "2026-05-18",
-      "bets": 1,
-      "wins": 0,
-      "pnl": -100.0
-    },
-    {
-      "date": "2026-05-18",
-      "bets": 1,
-      "wins": 0,
-      "pnl": -100.0
-    },
-    {
-      "date": "2026-05-18",
-      "bets": 1,
-      "wins": 0,
-      "pnl": -100.0
-    },
-    {
-      "date": "2026-05-18",
-      "bets": 1,
-      "wins": 0,
-      "pnl": -100.0
-    },
-    {
-      "date": "2026-05-18",
-      "bets": 1,
-      "wins": 0,
-      "pnl": -100.0
-    },
-    {
-      "date": "2026-05-21",
-      "bets": 0,
-      "wins": 0,
-      "pnl": 0
-    },
-    {
-      "date": "2026-05-21",
-      "bets": 0,
-      "wins": 0,
-      "pnl": 0
-    },
-    {
-      "date": "2026-05-21",
-      "bets": 0,
-      "wins": 0,
-      "pnl": 0
-    },
-    {
-      "date": "2026-05-21",
-      "bets": 0,
-      "wins": 0,
-      "pnl": 0
-    },
-    {
-      "date": "2026-05-21",
-      "bets": 0,
-      "wins": 0,
-      "pnl": 0
-    },
-    {
-      "date": "2026-05-21",
-      "bets": 0,
-      "wins": 0,
-      "pnl": 0
     },
     {
       "date": "2026-05-21",
@@ -148,14 +52,8 @@
     {
       "date": "2026-05-22",
       "bets": 4,
-      "wins": 0,
-      "pnl": -470.0
-    },
-    {
-      "date": "2026-05-22",
-      "bets": 4,
-      "wins": 0,
-      "pnl": -470.0
+      "wins": 3,
+      "pnl": 525.0
     }
   ]
 }
