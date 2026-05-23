@@ -438,6 +438,27 @@ def _():
             assert len(gids) == len(set(gids)), "串關同場重複！"
 
 
+@test("串關：每天至少產生一注 NT$10 五關")
+def _():
+    from analyze import Pick, build_parlays
+
+    picks = [
+        Pick(
+            sport="MLB", game_id=f"g{i}", game_date="2026-05-23",
+            home_team=f"H{i}", away_team=f"A{i}", bet_side="home",
+            bet_label=f"H{i} 勝", bet_type="moneyline",
+            odds=1.75 + i * 0.02, true_prob=0.56, implied_prob=0.50,
+            edge=0.06 + i * 0.005, kelly_frac=0.01, grade="B",
+        )
+        for i in range(5)
+    ]
+
+    parlays = build_parlays(picks, 3000.0)
+    required = [par for par in parlays if len(par.legs) == 5 and par.fixed_bet > 0]
+    assert required, "候選達 5 場時，應固定產生一注 5 關"
+    assert required[0].bet_amount(3000.0) == 10.0, "每日 5 關固定注額應為 NT$10"
+
+
 # ══════════════════════════════════════════════════════════
 # 11. 結算邏輯
 # ══════════════════════════════════════════════════════════

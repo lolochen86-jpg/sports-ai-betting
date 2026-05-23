@@ -68,8 +68,9 @@ class StrategyConfig:
     parlay_4_min_ev:   float = 0.10   # 4-串最低 EV（已棄用）
     max_parlay_odds:   float = 15.0   # 串關最高賠率上限
     max_parlays_per_n: int   = 1      # 每種 n-串最多組數
-    max_parlay_legs:   int   = 2      # 最多幾串（2=只允許二串）
+    max_parlay_legs:   int   = 5      # 最多幾串
     parlay_min_leg_edge: float = 0.08 # 每腳進串關最低 edge
+    required_5_leg_bet: float = 10.0  # 每日固定一注 5 關保底金額
     # 凱利係數
     kelly_single_A:    float = 0.25   # A 級單關
     kelly_single_B:    float = 0.20   # B 級單關
@@ -88,7 +89,7 @@ CONSERVATIVE = StrategyConfig(
     single_min_edge=0.04,
     parlay_min_ev=0.08,  parlay_4_min_ev=0.10,
     max_parlay_odds=12.0, max_parlays_per_n=1,  # 只留最強 1 個二串
-    max_parlay_legs=2,   parlay_min_leg_edge=0.08,
+    max_parlay_legs=5,   parlay_min_leg_edge=0.08,
     kelly_single_A=0.25, kelly_single_B=0.20, kelly_single_C=0.12,
     kelly_parlay=0.12,   hard_cap_pct=0.08,
     max_singles=4,
@@ -102,7 +103,7 @@ AGGRESSIVE = StrategyConfig(
     single_min_edge=0.08,
     parlay_min_ev=0.08,  parlay_4_min_ev=0.10,
     max_parlay_odds=15.0, max_parlays_per_n=2,  # 最多 2 個二串
-    max_parlay_legs=2,   parlay_min_leg_edge=0.08,
+    max_parlay_legs=5,   parlay_min_leg_edge=0.08,
     kelly_single_A=0.20, kelly_single_B=0.15, kelly_single_C=0.08,
     kelly_parlay=0.15,   hard_cap_pct=0.10,
     max_singles=2,
@@ -116,7 +117,7 @@ UNDERDOG = StrategyConfig(
     single_min_edge=0.05,
     parlay_min_ev=0.10,  parlay_4_min_ev=0.15,
     max_parlay_odds=15.0, max_parlays_per_n=1,  # 只留最強 1 個二串
-    max_parlay_legs=2,   parlay_min_leg_edge=0.08,
+    max_parlay_legs=5,   parlay_min_leg_edge=0.08,
     kelly_single_A=0.15, kelly_single_B=0.12, kelly_single_C=0.08,
     kelly_parlay=0.10,   hard_cap_pct=0.08,
     max_singles=4,
@@ -235,9 +236,12 @@ class Parlay:
     true_prob:     float         # 各腳勝率相乘
     parlay_ev:     float         # true_prob * parlay_odds - 1
     kelly_frac:    float
+    fixed_bet:     float = 0.0
 
     def bet_amount(self, bankroll: float,
                   cfg: "StrategyConfig | None" = None) -> float:
+        if self.fixed_bet > 0:
+            return max(10.0, round(self.fixed_bet / 10) * 10)
         k   = self.kelly_frac
         cap_pct = (cfg.hard_cap_pct if cfg else _HARD_CAP_PCT)
         raw = bankroll * k
@@ -518,20 +522,21 @@ def build_parlays(picks: list[Pick], bankroll: float,
                   cfg: "StrategyConfig | None" = None) -> list[Parlay]:
     """
     從候選 Pick 中生成符合門檻的串關組合。
-    只產生 2 串（最多到 max_parlay_legs），每種串數只保留 EV 最高的 max_parlays_per_n 組。
-    每腳必須達到 parlay_min_leg_edge 才能進串關，避免弱腳拖垮整串。
+    只產生 2 關以上（最多到 max_parlay_legs），每種串數只保留 EV 最高的 max_parlays_per_n 組。
+    每腳必須達到 parlay_min_leg_edge；若當天至少有 5 場候選，另外固定加入一注 NT$10 的 5 關。
     """
     c = cfg or CONSERVATIVE
-    max_legs = min(c.max_parlay_legs, 2)  # 強制上限 2 串，不產生 3/4 串
+    max_legs = max(2, min(c.max_parlay_legs, 5))
     parlays = []
 
-    # 只有 edge 達門檻的腳才能進串關
+    # 只有 edge 達門檻的腳才能進一般串關
     eligible = [p for p in picks if p.edge >= c.parlay_min_leg_edge]
 
     for n in range(2, max_legs + 1):
         if len(eligible) < n:
             continue
 
+        per_size = []
         for combo in combinations(eligible, n):
             game_ids = [p.game_id for p in combo]
             if len(game_ids) != len(set(game_ids)):
@@ -554,7 +559,7 @@ def build_parlays(picks: list[Pick], bankroll: float,
             full_k = (b_net * p_prob - (1 - p_prob)) / b_net if b_net > 0 else 0
             frac   = max(0.0, full_k * c.kelly_parlay)
 
-            parlays.append(Parlay(
+            per_size.append(Parlay(
                 legs=list(combo),
                 parlay_odds=round(p_odds, 3),
                 true_prob=round(p_prob, 4),
@@ -562,9 +567,57 @@ def build_parlays(picks: list[Pick], bankroll: float,
                 kelly_frac=frac,
             ))
 
-    # 只保留 EV 最高的前 max_parlays_per_n 組
-    parlays.sort(key=lambda x: x.parlay_ev, reverse=True)
-    return parlays[:c.max_parlays_per_n]
+        per_size.sort(key=lambda x: x.parlay_ev, reverse=True)
+        parlays.extend(per_size[:c.max_parlays_per_n])
+
+    required_5 = _build_required_5_leg_parlay(picks, bankroll, c)
+    if required_5 is not None:
+        required_ids = {p.game_id for p in required_5.legs}
+        has_same_5 = any(
+            len(par.legs) == 5 and {p.game_id for p in par.legs} == required_ids
+            for par in parlays
+        )
+        if not has_same_5:
+            parlays.append(required_5)
+
+    return parlays
+
+
+def _build_required_5_leg_parlay(picks: list[Pick], bankroll: float,
+                                 cfg: StrategyConfig) -> Parlay | None:
+    """每日保底 5 關：從當天 edge 最好的不同賽事挑 5 腳，固定 NT$10。"""
+    if cfg.required_5_leg_bet <= 0 or cfg.max_parlay_legs < 5:
+        return None
+
+    legs: list[Pick] = []
+    seen_games: set[str] = set()
+    for pick in sorted(picks, key=lambda x: x.edge, reverse=True):
+        if pick.game_id in seen_games:
+            continue
+        legs.append(pick)
+        seen_games.add(pick.game_id)
+        if len(legs) == 5:
+            break
+
+    if len(legs) < 5:
+        return None
+
+    p_odds = 1.0
+    p_prob = 1.0
+    for pick in legs:
+        p_odds *= pick.odds
+        p_prob *= pick.true_prob
+
+    ev = p_prob * p_odds - 1.0
+    frac = cfg.required_5_leg_bet / max(bankroll, 1.0)
+    return Parlay(
+        legs=legs,
+        parlay_odds=round(p_odds, 3),
+        true_prob=round(p_prob, 4),
+        parlay_ev=round(ev, 4),
+        kelly_frac=frac,
+        fixed_bet=cfg.required_5_leg_bet,
+    )
 
 
 # ── 本金區間凱利係數調整 ──────────────────────────────────
@@ -626,9 +679,9 @@ def make_daily_plan(picks: list[Pick], bankroll: float, game_date: str,
     # 候選 picks 依策略篩選單關門檻
     all_sorted = sorted(picks, key=lambda x: x.edge, reverse=True)
 
-    # 新規則：所有下注最少 2 關串，不再產生單關。
+    # 新規則：所有下注最少 2 關串，不再產生單關；候選池放大以便湊每日 5 關。
     picks_limited     = []
-    parlay_candidates = all_sorted[:8]
+    parlay_candidates = all_sorted[:12]
     parlays_list      = build_parlays(parlay_candidates, bankroll, c)
 
     # 計算各注碼
@@ -640,7 +693,7 @@ def make_daily_plan(picks: list[Pick], bankroll: float, game_date: str,
 
     for par in parlays_list:
         amt = par.bet_amount(bankroll, c)
-        total += amt * km
+        total += amt if par.fixed_bet > 0 else amt * km
 
     # 若超出可用資金，等比縮減
     if total > available and total > 0:
@@ -648,8 +701,11 @@ def make_daily_plan(picks: list[Pick], bankroll: float, game_date: str,
         for p in picks_limited:
             p.kelly_frac *= scale
         for par in parlays_list:
-            par.kelly_frac *= scale
-        total = available
+            if par.fixed_bet <= 0:
+                par.kelly_frac *= scale
+        total = 0.0
+        for par in parlays_list:
+            total += par.bet_amount(bankroll, c)
 
     return DailyPlan(
         date=game_date,

@@ -249,9 +249,13 @@ def settle_parlay_pick(parlay: dict, winners: dict[str, Optional[str]],
     legs   = parlay.get("legs", [])
     odds   = float(parlay.get("parlay_odds", 1.0))
     frac   = float(parlay.get("kelly_frac", 0.0))
-    amount = max(10.0, round(bankroll * frac / 10) * 10)
-    amount = min(amount, bankroll * 0.08 * len(legs))
-    amount = max(10.0, round(amount / 10) * 10)
+    fixed  = float(parlay.get("fixed_bet", 0.0) or parlay.get("bet_amount", 0.0) or 0.0)
+    if fixed > 0:
+        amount = max(10.0, round(fixed / 10) * 10)
+    else:
+        amount = max(10.0, round(bankroll * frac / 10) * 10)
+        amount = min(amount, bankroll * 0.08 * len(legs))
+        amount = max(10.0, round(amount / 10) * 10)
 
     all_win = True
     voided  = False

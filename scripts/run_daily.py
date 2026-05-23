@@ -119,6 +119,7 @@ def run(report_date: date | str | None = None, dry_run: bool = False) -> None:
                     "true_prob":   par.true_prob,
                     "parlay_ev":   par.parlay_ev,
                     "kelly_frac":  par.kelly_frac,
+                    "fixed_bet":   par.fixed_bet,
                 }
                 for par in plan.parlays
             ],

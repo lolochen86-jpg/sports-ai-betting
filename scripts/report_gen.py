@@ -543,10 +543,13 @@ class _DictPlan:
                 self.true_prob  = float(p.get("true_prob", 0))
                 self.parlay_ev  = float(p.get("parlay_ev", 0))
                 self._kf        = float(p.get("kelly_frac", 0))
+                self._fixed_bet = float(p.get("fixed_bet", 0) or p.get("bet_amount", 0) or 0)
                 legs_raw = p.get("legs", [])
                 self.legs = [_Pick(lg) for lg in legs_raw]
                 self.label = "·".join(lg.bet_label for lg in self.legs)
             def bet_amount(self, bankroll):
+                if self._fixed_bet > 0:
+                    return max(10.0, round(self._fixed_bet / 10) * 10)
                 raw = self._kf * bankroll
                 return max(10.0, round(raw / 10) * 10)
 
