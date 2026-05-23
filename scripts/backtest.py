@@ -5,9 +5,8 @@
   每日：抓數據 → 分析 → 生成下注計劃 → 取得實際比賽結果 → 結算盈虧
 
 終止條件：
-  A. 本金 ≤ NT$0   → 記錄「破產」
-  B. 本金 > NT$6,000 → 記錄「達標（翻倍）」
-  C. 到達 today（無更多歷史結果可用）→ 自然結束
+  A. 三位分析師各自 NT$3,000 起跑；任兩位本金歸零 → 整體回測停止
+  B. 到達 today（無更多歷史結果可用）→ 自然結束
 
 輸出：
   data/backtest/backtest_log.csv     — 逐注紀錄
@@ -34,10 +33,11 @@ from analyze import (
 logger = get_logger("backtest")
 
 # ── 回測參數 ──────────────────────────────────────────────
-_START_DATE     = date(2026, 5, 1)
+_START_DATE     = date(2026, 4, 1)
 _INIT_BANKROLL  = 3000.0
 _TARGET         = 12000.0   # 達標本金（4倍）
 _RUIN_THRESHOLD = 0.0       # 破產門檻
+_STOP_RUINED_ANALYSTS = 2
 
 # ── CSV 欄位定義 ──────────────────────────────────────────
 _BET_LOG_FIELDS = [
@@ -272,6 +272,9 @@ def run_one_day(
 
     # 2. 分析引擎
     plan: DailyPlan = analyze_run(nba_games, mlb_games, bankroll, d.isoformat(), cfg)
+    # 回測新規則：下注最少 2 關串，單關不納入下注。
+    plan.single_picks = []
+    plan.total_bet = round(sum(par.bet_amount(bankroll, cfg) for par in plan.parlays) / 10) * 10
 
     if not plan.single_picks and not plan.parlays:
         logger.info(f"  {d}：無符合門檻的選場，跳過")
@@ -358,8 +361,6 @@ def run_one_day(
     # 5. 終止條件檢查
     if bankroll <= _RUIN_THRESHOLD:
         return bankroll, "RUIN"
-    if bankroll > _TARGET:
-        return bankroll, "TARGET"
     return bankroll, ""
 
 
@@ -391,7 +392,7 @@ def _load_strategy_stats(res: dict, init_bankroll: float) -> dict:
     bet_days    = sum(1 for r in daily_rows if int(r.get("bets_count", 0)) > 0)
     total_pnl   = sum(float(r.get("total_pnl", 0)) for r in daily_rows)
     total_bet   = sum(float(r.get("total_bet", 0)) for r in daily_rows)
-    roi         = total_pnl / total_bet * 100 if total_bet > 0 else 0
+    roi         = (final_bankroll - init_bankroll) / init_bankroll * 100 if init_bankroll > 0 else 0
 
     singles = [r for r in bet_rows if r.get("bet_type") == "single"]
     parlays = [r for r in bet_rows if "parlay" in r.get("bet_type", "")]
@@ -415,7 +416,7 @@ def _load_strategy_stats(res: dict, init_bankroll: float) -> dict:
         else: max_streak_loss = max(max_streak_loss, cur)
 
     amounts   = [float(r.get("bet_amount", 0)) for r in bet_rows if float(r.get("bet_amount", 0)) > 0]
-    odds_vals = [float(r.get("odds", 0)) for r in singles if float(r.get("odds", 0)) > 0]
+    odds_vals = [float(r.get("odds", 0)) for r in bet_rows if float(r.get("odds", 0)) > 0]
     won_rows  = [r for r in bet_rows if r.get("result") == "WIN"]
     lost_rows = [r for r in bet_rows if r.get("result") == "LOSS"]
     best_bet  = max(won_rows,  key=lambda r: float(r.get("pnl", 0)), default=None)
@@ -430,6 +431,7 @@ def _load_strategy_stats(res: dict, init_bankroll: float) -> dict:
         "RUIN":    "本金歸零（破產）",
         "TARGET":  f"本金突破 NT${_TARGET:,.0f}（達標）",
         "NATURAL": "數據截止（自然結束）",
+        "STOP_TWO_RUINED": "已有兩位分析師歸零，整體停止",
         "ERROR":   "執行中發生錯誤（部分結果）",
     }.get(end_reason, end_reason)
 
@@ -542,7 +544,7 @@ def generate_report(
     md = f"""# 運彩AI分析師 — 三策略回測對比報告
 
 **測試期間**：{start} 起　｜　**起始本金**：各 NT${init_bankroll:,.0f}（三策略各自獨立）
-**停利目標**：NT${_TARGET:,.0f}（{_TARGET/init_bankroll:.0f}倍）　｜　**停損**：本金歸零
+**下注規則**：最少 2 關串（不下注單關）　｜　**停止條件**：三位分析師中任兩位本金歸零
 
 ---
 
@@ -568,7 +570,7 @@ def generate_report(
 
 ## 🛡️ 穩健型策略詳情
 
-> Edge ≥ 4% 單關、串關 EV ≥ 8%，凱利 A/25% B/20% C/12%，每日最多 4 場單關
+> 僅下注 2 關以上串關；候選腿 Edge ≥ 8%，串關 EV ≥ 8%，不下注單關
 
 | 指標 | 數值 |
 |---|---|
@@ -592,7 +594,7 @@ def generate_report(
 
 ## ⚡ 激進型策略詳情
 
-> 串關為主（EV ≥ 4%，賠率上限 30），單關需 Edge ≥ 8%，每日最多 5 組串關 + 2 場單關
+> 僅下注 2 關以上串關；EV ≥ 4%，賠率上限 30，不下注單關
 
 | 指標 | 數值 |
 |---|---|
@@ -616,7 +618,7 @@ def generate_report(
 
 ## 🎯 冷門獵人型策略詳情
 
-> 只押冷門（賠率 ≥ 2.00），Edge ≥ 5%，保守凱利 A/15% B/12% C/8%，最多 4 場單關 + 少量冷門串關
+> 只用冷門候選組 2 關以上串關；單腿賠率 ≥ 2.00、Edge ≥ 8%，不下注單關
 
 | 指標 | 數值 |
 |---|---|
@@ -639,7 +641,7 @@ def generate_report(
 ---
 
 *回測使用分數凱利，Pinnacle 賠率換算台灣運彩等效賠率*
-*停利目標：NT${_TARGET:,.0f}（{_TARGET/init_bankroll:.0f}倍）｜停損門檻：歸零*
+*停止條件：三位分析師各自 NT${init_bankroll:,.0f} 起跑，任兩位本金歸零即停止整體回測。*
 *所有數據嚴格限制於比賽開始前已公開的資訊（無未來數據洩漏）*
 *生成時間：{start}*
 """
@@ -708,18 +710,109 @@ def _run_strategy(
 
 
 # ── 主流程 ────────────────────────────────────────────────
+def _run_strategies_until_two_ruined(
+    s: date,
+    today: date,
+    init_bankroll: float,
+    auto_fetch: bool,
+) -> tuple[dict, dict, dict, str]:
+    strategies = [
+        ("conservative", CONSERVATIVE),
+        ("aggressive", AGGRESSIVE),
+        ("underdog", UNDERDOG),
+    ]
+    states = {}
+    for key, cfg in strategies:
+        slug = cfg.name.replace("型", "").replace("（", "").replace("）", "")
+        states[key] = {
+            "cfg": cfg,
+            "bankroll": init_bankroll,
+            "end_reason": "NATURAL",
+            "end_date": s,
+            "active": True,
+            "bet_log_path": BACKTEST_DIR / f"backtest_log_{s.isoformat()}_{slug}.csv",
+            "daily_path": BACKTEST_DIR / f"daily_summary_{s.isoformat()}_{slug}.csv",
+        }
+
+    writers = {}
+    files = []
+    global_stop_reason = "NATURAL"
+
+    try:
+        for key, _ in strategies:
+            blog_f = open(states[key]["bet_log_path"], "w", newline="", encoding="utf-8")
+            daily_f = open(states[key]["daily_path"], "w", newline="", encoding="utf-8")
+            files.extend([blog_f, daily_f])
+            bet_log_writer = csv.DictWriter(blog_f, fieldnames=_BET_LOG_FIELDS)
+            daily_writer = csv.DictWriter(daily_f, fieldnames=_DAILY_FIELDS)
+            bet_log_writer.writeheader()
+            daily_writer.writeheader()
+            writers[key] = (bet_log_writer, daily_writer)
+
+        for d in date_range(s, today - timedelta(days=1)):
+            if auto_fetch:
+                _auto_fetch_day(d)
+
+            for key, cfg in strategies:
+                state = states[key]
+                if not state["active"]:
+                    continue
+                bet_log_writer, daily_writer = writers[key]
+                try:
+                    bankroll, stop = run_one_day(
+                        d, state["bankroll"], bet_log_writer, daily_writer, cfg
+                    )
+                    state["bankroll"] = bankroll
+                    state["end_date"] = d
+                except Exception as e:
+                    logger.error(f"  [{cfg.name}] {d} 單日錯誤（略過）：{e}")
+                    state["end_date"] = d
+                    stop = ""
+
+                if stop == "RUIN":
+                    state["active"] = False
+                    state["end_reason"] = "RUIN"
+                    logger.info(f"[{cfg.name}] 本金歸零：NT${state['bankroll']:,.0f}")
+
+            ruined = sum(1 for state in states.values() if state["end_reason"] == "RUIN")
+            if ruined >= _STOP_RUINED_ANALYSTS:
+                global_stop_reason = "TWO_RUINED"
+                logger.info(f"已有 {ruined} 位分析師歸零，整體回測停止於 {d}")
+                for state in states.values():
+                    if state["active"]:
+                        state["end_reason"] = "STOP_TWO_RUINED"
+                        state["end_date"] = d
+                break
+    finally:
+        for f in files:
+            f.close()
+
+    results = []
+    for key, _ in strategies:
+        state = states[key]
+        results.append({
+            "cfg": state["cfg"],
+            "final_bankroll": state["bankroll"],
+            "end_reason": state["end_reason"],
+            "end_date": state["end_date"],
+            "bet_log_path": state["bet_log_path"],
+            "daily_path": state["daily_path"],
+        })
+    return results[0], results[1], results[2], global_stop_reason
+
+
 def run(
     start_date: date | str | None = None,
     init_bankroll: float = _INIT_BANKROLL,
     auto_fetch: bool = True,
 ) -> dict:
     """
-    執行雙策略回測（穩健型 + 激進型），輸出合併對比報告。
+    執行三位分析師同步回測，任兩位本金歸零即停止，輸出合併對比報告。
 
     auto_fetch=True：每日自動呼叫 fetch_nba / fetch_mlb / fetch_odds
     auto_fetch=False：假設數據已存在於 data/ 快取（離線模式）
 
-    回傳：{"report_path", "conservative": {...}, "aggressive": {...}}
+    回傳：{"report_path", "conservative": {...}, "aggressive": {...}, "underdog": {...}}
     """
     s = parse_date(start_date) if start_date else _START_DATE
     today = today_tw()
@@ -731,17 +824,10 @@ def run(
     logger.info(f"回測起始：{s}  本金：NT${init_bankroll:,.0f}")
     logger.info(f"{'='*55}")
 
-    # ── 穩健型 ──
-    logger.info("\n▶ 穩健型策略開始...")
-    res_c = _run_strategy(s, today, init_bankroll, CONSERVATIVE, auto_fetch)
-
-    # ── 激進型（數據已快取）──
-    logger.info("\n▶ 激進型策略開始...")
-    res_a = _run_strategy(s, today, init_bankroll, AGGRESSIVE, False)
-
-    # ── 冷門獵人型（數據已快取）──
-    logger.info("\n▶ 冷門獵人型策略開始...")
-    res_u = _run_strategy(s, today, init_bankroll, UNDERDOG, False)
+    logger.info("\n▶ 三位分析師同步回測開始（任兩位歸零即停止）...")
+    res_c, res_a, res_u, global_stop_reason = _run_strategies_until_two_ruined(
+        s, today, init_bankroll, auto_fetch
+    )
 
     # ── 合併報告 ──
     try:
@@ -765,6 +851,7 @@ def run(
         "conservative": res_c,
         "aggressive":   res_a,
         "underdog":     res_u,
+        "global_stop":  global_stop_reason,
     }
 
 

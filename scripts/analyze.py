@@ -626,17 +626,10 @@ def make_daily_plan(picks: list[Pick], bankroll: float, game_date: str,
     # 候選 picks 依策略篩選單關門檻
     all_sorted = sorted(picks, key=lambda x: x.edge, reverse=True)
 
-    # 低本金時只下單關
-    if bankroll < 1000:
-        picks_limited = all_sorted[:2]
-        parlays_list  = []
-    else:
-        # 激進型：單關需高信心，其餘都用來組串關
-        single_candidates = [p for p in all_sorted if p.edge >= c.single_min_edge]
-        picks_limited     = single_candidates[:c.max_singles]
-        # 串關候選：所有 picks（包含 edge < single_min_edge 的也可組串）
-        parlay_candidates = all_sorted[:8]
-        parlays_list      = build_parlays(parlay_candidates, bankroll, c)
+    # 新規則：所有下注最少 2 關串，不再產生單關。
+    picks_limited     = []
+    parlay_candidates = all_sorted[:8]
+    parlays_list      = build_parlays(parlay_candidates, bankroll, c)
 
     # 計算各注碼
     total = 0.0
