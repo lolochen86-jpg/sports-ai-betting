@@ -649,6 +649,7 @@ class DailyPlan:
     total_bet:   float
     reserved:    float              # 保留 10% 不動
     required_5_leg_note: str = ""
+    required_5_leg_candidates: list[dict] = field(default_factory=list)
 
     def summary_lines(self) -> list[str]:
         lines = [f"本金：NT${self.bankroll:,.0f}，今日投入：NT${self.total_bet:,.0f}"]
@@ -687,6 +688,7 @@ def make_daily_plan(picks: list[Pick], bankroll: float, game_date: str,
     parlay_candidates = all_sorted[:12]
     parlays_list      = build_parlays(parlay_candidates, bankroll, c)
     required_5_leg_note = _required_5_leg_note(parlay_candidates, c)
+    required_5_leg_candidates = _required_5_leg_candidates(parlay_candidates)
 
     # Keep serialized plans and settlement aligned: the risk multiplier is
     # baked into normal parlay fractions, while fixed NT$10 parlays stay fixed.
@@ -726,6 +728,7 @@ def make_daily_plan(picks: list[Pick], bankroll: float, game_date: str,
         total_bet=round(total / 10) * 10,
         reserved=reserved,
         required_5_leg_note=required_5_leg_note,
+        required_5_leg_candidates=required_5_leg_candidates,
     )
 
 
@@ -740,6 +743,28 @@ def _required_5_leg_note(picks: list[Pick], cfg: StrategyConfig) -> str:
     if len(unique_games) < 5:
         return f"skipped; only {len(unique_games)} unique candidate games (<5)"
     return f"created; fixed_bet=NT${cfg.required_5_leg_bet:.0f}"
+
+
+def _required_5_leg_candidates(picks: list[Pick]) -> list[dict]:
+    """Top unique candidate legs used to decide whether a five-leg parlay exists."""
+    out: list[dict] = []
+    seen: set[str] = set()
+    for pick in sorted(picks, key=lambda x: x.edge, reverse=True):
+        if pick.game_id in seen:
+            continue
+        seen.add(pick.game_id)
+        out.append({
+            "sport": pick.sport,
+            "game_id": pick.game_id,
+            "matchup": f"{pick.away_team}@{pick.home_team}",
+            "bet_label": pick.bet_label,
+            "odds": pick.odds,
+            "edge": pick.edge,
+            "true_prob": pick.true_prob,
+        })
+        if len(out) == 5:
+            break
+    return out
 
 
 # ── 主流程 ────────────────────────────────────────────────

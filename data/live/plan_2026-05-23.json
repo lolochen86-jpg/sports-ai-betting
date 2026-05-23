@@ -147,5 +147,43 @@
     }
   ],
   "dry_run": false,
-  "required_5_leg_note": "skipped; only 4 unique candidate games (<5)"
+  "required_5_leg_note": "skipped; only 4 unique candidate games (<5)",
+  "required_5_leg_candidates": [
+    {
+      "sport": "MLB",
+      "game_id": "823458",
+      "matchup": "CLE@PHI",
+      "bet_label": "守護者 勝",
+      "odds": 2.651,
+      "edge": 0.15114587913757144,
+      "true_prob": 0.5104982232651694
+    },
+    {
+      "sport": "MLB",
+      "game_id": "824840",
+      "matchup": "DET@BAL",
+      "bet_label": "老虎 勝",
+      "odds": 2.005,
+      "edge": 0.13044395814455906,
+      "true_prob": 0.6063979570990807
+    },
+    {
+      "sport": "MLB",
+      "game_id": "824920",
+      "matchup": "WSH@ATL",
+      "bet_label": "國民 勝",
+      "odds": 2.602,
+      "edge": 0.12422015086132965,
+      "true_prob": 0.4905133802816901
+    },
+    {
+      "sport": "MLB",
+      "game_id": "824030",
+      "matchup": "TEX@LAA",
+      "bet_label": "天使 勝",
+      "odds": 2.113,
+      "edge": 0.09751444750245164,
+      "true_prob": 0.5493951219512195
+    }
+  ]
 }

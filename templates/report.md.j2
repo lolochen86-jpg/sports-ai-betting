@@ -62,9 +62,23 @@
 {% if strat.required_5_leg_note %}> required_5_leg: {{ strat.required_5_leg_note }}
 
 {% endif %}
+{% if strat.required_5_leg_candidates %}
+| 5關候選 | 賽事 | 賠率 | Edge |
+|---|---|---|---|
+{% for c in strat.required_5_leg_candidates %}| {{ c.bet_label }} | {{ c.matchup }} | {{ c.odds | odds_fmt }} | {{ c.edge | pct }} |
+{% endfor %}
+
+{% endif %}
 {% else %}
 {% if strat.required_5_leg_note %}
 > required_5_leg: {{ strat.required_5_leg_note }}
+
+{% endif %}
+{% if strat.required_5_leg_candidates %}
+| 5關候選 | 賽事 | 賠率 | Edge |
+|---|---|---|---|
+{% for c in strat.required_5_leg_candidates %}| {{ c.bet_label }} | {{ c.matchup }} | {{ c.odds | odds_fmt }} | {{ c.edge | pct }} |
+{% endfor %}
 
 {% endif %}
 {% if strat.singles %}

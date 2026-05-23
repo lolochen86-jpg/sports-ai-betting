@@ -149,6 +149,7 @@ def run(report_date: date | str | None = None, dry_run: bool = False) -> None:
             "bankroll":     plan.bankroll,
             "total_bet":    plan.total_bet,
             "required_5_leg_note": getattr(plan, "required_5_leg_note", ""),
+            "required_5_leg_candidates": getattr(plan, "required_5_leg_candidates", []),
             "single_picks": [dataclasses.asdict(p) for p in plan.single_picks],
             "parlays": [
                 {

@@ -375,6 +375,7 @@ def _build_context(
                     })
             total = sum(x["amount"] for x in s_list) + sum(x["amount"] for x in pa_list)
             required_5_leg_note = getattr(p, "required_5_leg_note", "") if p is not None else ""
+            required_5_leg_candidates = getattr(p, "required_5_leg_candidates", []) if p is not None else []
 
             strategies.append({
                 "name":     label,
@@ -384,6 +385,7 @@ def _build_context(
                 "total":    total,
                 "no_picks": len(s_list) == 0 and len(pa_list) == 0,
                 "required_5_leg_note": required_5_leg_note,
+                "required_5_leg_candidates": required_5_leg_candidates,
                 # 本金
                 "bankroll_current": cur_bk,
                 "bankroll_roi":     bk_stats["roi"],
@@ -524,6 +526,7 @@ class _DictPlan:
         self._d = d
         self.bankroll = d.get("bankroll", 3000.0)
         self.required_5_leg_note = d.get("required_5_leg_note", "")
+        self.required_5_leg_candidates = d.get("required_5_leg_candidates", [])
 
         class _Pick:
             def __init__(self, p):
@@ -537,7 +540,10 @@ class _DictPlan:
                 self.edge       = float(p.get("edge", 0))
                 self.grade      = p.get("grade", "C")
                 self._kf        = float(p.get("kelly_frac", 0))
+                self._amount    = float(p.get("bet_amount", 0) or 0)
             def bet_amount(self, bankroll):
+                if self._amount > 0:
+                    return self._amount
                 raw = self._kf * bankroll
                 return max(10.0, round(raw / 10) * 10)
             def data_card(self, bankroll):
@@ -550,7 +556,8 @@ class _DictPlan:
                 self.true_prob  = float(p.get("true_prob", 0))
                 self.parlay_ev  = float(p.get("parlay_ev", 0))
                 self._kf        = float(p.get("kelly_frac", 0))
-                self._fixed_bet = float(p.get("fixed_bet", 0) or p.get("bet_amount", 0) or 0)
+                self._fixed_bet = float(p.get("fixed_bet", 0) or 0)
+                self._amount    = float(p.get("bet_amount", 0) or 0)
                 self.fixed_bet  = self._fixed_bet
                 legs_raw = p.get("legs", [])
                 self.legs = [_Pick(lg) for lg in legs_raw]
@@ -558,6 +565,8 @@ class _DictPlan:
             def bet_amount(self, bankroll):
                 if self._fixed_bet > 0:
                     return max(10.0, round(self._fixed_bet / 10) * 10)
+                if self._amount > 0:
+                    return self._amount
                 raw = self._kf * bankroll
                 return max(10.0, round(raw / 10) * 10)
 

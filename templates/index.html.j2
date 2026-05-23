@@ -280,9 +280,35 @@
             {% if st.required_5_leg_note %}
               <div class="empty">required_5_leg: {{ st.required_5_leg_note }}</div>
             {% endif %}
+            {% if st.required_5_leg_candidates %}
+              <div class="parlay-list">
+              {% for c in st.required_5_leg_candidates %}
+                <div class="parlay">
+                  <div class="parlay-title">{{ c.bet_label }} · {{ c.matchup }}</div>
+                  <div class="parlay-meta">
+                    <span>候選腳 · Edge {{ "{:+.1f}".format(c.edge * 100) }}%</span>
+                    <strong>@{{ "{:.2f}".format(c.odds) }}</strong>
+                  </div>
+                </div>
+              {% endfor %}
+              </div>
+            {% endif %}
           {% else %}
             {% if st.required_5_leg_note %}
               <div class="empty">required_5_leg: {{ st.required_5_leg_note }}</div>
+            {% endif %}
+            {% if st.required_5_leg_candidates %}
+              <div class="parlay-list">
+              {% for c in st.required_5_leg_candidates %}
+                <div class="parlay">
+                  <div class="parlay-title">{{ c.bet_label }} · {{ c.matchup }}</div>
+                  <div class="parlay-meta">
+                    <span>候選腳 · Edge {{ "{:+.1f}".format(c.edge * 100) }}%</span>
+                    <strong>@{{ "{:.2f}".format(c.odds) }}</strong>
+                  </div>
+                </div>
+              {% endfor %}
+              </div>
             {% endif %}
             <div class="parlay-list">
             {% for p in st.parlays %}
