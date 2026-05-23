@@ -570,23 +570,17 @@ def build_parlays(picks: list[Pick], bankroll: float,
         per_size.sort(key=lambda x: x.parlay_ev, reverse=True)
         parlays.extend(per_size[:c.max_parlays_per_n])
 
-    required_5 = _build_required_5_leg_parlay(picks, bankroll, c)
-    if required_5 is not None:
-        required_ids = {p.game_id for p in required_5.legs}
-        has_same_5 = any(
-            len(par.legs) == 5 and {p.game_id for p in par.legs} == required_ids
-            for par in parlays
-        )
-        if not has_same_5:
-            parlays.append(required_5)
+    required = _build_required_5_leg_parlay(picks, bankroll, c)
+    if required is not None:
+        parlays.append(required)
 
     return parlays
 
 
 def _build_required_5_leg_parlay(picks: list[Pick], bankroll: float,
                                  cfg: StrategyConfig) -> Parlay | None:
-    """每日保底 5 關：從當天 edge 最好的不同賽事挑 5 腳，固定 NT$10。"""
-    if cfg.required_5_leg_bet <= 0 or cfg.max_parlay_legs < 5:
+    """強制串關：足 5 場取最強 5 腳，不足 5 場則把剩餘候選全串一注。"""
+    if cfg.required_5_leg_bet <= 0 or cfg.max_parlay_legs < 2:
         return None
 
     legs: list[Pick] = []
@@ -596,10 +590,10 @@ def _build_required_5_leg_parlay(picks: list[Pick], bankroll: float,
             continue
         legs.append(pick)
         seen_games.add(pick.game_id)
-        if len(legs) == 5:
+        if len(legs) == min(cfg.max_parlay_legs, 5):
             break
 
-    if len(legs) < 5:
+    if len(legs) < 2:
         return None
 
     p_odds = 1.0
@@ -736,12 +730,14 @@ def _required_5_leg_note(picks: list[Pick], cfg: StrategyConfig) -> str:
     """Explain whether the mandatory fixed NT$10 five-leg parlay was created."""
     if cfg.required_5_leg_bet <= 0:
         return "disabled"
-    if cfg.max_parlay_legs < 5:
-        return "skipped; max_parlay_legs < 5"
+    if cfg.max_parlay_legs < 2:
+        return "skipped; max_parlay_legs < 2"
 
     unique_games = {pick.game_id for pick in picks}
+    if len(unique_games) < 2:
+        return f"skipped; only {len(unique_games)} unique candidate games (<2)"
     if len(unique_games) < 5:
-        return f"skipped; only {len(unique_games)} unique candidate games (<5)"
+        return f"created fallback {len(unique_games)}-leg parlay; fixed_bet=NT${cfg.required_5_leg_bet:.0f}"
     return f"created; fixed_bet=NT${cfg.required_5_leg_bet:.0f}"
 
 

@@ -447,8 +447,8 @@ def _():
             sport="MLB", game_id=f"g{i}", game_date="2026-05-23",
             home_team=f"H{i}", away_team=f"A{i}", bet_side="home",
             bet_label=f"H{i} 勝", bet_type="moneyline",
-            odds=1.75 + i * 0.02, true_prob=0.56, implied_prob=0.50,
-            edge=0.06 + i * 0.005, kelly_frac=0.01, grade="B",
+            odds=1.60 + i * 0.01, true_prob=0.75, implied_prob=0.50,
+            edge=0.12 + i * 0.005, kelly_frac=0.01, grade="B",
         )
         for i in range(5)
     ]
@@ -576,6 +576,30 @@ def _():
 # ══════════════════════════════════════════════════════════
 # 輸出結果
 # ══════════════════════════════════════════════════════════
+@test("mandatory parlay is added without removing normal parlays")
+def _():
+    from analyze import Pick, build_parlays
+
+    picks = [
+        Pick(
+            sport="MLB", game_id=f"extra{i}", game_date="2026-05-23",
+            home_team=f"H{i}", away_team=f"A{i}", bet_side="home",
+            bet_label=f"H{i} win", bet_type="moneyline",
+            odds=1.60 + i * 0.01, true_prob=0.75,
+            implied_prob=0.50, edge=0.12 + i * 0.005,
+            kelly_frac=0.01, grade="B",
+        )
+        for i in range(5)
+    ]
+
+    parlays = build_parlays(picks, 3000.0)
+    required = [par for par in parlays if par.fixed_bet > 0]
+    normal = [par for par in parlays if par.fixed_bet <= 0]
+    assert required, "missing mandatory fixed parlay"
+    assert required[0].bet_amount(3000.0) == 10.0, "mandatory parlay must stay NT$10"
+    assert normal, "mandatory parlay must be added without removing normal parlays"
+
+
 def print_results() -> int:
     print()
     print("=" * 60)

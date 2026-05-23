@@ -95,7 +95,7 @@
 
 | # | 組合 | 總賠率 | 串關EV | 下注額 | 潛在獎金 |
 |---|---|---|---|---|---|
-{% for p in strat.parlays %}| {{ loop.index }} | {{ p.label }} | {{ p.parlay_odds | odds_fmt }} | {{ (p.parlay_ev * 100) | round(1) }}% | {{ p.amount | ntd }} | +{{ p.potential | ntd }} |
+{% for p in strat.parlays %}| {{ loop.index }} | {{ p.leg_summary | default(p.label) }} | {{ p.parlay_odds | odds_fmt }} | {{ (p.parlay_ev * 100) | round(1) }}% | {{ p.amount | ntd }} | +{{ p.potential | ntd }} |
 {% endfor %}
 
 {% endif %}
@@ -124,7 +124,7 @@
 
 | # | 組合 | 總賠率 | 串關EV | 下注額 | 潛在獎金 |
 |---|---|---|---|---|---|
-{% for p in parlays %}| {{ loop.index + singles | length }} | {{ p.label }} | {{ p.parlay_odds | odds_fmt }} | {{ (p.parlay_ev * 100) | round(1) }}% | {{ p.amount | ntd }} | +{{ p.potential | ntd }} |
+{% for p in parlays %}| {{ loop.index + singles | length }} | {{ p.leg_summary | default(p.label) }} | {{ p.parlay_odds | odds_fmt }} | {{ (p.parlay_ev * 100) | round(1) }}% | {{ p.amount | ntd }} | +{{ p.potential | ntd }} |
 {% endfor %}
 
 {% endif %}

@@ -123,6 +123,7 @@
     background: var(--panel-2);
   }
   .parlay-title { font-size: 0.86rem; font-weight: 700; overflow-wrap: anywhere; }
+  .parlay-legs { margin-top: 4px; color: var(--muted); font-size: 0.76rem; line-height: 1.45; overflow-wrap: anywhere; }
   .parlay-meta {
     display: flex;
     justify-content: space-between;
@@ -272,12 +273,12 @@
               <span class="pill">本金 NT$3,435</span>
             </div>
             <div class="strategy-total">
-              下注 NT$30
+              下注 NT$40
             </div>
           </div>
           
             
-              <div class="empty">required_5_leg: skipped; only 3 unique candidate games (<5)</div>
+              <div class="empty">required_5_leg: created fallback 3-leg parlay; fixed_bet=NT$10</div>
             
             
               <div class="parlay-list">
@@ -315,9 +316,26 @@
                   老虎 勝·天使 勝
                   
                 </div>
+                
+                <div class="parlay-legs">老虎 勝 (DET@BAL) / 天使 勝 (TEX@LAA)</div>
+                
                 <div class="parlay-meta">
                   <span>2 關 · 總賠率 4.24 · EV +41.1%</span>
                   <strong>NT$30</strong>
+                </div>
+              </div>
+            
+              <div class="parlay">
+                <div class="parlay-title">
+                  老虎 勝·天使 勝·巨人 勝
+                  <span class="tag">保底 5 關</span>
+                </div>
+                
+                <div class="parlay-legs">老虎 勝 (DET@BAL) / 天使 勝 (TEX@LAA) / 巨人 勝 (CWS@SF)</div>
+                
+                <div class="parlay-meta">
+                  <span>3 關 · 總賠率 7.57 · EV +48.6%</span>
+                  <strong>NT$10</strong>
                 </div>
               </div>
             
@@ -332,12 +350,12 @@
               <span class="pill">本金 NT$2,994</span>
             </div>
             <div class="strategy-total">
-              下注 NT$90
+              下注 NT$100
             </div>
           </div>
           
             
-              <div class="empty">required_5_leg: skipped; only 2 unique candidate games (<5)</div>
+              <div class="empty">required_5_leg: created fallback 3-leg parlay; fixed_bet=NT$10</div>
             
             
               <div class="parlay-list">
@@ -358,6 +376,14 @@
                   </div>
                 </div>
               
+                <div class="parlay">
+                  <div class="parlay-title">天使 勝 · TEX@LAA</div>
+                  <div class="parlay-meta">
+                    <span>候選腳 · Edge +9.8%</span>
+                    <strong>@2.11</strong>
+                  </div>
+                </div>
+              
               </div>
             
             <div class="parlay-list">
@@ -367,6 +393,9 @@
                   守護者 勝·老虎 勝
                   
                 </div>
+                
+                <div class="parlay-legs">守護者 勝 (CLE@PHI) / 老虎 勝 (DET@BAL)</div>
+                
                 <div class="parlay-meta">
                   <span>2 關 · 總賠率 5.32 · EV +64.5%</span>
                   <strong>NT$50</strong>
@@ -378,9 +407,26 @@
                   守護者 勝·天使 勝
                   
                 </div>
+                
+                <div class="parlay-legs">守護者 勝 (CLE@PHI) / 天使 勝 (TEX@LAA)</div>
+                
                 <div class="parlay-meta">
                   <span>2 關 · 總賠率 5.60 · EV +57.1%</span>
                   <strong>NT$40</strong>
+                </div>
+              </div>
+            
+              <div class="parlay">
+                <div class="parlay-title">
+                  守護者 勝·老虎 勝·天使 勝
+                  <span class="tag">保底 5 關</span>
+                </div>
+                
+                <div class="parlay-legs">守護者 勝 (CLE@PHI) / 老虎 勝 (DET@BAL) / 天使 勝 (TEX@LAA)</div>
+                
+                <div class="parlay-meta">
+                  <span>3 關 · 總賠率 11.23 · EV +91.0%</span>
+                  <strong>NT$10</strong>
                 </div>
               </div>
             
@@ -395,12 +441,12 @@
               <span class="pill">本金 NT$3,365</span>
             </div>
             <div class="strategy-total">
-              下注 NT$30
+              下注 NT$40
             </div>
           </div>
           
             
-              <div class="empty">required_5_leg: skipped; only 4 unique candidate games (<5)</div>
+              <div class="empty">required_5_leg: created fallback 4-leg parlay; fixed_bet=NT$10</div>
             
             
               <div class="parlay-list">
@@ -446,9 +492,26 @@
                   守護者 勝·國民 勝
                   
                 </div>
+                
+                <div class="parlay-legs">守護者 勝 (CLE@PHI) / 國民 勝 (WSH@ATL)</div>
+                
                 <div class="parlay-meta">
                   <span>2 關 · 總賠率 6.90 · EV +72.7%</span>
                   <strong>NT$30</strong>
+                </div>
+              </div>
+            
+              <div class="parlay">
+                <div class="parlay-title">
+                  守護者 勝·老虎 勝·國民 勝·天使 勝
+                  <span class="tag">保底 5 關</span>
+                </div>
+                
+                <div class="parlay-legs">守護者 勝 (CLE@PHI) / 老虎 勝 (DET@BAL) / 國民 勝 (WSH@ATL) / 天使 勝 (TEX@LAA)</div>
+                
+                <div class="parlay-meta">
+                  <span>4 關 · 總賠率 29.22 · EV +143.8%</span>
+                  <strong>NT$10</strong>
                 </div>
               </div>
             

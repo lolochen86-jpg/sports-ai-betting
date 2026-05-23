@@ -123,6 +123,7 @@
     background: var(--panel-2);
   }
   .parlay-title { font-size: 0.86rem; font-weight: 700; overflow-wrap: anywhere; }
+  .parlay-legs { margin-top: 4px; color: var(--muted); font-size: 0.76rem; line-height: 1.45; overflow-wrap: anywhere; }
   .parlay-meta {
     display: flex;
     justify-content: space-between;
@@ -317,6 +318,9 @@
                   {{ p.label }}
                   {% if p.fixed_bet | default(0) | float > 0 %}<span class="tag">保底 5 關</span>{% endif %}
                 </div>
+                {% if p.leg_summary %}
+                <div class="parlay-legs">{{ p.leg_summary }}</div>
+                {% endif %}
                 <div class="parlay-meta">
                   <span>{{ p.legs | length }} 關 · 總賠率 {{ "{:.2f}".format(p.parlay_odds) }} · EV {% if p.parlay_ev >= 0 %}+{% endif %}{{ "{:.1f}".format(p.parlay_ev * 100) }}%</span>
                   <strong>NT${{ "{:,.0f}".format(p.amount) }}</strong>

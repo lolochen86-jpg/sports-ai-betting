@@ -311,8 +311,13 @@ def _build_context(
     if plan:
         for par in plan.parlays:
             amt = par.bet_amount(stats["current"])
+            leg_summary = " / ".join(
+                f"{lg.bet_label} ({lg.away_team}@{lg.home_team})"
+                for lg in par.legs
+            )
             parlays.append({
                 "label":      par.label,
+                "leg_summary": leg_summary,
                 "legs":       [{"label": lg.bet_label, "odds": lg.odds,
                                 "sport": lg.sport,
                                 "matchup": f"{lg.away_team}@{lg.home_team}"}
@@ -362,8 +367,13 @@ def _build_context(
                     })
                 for par in p.parlays:
                     amt = par.bet_amount(cur_bk)
+                    leg_summary = " / ".join(
+                        f"{lg.bet_label} ({lg.away_team}@{lg.home_team})"
+                        for lg in par.legs
+                    )
                     pa_list.append({
                         "label":       par.label,
+                        "leg_summary": leg_summary,
                         "legs":        [{"label": lg.bet_label, "odds": lg.odds,
                                          "matchup": f"{lg.away_team}@{lg.home_team}"}
                                         for lg in par.legs],
