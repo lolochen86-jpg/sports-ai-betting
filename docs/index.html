@@ -78,6 +78,21 @@
   .rule-k { color: var(--muted); font-size: 0.75rem; }
   .rule-v { margin-top: 4px; font-size: 1.15rem; font-weight: 800; }
   .rule-note { margin-top: 3px; color: var(--muted); font-size: 0.78rem; }
+  .formula-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .formula {
+    padding: 12px 14px;
+    min-height: 104px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .formula-k { color: var(--muted); font-size: 0.74rem; }
+  .formula-v { margin-top: 5px; font-size: 0.9rem; font-weight: 750; }
+  .formula-note { margin-top: 5px; color: var(--muted); font-size: 0.76rem; }
   .metrics {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
@@ -166,7 +181,7 @@
   }
   @media (max-width: 900px) {
     .metrics { grid-template-columns: repeat(3, 1fr); }
-    .rule-strip, .strategy-grid, .dash-grid { grid-template-columns: 1fr; }
+    .rule-strip, .formula-grid, .strategy-grid, .dash-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 560px) {
     .wrap { padding: 16px 12px 32px; }
@@ -213,6 +228,45 @@
         <div class="rule-k">回測起點</div>
         <div class="rule-v">2026-04-01</div>
         <div class="rule-note">兩位歸零即停止</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>下注公式與選單標準</h2>
+      <div class="hint">正式下注與回測共用同一套規則</div>
+    </div>
+    <div class="formula-grid">
+      <div class="formula">
+        <div class="formula-k">候選門檻</div>
+        <div class="formula-v">Edge = 模型勝率 - 賠率隱含勝率</div>
+        <div class="formula-note">候選至少需通過策略設定的 Edge、勝率與賠率範圍；同一串關不可放同場兩邊。</div>
+      </div>
+      <div class="formula">
+        <div class="formula-k">串關篩選</div>
+        <div class="formula-v">EV = 組合勝率 × 總賠率 - 1</div>
+        <div class="formula-note">正常串關只保留 EV 達標組合；正式下注不允許單關，所有注單最少 2 關。</div>
+      </div>
+      <div class="formula">
+        <div class="formula-k">注碼計算</div>
+        <div class="formula-v">Kelly 分數下注，最低 NT$10</div>
+        <div class="formula-note">一般串關依 Kelly 比例與本金上限取 10 元整數倍；固定強制串關不被 Kelly 放大或縮小。</div>
+      </div>
+      <div class="formula">
+        <div class="formula-k">每日強制串關</div>
+        <div class="formula-v">候選足 5 場取最有把握 5 場，固定 NT$10</div>
+        <div class="formula-note">若當天不足 5 場但至少 2 場，剩餘候選全部串成一注；不足 2 場才跳過並顯示原因。</div>
+      </div>
+      <div class="formula">
+        <div class="formula-k">結算盈虧</div>
+        <div class="formula-v">WIN：本金 × (總賠率 - 1)</div>
+        <div class="formula-note">LOSS：-本金；VOID：0。串關需全部命中才 WIN，任一腳無結果則 VOID 或等待資料。</div>
+      </div>
+      <div class="formula">
+        <div class="formula-k">本金與停損</div>
+        <div class="formula-v">每位分析師 NT$3,000 起始</div>
+        <div class="formula-note">Conservative、Aggressive、Underdog 各自計算；回測中任兩位本金低於 NT$10 即停止整體回測。</div>
       </div>
     </div>
   </section>
