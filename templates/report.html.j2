@@ -426,10 +426,10 @@
           {% if st.games %}
             {% for g in st.games %}
             <div class="prediction-game">
-              <div class="prediction-title">{{ g.sport }} · {{ g.matchup }}</div>
-              <div class="prediction-score">{{ g.predicted_score }}</div>
+              <div class="prediction-title">{{ g.sport }} · {{ g.matchup_zh | default(g.matchup) }}</div>
+              <div class="prediction-score">{{ g.predicted_score_zh | default(g.predicted_score) }}</div>
               <div class="prediction-meta">
-                {{ g.tw_time }} · 預測勝方 {{ g.predicted_winner }} · 信心 {{ g.confidence }}
+                {{ g.tw_time }} · 預測勝方 {{ g.predicted_winner_zh | default(g.predicted_winner) }} · 信心 {{ g.confidence }}
                 {% if g.home_starter or g.away_starter %}<br>先發：{{ g.away_starter or "TBD" }} / {{ g.home_starter or "TBD" }}{% endif %}
               </div>
             </div>

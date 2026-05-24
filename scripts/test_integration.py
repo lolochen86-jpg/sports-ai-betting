@@ -628,6 +628,14 @@ def _():
     assert row["confidence"] in {"高", "中", "低"}
 
 
+@test("team display names: MLB and NBA matchups are localized")
+def _():
+    from team_names import matchup_zh
+
+    assert matchup_zh("MLB", "PIT", "TOR") == "海盜@藍鳥"
+    assert matchup_zh("NBA", "NYK", "CLE") == "尼克@騎士"
+
+
 def print_results() -> int:
     print()
     print("=" * 60)

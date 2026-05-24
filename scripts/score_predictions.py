@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from analyze import mlb_win_probability, nba_win_probability
+from team_names import matchup_zh, team_zh
 from utils import (
     DATA_DIR,
     MLB_DIR,
@@ -186,8 +187,11 @@ def _predict_game(game: dict, sport: str) -> dict | None:
         "sport": sport,
         "game_id": str(game.get("game_id") or game.get("game_pk") or ""),
         "matchup": f"{away}@{home}",
+        "matchup_zh": matchup_zh(sport, away, home),
         "home_team": home,
         "away_team": away,
+        "home_team_zh": team_zh(sport, home),
+        "away_team_zh": team_zh(sport, away),
         "home_win_prob": round(home_prob, 4),
         "base_home_score": base_home,
         "base_away_score": base_away,
@@ -258,14 +262,22 @@ def _apply_strategy(row: dict, slug: str, profile: dict) -> dict:
         else:
             pred_away += 1
 
+    sport = row.get("sport", "")
+    home_team_zh = row.get("home_team_zh") or team_zh(sport, row["home_team"])
+    away_team_zh = row.get("away_team_zh") or team_zh(sport, row["away_team"])
     winner = row["home_team"] if pred_home > pred_away else row["away_team"]
+    winner_zh = home_team_zh if pred_home > pred_away else away_team_zh
     confidence = _confidence(row["home_win_prob"], pred_home, pred_away, slug)
     out = dict(row)
     out.update({
         "pred_home_score": pred_home,
         "pred_away_score": pred_away,
+        "home_team_zh": home_team_zh,
+        "away_team_zh": away_team_zh,
         "predicted_score": f"{row['away_team']} {pred_away} - {row['home_team']} {pred_home}",
+        "predicted_score_zh": f"{away_team_zh} {pred_away} - {home_team_zh} {pred_home}",
         "predicted_winner": winner,
+        "predicted_winner_zh": winner_zh,
         "confidence": confidence,
     })
     out.pop("base_home_score", None)

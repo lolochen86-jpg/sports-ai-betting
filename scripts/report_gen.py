@@ -24,6 +24,7 @@ from utils import (
     json_exists, parse_date, today_tw
 )
 from score_predictions import load_predictions
+from team_names import matchup_zh
 
 logger = get_logger("report_gen")
 
@@ -38,6 +39,23 @@ _STRATEGY_LABELS = {"conservative": "穩健型", "aggressive": "激進型", "und
 
 REPORTS_DIR.mkdir(exist_ok=True)
 DOCS_DIR.mkdir(exist_ok=True)
+
+
+def _display_matchup(sport: str, away: str, home: str) -> str:
+    return matchup_zh(sport, away, home)
+
+
+def _localize_candidates(candidates: list[dict]) -> list[dict]:
+    out = []
+    for c in candidates or []:
+        item = dict(c)
+        sport = item.get("sport", "")
+        raw_matchup = str(item.get("matchup", ""))
+        if "@" in raw_matchup:
+            away, home = raw_matchup.split("@", 1)
+            item["matchup"] = _display_matchup(sport, away, home)
+        out.append(item)
+    return out
 
 
 # ── 策略本金帳本 ──────────────────────────────────────────
@@ -298,7 +316,7 @@ def _build_context(
             singles.append({
                 "label":      p.bet_label,
                 "sport":      p.sport,
-                "matchup":    f"{p.away_team}@{p.home_team}",
+                "matchup":    _display_matchup(p.sport, p.away_team, p.home_team),
                 "odds":       p.odds,
                 "true_prob":  p.true_prob,
                 "edge":       p.edge,
@@ -313,7 +331,7 @@ def _build_context(
         for par in plan.parlays:
             amt = par.bet_amount(stats["current"])
             leg_summary = " / ".join(
-                f"{lg.bet_label} ({lg.away_team}@{lg.home_team})"
+                f"{lg.bet_label} ({_display_matchup(lg.sport, lg.away_team, lg.home_team)})"
                 for lg in par.legs
             )
             parlays.append({
@@ -321,7 +339,7 @@ def _build_context(
                 "leg_summary": leg_summary,
                 "legs":       [{"label": lg.bet_label, "odds": lg.odds,
                                 "sport": lg.sport,
-                                "matchup": f"{lg.away_team}@{lg.home_team}"}
+                                "matchup": _display_matchup(lg.sport, lg.away_team, lg.home_team)}
                                for lg in par.legs],
                 "parlay_odds": par.parlay_odds,
                 "true_prob":  par.true_prob,
@@ -358,7 +376,7 @@ def _build_context(
                     s_list.append({
                         "label":     pick.bet_label,
                         "sport":     pick.sport,
-                        "matchup":   f"{pick.away_team}@{pick.home_team}",
+                        "matchup":   _display_matchup(pick.sport, pick.away_team, pick.home_team),
                         "odds":      pick.odds,
                         "true_prob": pick.true_prob,
                         "edge":      pick.edge,
@@ -369,14 +387,14 @@ def _build_context(
                 for par in p.parlays:
                     amt = par.bet_amount(cur_bk)
                     leg_summary = " / ".join(
-                        f"{lg.bet_label} ({lg.away_team}@{lg.home_team})"
+                        f"{lg.bet_label} ({_display_matchup(lg.sport, lg.away_team, lg.home_team)})"
                         for lg in par.legs
                     )
                     pa_list.append({
                         "label":       par.label,
                         "leg_summary": leg_summary,
                         "legs":        [{"label": lg.bet_label, "odds": lg.odds,
-                                         "matchup": f"{lg.away_team}@{lg.home_team}"}
+                                         "matchup": _display_matchup(lg.sport, lg.away_team, lg.home_team)}
                                         for lg in par.legs],
                         "parlay_odds": par.parlay_odds,
                         "parlay_ev":   par.parlay_ev,
@@ -386,7 +404,9 @@ def _build_context(
                     })
             total = sum(x["amount"] for x in s_list) + sum(x["amount"] for x in pa_list)
             required_5_leg_note = getattr(p, "required_5_leg_note", "") if p is not None else ""
-            required_5_leg_candidates = getattr(p, "required_5_leg_candidates", []) if p is not None else []
+            required_5_leg_candidates = _localize_candidates(
+                getattr(p, "required_5_leg_candidates", []) if p is not None else []
+            )
 
             strategies.append({
                 "name":     label,
