@@ -895,6 +895,7 @@ def _publish_backtest_to_docs(start_date: date, report_path: Path) -> Path:
 </head>
 <body>
 <main>
+  <h1>運彩 AI 回測報告 {start_date.isoformat()}</h1>
   <nav>
     <a href="index.html">回首頁</a>
     <a href="backtest/backtest_report_{start_date.isoformat()}.md">Markdown</a>
@@ -906,10 +907,9 @@ def _publish_backtest_to_docs(start_date: date, report_path: Path) -> Path:
 </html>
 """
     out_path = docs_dir / f"backtest-{start_date.isoformat()}.html"
-    if not out_path.exists():
-        out_path.write_text(html_body, encoding="utf-8")
+    out_path.write_text(html_body, encoding="utf-8")
     alias_path = docs_dir / "backtest.html"
-    alias_path.write_text(out_path.read_text(encoding="utf-8"), encoding="utf-8")
+    alias_path.write_text(html_body, encoding="utf-8")
     return out_path
 
 
