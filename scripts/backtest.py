@@ -866,6 +866,323 @@ def run(
     }
 
 
+def _csv_rows(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    with open(path, newline="", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+
+def _fmt_money(value: object, signed: bool = False) -> str:
+    try:
+        n = float(value)
+    except (TypeError, ValueError):
+        n = 0.0
+    sign = "+" if signed and n > 0 else ""
+    return f"NT${sign}{n:,.0f}"
+
+
+def _fmt_pct(value: float) -> str:
+    return f"{value:+.1f}%"
+
+
+def _fmt_rate(wins: int, losses: int) -> str:
+    settled = wins + losses
+    return f"{wins / settled * 100:.1f}%" if settled else "N/A"
+
+
+def _result_class(result: str) -> str:
+    return {"WIN": "win", "LOSS": "loss", "VOID": "void"}.get(result, "void")
+
+
+def _html_cell(value: object) -> str:
+    return html.escape("" if value is None else str(value))
+
+
+def _strategy_dashboard(start_date: date, slug: str, label: str, accent: str) -> dict:
+    daily_path = BACKTEST_DIR / f"daily_summary_{start_date.isoformat()}_{slug}.csv"
+    bet_path = BACKTEST_DIR / f"backtest_log_{start_date.isoformat()}_{slug}.csv"
+    daily_rows = _csv_rows(daily_path)
+    bet_rows = _csv_rows(bet_path)
+
+    final_bankroll = 3000.0
+    if daily_rows:
+        final_bankroll = float(daily_rows[-1].get("bankroll_close", 3000.0) or 3000.0)
+    elif bet_rows:
+        final_bankroll = float(bet_rows[-1].get("bankroll_after", 3000.0) or 3000.0)
+
+    init = 3000.0
+    pnl = final_bankroll - init
+    roi = pnl / init * 100 if init else 0.0
+    wins = sum(1 for r in bet_rows if r.get("result") == "WIN")
+    losses = sum(1 for r in bet_rows if r.get("result") == "LOSS")
+    voids = sum(1 for r in bet_rows if r.get("result") == "VOID")
+    singles = sum(1 for r in bet_rows if r.get("bet_type") == "single")
+    parlays = sum(1 for r in bet_rows if "parlay" in r.get("bet_type", ""))
+    total_bet = sum(float(r.get("total_bet", 0) or 0) for r in daily_rows)
+    bet_days = sum(1 for r in daily_rows if int(float(r.get("bets_count", 0) or 0)) > 0)
+    peak = max([init] + [float(r.get("bankroll_close", init) or init) for r in daily_rows])
+    max_dd = 0.0
+    running_peak = init
+    for r in daily_rows:
+        close = float(r.get("bankroll_close", init) or init)
+        running_peak = max(running_peak, close)
+        if running_peak > 0:
+            max_dd = max(max_dd, (running_peak - close) / running_peak * 100)
+
+    by_date: dict[str, list[dict]] = {}
+    for row in bet_rows:
+        by_date.setdefault(row.get("date", ""), []).append(row)
+    daily_by_date = {row.get("date", ""): row for row in daily_rows}
+
+    day_blocks = []
+    for d_str in sorted(by_date):
+        rows = by_date[d_str]
+        day = daily_by_date.get(d_str, {})
+        day_pnl = float(day.get("total_pnl", rows[-1].get("pnl", 0)) or 0)
+        day_class = "win" if day_pnl > 0 else ("loss" if day_pnl < 0 else "void")
+        body_rows = []
+        for i, row in enumerate(rows, 1):
+            result = row.get("result", "")
+            body_rows.append(
+                "<tr>"
+                f"<td>{i}</td>"
+                f"<td>{_html_cell(row.get('bet_type'))}</td>"
+                f"<td class=\"label-cell\">{_html_cell(row.get('bet_label'))}</td>"
+                f"<td>{float(row.get('odds', 0) or 0):.2f}</td>"
+                f"<td>{float(row.get('edge', 0) or 0) * 100:.1f}%</td>"
+                f"<td>{_fmt_money(row.get('bet_amount'))}</td>"
+                f"<td><span class=\"result {_result_class(result)}\">{_html_cell(result)}</span></td>"
+                f"<td class=\"{_result_class(result)}\">{_fmt_money(row.get('pnl'), signed=True)}</td>"
+                f"<td>{_fmt_money(row.get('bankroll_after'))}</td>"
+                "</tr>"
+            )
+        day_blocks.append(
+            f"<details class=\"day-card\"><summary>"
+            f"<span>{_html_cell(d_str)}</span>"
+            f"<span class=\"{day_class}\">{_fmt_money(day_pnl, signed=True)}</span>"
+            f"<span>{len(rows)} 注</span>"
+            f"</summary><div class=\"table-scroll\"><table><thead><tr>"
+            "<th>#</th><th>類型</th><th>下注內容</th><th>賠率</th><th>Edge</th><th>金額</th><th>結果</th><th>盈虧</th><th>本金</th>"
+            "</tr></thead><tbody>"
+            + "".join(body_rows)
+            + "</tbody></table></div></details>"
+        )
+
+    return {
+        "slug": slug,
+        "label": label,
+        "accent": accent,
+        "daily_path": daily_path,
+        "bet_path": bet_path,
+        "final": final_bankroll,
+        "pnl": pnl,
+        "roi": roi,
+        "wins": wins,
+        "losses": losses,
+        "voids": voids,
+        "hit_rate": _fmt_rate(wins, losses),
+        "singles": singles,
+        "parlays": parlays,
+        "total_bet": total_bet,
+        "bet_days": bet_days,
+        "total_days": len(daily_rows),
+        "peak": peak,
+        "max_dd": max_dd,
+        "day_blocks": "".join(day_blocks) or "<p class=\"empty\">沒有下注紀錄</p>",
+    }
+
+
+def _render_backtest_dashboard(start_date: date, report_path: Path) -> str:
+    strategies = [
+        _strategy_dashboard(start_date, "穩健", "穩健型 Conservative", "blue"),
+        _strategy_dashboard(start_date, "激進", "激進型 Aggressive", "amber"),
+        _strategy_dashboard(start_date, "冷門獵人", "冷門獵人 Underdog", "violet"),
+    ]
+    winner = max(strategies, key=lambda s: s["final"], default=strategies[0])
+    total_bets = sum(s["wins"] + s["losses"] + s["voids"] for s in strategies)
+    total_voids = sum(s["voids"] for s in strategies)
+    total_singles = sum(s["singles"] for s in strategies)
+    best_roi = max(strategies, key=lambda s: s["roi"])
+
+    def _summary_row(s: dict) -> str:
+        row_class = "winner-row" if s is winner else ""
+        return (
+            f"<tr class=\"{row_class}\">"
+            f"<td><span class=\"dot {s['accent']}\"></span>{_html_cell(s['label'])}</td>"
+            f"<td>{_fmt_money(s['final'])}</td>"
+            f"<td class=\"{'win' if s['pnl'] >= 0 else 'loss'}\">{_fmt_money(s['pnl'], signed=True)}</td>"
+            f"<td class=\"{'win' if s['roi'] >= 0 else 'loss'}\">{_fmt_pct(s['roi'])}</td>"
+            f"<td>{s['hit_rate']}</td>"
+            f"<td>{s['bet_days']}/{s['total_days']}</td>"
+            f"<td>{s['parlays']}</td>"
+            f"<td>{s['voids']}</td>"
+            "</tr>"
+        )
+
+    def _strategy_card(s: dict) -> str:
+        pnl_class = "win" if s["pnl"] >= 0 else "loss"
+        return (
+            f"<article class=\"strategy-card {s['accent']}\">"
+            f"<div class=\"strategy-head\"><div><span class=\"dot {s['accent']}\"></span>"
+            f"<h2>{_html_cell(s['label'])}</h2></div>"
+            f"<span class=\"badge\">{'目前領先' if s is winner else '已重跑'}</span></div>"
+            f"<div class=\"money\">{_fmt_money(s['final'])}</div>"
+            f"<div class=\"sub {pnl_class}\">{_fmt_money(s['pnl'], signed=True)} / {_fmt_pct(s['roi'])}</div>"
+            f"<dl class=\"mini-grid\">"
+            f"<div><dt>下注天數</dt><dd>{s['bet_days']}/{s['total_days']}</dd></div>"
+            f"<div><dt>命中率</dt><dd>{s['hit_rate']}</dd></div>"
+            f"<div><dt>最高本金</dt><dd>{_fmt_money(s['peak'])}</dd></div>"
+            f"<div><dt>最大回撤</dt><dd>-{s['max_dd']:.1f}%</dd></div>"
+            f"<div><dt>串關注數</dt><dd>{s['parlays']}</dd></div>"
+            f"<div><dt>單關注數</dt><dd>{s['singles']}</dd></div>"
+            f"</dl></article>"
+        )
+
+    detail_sections = "".join(
+        f"<section class=\"section\"><div class=\"section-head\"><h2>{_html_cell(s['label'])} 每日下注明細</h2>"
+        f"<span class=\"hint\">WIN / LOSS / VOID 與每日本金變化</span></div>{s['day_blocks']}</section>"
+        for s in strategies
+    )
+
+    report_name = report_path.name
+    csv_links = "".join(
+        f"<a class=\"link-chip\" href=\"backtest/{_html_cell(s['bet_path'].name)}\">{_html_cell(s['label'])} 下注 CSV</a>"
+        f"<a class=\"link-chip\" href=\"backtest/{_html_cell(s['daily_path'].name)}\">{_html_cell(s['label'])} 每日 CSV</a>"
+        for s in strategies
+    )
+
+    return f"""<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>運彩 AI 回測報告 {start_date.isoformat()}</title>
+<style>
+  :root {{
+    --bg: #0b0f14;
+    --panel: #121821;
+    --panel-2: #171f2b;
+    --line: #273244;
+    --text: #e7edf5;
+    --muted: #8a97aa;
+    --blue: #56a8e8;
+    --green: #48c78e;
+    --red: #f87171;
+    --amber: #f3c969;
+    --violet: #a78bfa;
+  }}
+  * {{ box-sizing: border-box; }}
+  body {{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", "Noto Sans TC", system-ui, sans-serif;
+    line-height: 1.55;
+  }}
+  a {{ color: inherit; text-decoration: none; }}
+  .wrap {{ max-width: 1180px; margin: 0 auto; padding: 22px 18px 48px; }}
+  .topbar {{ display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }}
+  .brand-title {{ font-size: clamp(1.45rem, 3vw, 2.1rem); font-weight: 850; color: var(--blue); }}
+  .brand-sub {{ color: var(--muted); font-size: 0.9rem; margin-top: 4px; }}
+  .actions {{ display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }}
+  .btn, .link-chip {{ display: inline-flex; align-items: center; min-height: 38px; padding: 0 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); font-size: 0.88rem; font-weight: 700; }}
+  .btn.primary {{ border-color: rgba(86,168,232,0.55); color: var(--blue); background: rgba(86,168,232,0.12); }}
+  .section {{ margin-top: 24px; }}
+  .section-head {{ display: flex; justify-content: space-between; align-items: end; gap: 12px; margin-bottom: 12px; }}
+  h1, h2 {{ margin: 0; }}
+  h2 {{ font-size: 1.02rem; color: var(--blue); }}
+  .hint {{ color: var(--muted); font-size: 0.82rem; }}
+  .metric-grid, .strategy-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }}
+  .strategy-grid {{ grid-template-columns: repeat(3, 1fr); gap: 12px; }}
+  .metric, .strategy-card, .panel, .day-card {{ background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }}
+  .metric {{ padding: 14px; min-height: 86px; }}
+  .metric-k {{ color: var(--muted); font-size: 0.75rem; }}
+  .metric-v {{ margin-top: 4px; font-size: 1.28rem; font-weight: 850; }}
+  .strategy-card {{ padding: 14px; }}
+  .strategy-head {{ display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }}
+  .strategy-head > div {{ display: flex; gap: 8px; align-items: center; }}
+  .badge {{ border: 1px solid var(--line); color: var(--muted); border-radius: 999px; padding: 2px 8px; font-size: 0.74rem; }}
+  .money {{ margin-top: 14px; font-size: 1.55rem; font-weight: 900; }}
+  .sub {{ margin-top: 2px; font-weight: 800; }}
+  .mini-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 14px 0 0; }}
+  dt {{ color: var(--muted); font-size: 0.73rem; }}
+  dd {{ margin: 2px 0 0; font-weight: 800; }}
+  .panel {{ padding: 14px; }}
+  .table-scroll {{ overflow-x: auto; }}
+  table {{ width: 100%; border-collapse: collapse; font-size: 0.86rem; }}
+  th, td {{ padding: 10px 11px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }}
+  th {{ color: var(--muted); font-size: 0.74rem; font-weight: 800; background: rgba(255,255,255,0.025); }}
+  tr:last-child td {{ border-bottom: 0; }}
+  .winner-row td {{ background: rgba(72,199,142,0.06); }}
+  .label-cell {{ min-width: 280px; overflow-wrap: anywhere; }}
+  .dot {{ width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: 0 0 auto; }}
+  .blue {{ color: var(--blue); }} .dot.blue {{ background: var(--blue); }}
+  .amber {{ color: var(--amber); }} .dot.amber {{ background: var(--amber); }}
+  .violet {{ color: var(--violet); }} .dot.violet {{ background: var(--violet); }}
+  .win {{ color: var(--green); }} .loss {{ color: var(--red); }} .void {{ color: var(--muted); }}
+  .result {{ display: inline-flex; border: 1px solid currentColor; border-radius: 999px; padding: 2px 8px; font-size: 0.74rem; font-weight: 850; }}
+  .links {{ display: flex; flex-wrap: wrap; gap: 8px; }}
+  .day-card {{ margin-bottom: 8px; overflow: hidden; }}
+  .day-card summary {{ display: grid; grid-template-columns: minmax(120px, 1fr) auto auto; gap: 12px; align-items: center; cursor: pointer; padding: 12px 14px; font-weight: 850; }}
+  .day-card[open] summary {{ border-bottom: 1px solid var(--line); }}
+  .empty {{ margin: 0; color: var(--muted); }}
+  @media (max-width: 900px) {{
+    .topbar, .section-head {{ align-items: stretch; flex-direction: column; }}
+    .actions {{ justify-content: flex-start; }}
+    .metric-grid, .strategy-grid {{ grid-template-columns: 1fr; }}
+    .day-card summary {{ grid-template-columns: 1fr; }}
+    table {{ font-size: 0.78rem; }}
+  }}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div>
+      <h1 class="brand-title">運彩 AI 回測報告 {start_date.isoformat()}</h1>
+      <div class="brand-sub">三位分析師同步回測，正式下注規則：不下注單關、至少 2 關、候選足夠時固定 NT$10 五關串。</div>
+    </div>
+    <nav class="actions">
+      <a class="btn primary" href="index.html">回首頁</a>
+      <a class="btn" href="backtest/{_html_cell(report_name)}">Markdown</a>
+      <a class="btn" href="backtest/">CSV 目錄</a>
+    </nav>
+  </header>
+
+  <section class="section metric-grid">
+    <div class="metric"><div class="metric-k">目前領先</div><div class="metric-v {winner['accent']}">{_html_cell(winner['label'])}</div></div>
+    <div class="metric"><div class="metric-k">最高 ROI</div><div class="metric-v {'win' if best_roi['roi'] >= 0 else 'loss'}">{_fmt_pct(best_roi['roi'])}</div></div>
+    <div class="metric"><div class="metric-k">總下注筆數</div><div class="metric-v">{total_bets}</div></div>
+    <div class="metric"><div class="metric-k">單關筆數 / VOID</div><div class="metric-v">{total_singles} / {total_voids}</div></div>
+  </section>
+
+  <section class="section strategy-grid">
+    {"".join(_strategy_card(s) for s in strategies)}
+  </section>
+
+  <section class="section panel">
+    <div class="section-head"><h2>三策略總覽</h2><span class="hint">本金、ROI、命中率、注數完全由回測 CSV 產生</span></div>
+    <div class="table-scroll"><table><thead><tr>
+      <th>分析師</th><th>最終本金</th><th>總損益</th><th>ROI</th><th>命中率</th><th>下注天數</th><th>串關注數</th><th>VOID</th>
+    </tr></thead><tbody>{"".join(_summary_row(s) for s in strategies)}</tbody></table></div>
+  </section>
+
+  <section class="section panel">
+    <div class="section-head"><h2>原始紀錄</h2><span class="hint">CSV / Markdown 保留，方便逐筆核對</span></div>
+    <div class="links">
+      <a class="link-chip" href="backtest/{_html_cell(report_name)}">Markdown 報告</a>
+      {csv_links}
+    </div>
+  </section>
+
+  {detail_sections}
+</div>
+</body>
+</html>
+"""
+
+
 def _publish_backtest_to_docs(start_date: date, report_path: Path) -> Path:
     """Publish the latest backtest markdown and CSV artifacts to GitHub Pages."""
     docs_dir = ROOT_DIR / "docs"
@@ -876,36 +1193,7 @@ def _publish_backtest_to_docs(start_date: date, report_path: Path) -> Path:
         shutil.copy2(csv_path, docs_backtest_dir / csv_path.name)
     shutil.copy2(report_path, docs_backtest_dir / report_path.name)
 
-    md = report_path.read_text(encoding="utf-8")
-    escaped = html.escape(md)
-    html_body = f"""<!doctype html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>運彩 AI 回測報告 {start_date.isoformat()}</title>
-  <style>
-    body {{ margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f6f7f9; color: #172033; }}
-    main {{ max-width: 1120px; margin: 0 auto; padding: 24px; }}
-    nav {{ display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }}
-    a {{ color: #155eef; text-decoration: none; font-weight: 700; }}
-    .panel {{ background: #fff; border: 1px solid #d9dee8; border-radius: 8px; padding: 18px; }}
-    pre {{ white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.55; }}
-  </style>
-</head>
-<body>
-<main>
-  <h1>運彩 AI 回測報告 {start_date.isoformat()}</h1>
-  <nav>
-    <a href="index.html">回首頁</a>
-    <a href="backtest/backtest_report_{start_date.isoformat()}.md">Markdown</a>
-    <a href="backtest/">CSV / 原始紀錄</a>
-  </nav>
-  <section class="panel"><pre>{escaped}</pre></section>
-</main>
-</body>
-</html>
-"""
+    html_body = _render_backtest_dashboard(start_date, report_path)
     out_path = docs_dir / f"backtest-{start_date.isoformat()}.html"
     out_path.write_text(html_body, encoding="utf-8")
     alias_path = docs_dir / "backtest.html"
