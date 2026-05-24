@@ -1,6 +1,6 @@
 {
   "date": "2026-05-24",
-  "bankroll": 3365.0,
+  "bankroll": 3275.0,
   "total_bet": 50,
   "required_5_leg_note": "created; fixed_bet=NT$10",
   "required_5_leg_candidates": [
@@ -537,7 +537,7 @@
       "parlay_odds": 59.402,
       "true_prob": 0.0312,
       "parlay_ev": 0.8541,
-      "kelly_frac": 0.0029717682020802376,
+      "kelly_frac": 0.0030534351145038168,
       "fixed_bet": 10.0,
       "required_label": "強制五關 NT$10"
     }

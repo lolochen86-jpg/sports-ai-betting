@@ -28,6 +28,16 @@
     "home_injury_adj": 0.0,
     "away_injury_adj": 0.0,
     "home_out_count": 0,
-    "away_out_count": 0
+    "away_out_count": 0,
+    "home_odds": 1.667,
+    "away_odds": 2.23,
+    "spread": -2.5,
+    "spread_home_odds": 1.875,
+    "spread_away_odds": 1.946,
+    "total_line": 219.0,
+    "over_odds": 1.821,
+    "under_odds": 1.985,
+    "odds_source": "pinnacle_direct",
+    "odds_timestamp": "2026-05-24T22:24:47.633829+08:00"
   }
 ]
