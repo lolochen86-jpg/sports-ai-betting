@@ -636,6 +636,28 @@ def _():
     assert matchup_zh("NBA", "NYK", "CLE") == "尼克@騎士"
 
 
+@test("mandatory parlay uses valid games even when no normal picks pass Edge")
+def _():
+    from analyze import Pick, make_daily_plan
+
+    forced = [
+        Pick(
+            sport="MLB", game_id=f"forced{i}", game_date="2026-05-24",
+            home_team=f"H{i}", away_team=f"A{i}", bet_side="home",
+            bet_label=f"H{i} win", bet_type="moneyline",
+            odds=1.80 + i * 0.01, true_prob=0.48, implied_prob=0.52,
+            edge=-0.04 + i * 0.001, kelly_frac=0.0, grade="C",
+        )
+        for i in range(5)
+    ]
+
+    plan = make_daily_plan([], 3000.0, "2026-05-24", required_picks=forced)
+    required = [par for par in plan.parlays if par.fixed_bet > 0]
+    assert required, "mandatory fixed parlay should still be created from valid games"
+    assert len(required[0].legs) == 5
+    assert required[0].bet_amount(3000.0) == 10.0
+
+
 def print_results() -> int:
     print()
     print("=" * 60)

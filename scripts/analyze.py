@@ -368,7 +368,9 @@ def mlb_win_probability(game: dict) -> tuple[float, ProbBreakdown]:
 
 # ── 單場分析主函式 ─────────────────────────────────────────
 def analyze_nba_game(game: dict,
-                     cfg: "StrategyConfig | None" = None) -> list[Pick]:
+                     cfg: "StrategyConfig | None" = None,
+                     *,
+                     enforce_thresholds: bool = True) -> list[Pick]:
     """
     分析一場 NBA 賽事，回傳所有通過門檻的 Pick 列表。
     同一場最多產生 2 個 Pick（主隊/客隊各一，但通常只有一個過門檻）。
@@ -401,10 +403,11 @@ def analyze_nba_game(game: dict,
         ("home", home_win_prob, h_fair, h_edge, h_odds, game["home_team"]),
         ("away", away_win_prob, a_fair, a_edge, a_odds, game["away_team"]),
     ]:
-        if edge_val < c.min_edge:
-            continue
-        if prob < c.min_true_prob:
-            continue
+        if enforce_thresholds:
+            if edge_val < c.min_edge:
+                continue
+            if prob < c.min_true_prob:
+                continue
         if odds < c.min_odds or odds > c.max_odds:
             continue
 
@@ -438,7 +441,9 @@ def analyze_nba_game(game: dict,
 
 
 def analyze_mlb_game(game: dict,
-                     cfg: "StrategyConfig | None" = None) -> list[Pick]:
+                     cfg: "StrategyConfig | None" = None,
+                     *,
+                     enforce_thresholds: bool = True) -> list[Pick]:
     """分析一場 MLB 賽事，回傳通過門檻的 Pick 列表。"""
     c = cfg or CONSERVATIVE
     ok, missing = validate_mlb_game(game)
@@ -468,10 +473,11 @@ def analyze_mlb_game(game: dict,
         ("home", home_win_prob, h_fair, h_edge, h_odds, game["home_team"]),
         ("away", away_win_prob, a_fair, a_edge, a_odds, game["away_team"]),
     ]:
-        if edge_val < c.min_edge:
-            continue
-        if prob < c.min_true_prob:
-            continue
+        if enforce_thresholds:
+            if edge_val < c.min_edge:
+                continue
+            if prob < c.min_true_prob:
+                continue
         if odds < c.min_odds or odds > c.max_odds:
             continue
 
@@ -527,7 +533,8 @@ def _grade(edge_val: float, game: dict) -> str:
 
 # ── 串關組合生成 ───────────────────────────────────────────
 def build_parlays(picks: list[Pick], bankroll: float,
-                  cfg: "StrategyConfig | None" = None) -> list[Parlay]:
+                  cfg: "StrategyConfig | None" = None,
+                  required_picks: list[Pick] | None = None) -> list[Parlay]:
     """
     從候選 Pick 中生成符合門檻的串關組合。
     只產生 2 關以上（最多到 max_parlay_legs），每種串數只保留 EV 最高的 max_parlays_per_n 組。
@@ -578,7 +585,8 @@ def build_parlays(picks: list[Pick], bankroll: float,
         per_size.sort(key=lambda x: x.parlay_ev, reverse=True)
         parlays.extend(per_size[:c.max_parlays_per_n])
 
-    required = _build_required_5_leg_parlay(picks, bankroll, c)
+    required_pool = required_picks if required_picks is not None else picks
+    required = _build_required_5_leg_parlay(required_pool, bankroll, c)
     if required is not None:
         parlays.append(required)
 
@@ -667,7 +675,8 @@ class DailyPlan:
 
 
 def make_daily_plan(picks: list[Pick], bankroll: float, game_date: str,
-                    cfg: "StrategyConfig | None" = None) -> DailyPlan:
+                    cfg: "StrategyConfig | None" = None,
+                    required_picks: list[Pick] | None = None) -> DailyPlan:
     """
     依策略設定分配每日注碼。
     穩健型：平衡單關與串關。
@@ -688,9 +697,11 @@ def make_daily_plan(picks: list[Pick], bankroll: float, game_date: str,
     # 新規則：所有下注最少 2 關串，不再產生單關；候選池放大以便湊每日 5 關。
     picks_limited     = []
     parlay_candidates = all_sorted[:12]
-    parlays_list      = build_parlays(parlay_candidates, bankroll, c)
-    required_5_leg_note = _required_5_leg_note(parlay_candidates, c)
-    required_5_leg_candidates = _required_5_leg_candidates(parlay_candidates)
+    required_pool = sorted(required_picks if required_picks is not None else parlay_candidates,
+                           key=lambda x: x.edge, reverse=True)
+    parlays_list      = build_parlays(parlay_candidates, bankroll, c, required_pool)
+    required_5_leg_note = _required_5_leg_note(required_pool, c)
+    required_5_leg_candidates = _required_5_leg_candidates(required_pool)
 
     # Keep serialized plans and settlement aligned: the risk multiplier is
     # baked into normal parlay fractions, while fixed NT$10 parlays stay fixed.
@@ -783,9 +794,11 @@ def run(nba_games: list, mlb_games: list, bankroll: float,
     c = cfg or CONSERVATIVE
     logger.info(f"===== 分析引擎[{c.name}]：{game_date}，本金 NT${bankroll:,.0f} =====")
     all_picks: list[Pick] = []
+    forced_pool: list[Pick] = []
 
     for game in nba_games:
         picks = analyze_nba_game(game, c)
+        forced_pool.extend(analyze_nba_game(game, c, enforce_thresholds=False))
         all_picks.extend(picks)
         if picks:
             for p in picks:
@@ -793,13 +806,14 @@ def run(nba_games: list, mlb_games: list, bankroll: float,
 
     for game in mlb_games:
         picks = analyze_mlb_game(game, c)
+        forced_pool.extend(analyze_mlb_game(game, c, enforce_thresholds=False))
         all_picks.extend(picks)
         if picks:
             for p in picks:
                 logger.info(f"  ✓ MLB {p.bet_label} Edge={p.edge:+.1%} [{p.grade}]")
 
     logger.info(f"  候選 Pick：{len(all_picks)} 個（Edge≥{c.min_edge:.0%}）")
-    plan = make_daily_plan(all_picks, bankroll, game_date, c)
+    plan = make_daily_plan(all_picks, bankroll, game_date, c, required_picks=forced_pool)
 
     for line in plan.summary_lines():
         logger.info(line)
