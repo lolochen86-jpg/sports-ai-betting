@@ -238,6 +238,14 @@ class Parlay:
     kelly_frac:    float
     fixed_bet:     float = 0.0
 
+    @property
+    def required_label(self) -> str:
+        if self.fixed_bet <= 0:
+            return ""
+        if len(self.legs) >= 5:
+            return f"強制五關 NT${self.fixed_bet:.0f}"
+        return f"強制多關 NT${self.fixed_bet:.0f}（候選不足 5 場，實際 {len(self.legs)} 關）"
+
     def bet_amount(self, bankroll: float,
                   cfg: "StrategyConfig | None" = None) -> float:
         if self.fixed_bet > 0:

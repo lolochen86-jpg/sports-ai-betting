@@ -429,7 +429,7 @@
               <div class="parlay">
                 <div class="parlay-title">
                   {{ p.label }}
-                  {% if p.fixed_bet | default(0) | float > 0 %}<span class="tag">保底 5 關</span>{% endif %}
+                  {% if p.required_label %}<span class="tag">{{ p.required_label }}</span>{% elif p.fixed_bet | default(0) | float > 0 %}<span class="tag">強制五關 NT${{ "{:,.0f}".format(p.fixed_bet) }}</span>{% endif %}
                 </div>
                 {% if p.leg_summary %}
                 <div class="parlay-legs">{{ p.leg_summary }}</div>

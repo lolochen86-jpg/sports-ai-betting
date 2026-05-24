@@ -300,6 +300,12 @@ def settle_parlay_pick(parlay: dict, winners: dict[str, Optional[str]],
         pnl    = -amount
 
     leg_labels = " + ".join(lg.get("bet_label", "") for lg in legs)
+    required_label = parlay.get("required_label", "")
+    if fixed > 0 and not required_label:
+        if len(legs) >= 5:
+            required_label = f"強制五關 NT${fixed:.0f}"
+        else:
+            required_label = f"強制多關 NT${fixed:.0f}（候選不足 5 場，實際 {len(legs)} 關）"
     return {
         "bet_type":    f"{len(legs)}-parlay",
         "bet_label":   f"{len(legs)}-串（{leg_labels}）",
@@ -310,6 +316,7 @@ def settle_parlay_pick(parlay: dict, winners: dict[str, Optional[str]],
         "pnl":         pnl,
         "leg_results": leg_results,
         "legs":        legs,
+        "notes":       required_label,
     }
 
 

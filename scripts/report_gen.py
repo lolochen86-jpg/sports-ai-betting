@@ -347,6 +347,7 @@ def _build_context(
                 "amount":     amt,
                 "potential":  round(amt * (par.parlay_odds - 1), 0),
                 "fixed_bet":  getattr(par, "fixed_bet", 0.0),
+                "required_label": getattr(par, "required_label", ""),
             })
 
     total_today = sum(s["amount"] for s in singles) + sum(p["amount"] for p in parlays)
@@ -401,6 +402,7 @@ def _build_context(
                         "amount":      amt,
                         "potential":   round(amt * (par.parlay_odds - 1), 0),
                         "fixed_bet":   getattr(par, "fixed_bet", 0.0),
+                        "required_label": getattr(par, "required_label", ""),
                     })
             total = sum(x["amount"] for x in s_list) + sum(x["amount"] for x in pa_list)
             required_5_leg_note = getattr(p, "required_5_leg_note", "") if p is not None else ""
@@ -592,8 +594,14 @@ class _DictPlan:
                 self._fixed_bet = float(p.get("fixed_bet", 0) or 0)
                 self._amount    = float(p.get("bet_amount", 0) or 0)
                 self.fixed_bet  = self._fixed_bet
+                self.required_label = p.get("required_label", "")
                 legs_raw = p.get("legs", [])
                 self.legs = [_Pick(lg) for lg in legs_raw]
+                if self._fixed_bet > 0 and not self.required_label:
+                    if len(self.legs) >= 5:
+                        self.required_label = f"強制五關 NT${self._fixed_bet:.0f}"
+                    else:
+                        self.required_label = f"強制多關 NT${self._fixed_bet:.0f}（候選不足 5 場，實際 {len(self.legs)} 關）"
                 self.label = "·".join(lg.bet_label for lg in self.legs)
             def bet_amount(self, bankroll):
                 if self._fixed_bet > 0:

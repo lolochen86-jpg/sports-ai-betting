@@ -213,6 +213,7 @@ def settle_parlay(parlay: Parlay, bankroll_before: float,
         pnl    = -amount
 
     label = parlay.label
+    required_label = parlay.required_label
 
     return {
         "date":           parlay.legs[0].game_date,
@@ -232,7 +233,7 @@ def settle_parlay(parlay: Parlay, bankroll_before: float,
         "result":         result,
         "pnl":            pnl,
         "bankroll_after": bankroll_before + pnl,
-        "notes":          "",
+        "notes":          required_label,
     }
 
 
@@ -944,11 +945,13 @@ def _strategy_dashboard(start_date: date, slug: str, label: str, accent: str) ->
         body_rows = []
         for i, row in enumerate(rows, 1):
             result = row.get("result", "")
+            notes = row.get("notes", "")
+            note_badge = f" <span class=\"force-badge\">{_html_cell(notes)}</span>" if notes else ""
             body_rows.append(
                 "<tr>"
                 f"<td>{i}</td>"
                 f"<td>{_html_cell(row.get('bet_type'))}</td>"
-                f"<td class=\"label-cell\">{_html_cell(row.get('bet_label'))}</td>"
+                f"<td class=\"label-cell\">{_html_cell(row.get('bet_label'))}{note_badge}</td>"
                 f"<td>{float(row.get('odds', 0) or 0):.2f}</td>"
                 f"<td>{float(row.get('edge', 0) or 0) * 100:.1f}%</td>"
                 f"<td>{_fmt_money(row.get('bet_amount'))}</td>"
@@ -1116,6 +1119,7 @@ def _render_backtest_dashboard(start_date: date, report_path: Path) -> str:
   tr:last-child td {{ border-bottom: 0; }}
   .winner-row td {{ background: rgba(72,199,142,0.06); }}
   .label-cell {{ min-width: 280px; overflow-wrap: anywhere; }}
+  .force-badge {{ display: inline-flex; margin-left: 8px; border: 1px solid rgba(243,201,105,0.7); color: var(--amber); border-radius: 999px; padding: 2px 8px; font-size: 0.72rem; font-weight: 850; white-space: nowrap; }}
   .dot {{ width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: 0 0 auto; }}
   .blue {{ color: var(--blue); }} .dot.blue {{ background: var(--blue); }}
   .amber {{ color: var(--amber); }} .dot.amber {{ background: var(--amber); }}
