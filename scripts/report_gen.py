@@ -23,6 +23,7 @@ from utils import (
     ROOT_DIR, DATA_DIR, get_logger, save_json, load_json,
     json_exists, parse_date, today_tw
 )
+from score_predictions import load_predictions
 
 logger = get_logger("report_gen")
 
@@ -419,6 +420,7 @@ def _build_context(
     return {
         "report_date":    d.isoformat(),
         "yesterday_date": yesterday.isoformat(),
+        "next_day_predictions": load_predictions(d),
         "publish_time":   "22:00（台灣時間）",
 
         # 本金
@@ -502,6 +504,7 @@ def update_index_html(perf: dict, bankroll: dict,
         recent_reports=recent_reports,
         today=today_tw().isoformat(),
         today_strategies=today_strategies or [],
+        next_day_predictions=load_predictions(today_tw()),
     )
     idx_path = DOCS_DIR / "index.html"
     idx_path.write_text(html, encoding="utf-8")

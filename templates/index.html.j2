@@ -93,6 +93,25 @@
   .formula-k { color: var(--muted); font-size: 0.74rem; }
   .formula-v { margin-top: 5px; font-size: 0.9rem; font-weight: 750; }
   .formula-note { margin-top: 5px; color: var(--muted); font-size: 0.76rem; }
+  .prediction-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .prediction-card {
+    padding: 14px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .prediction-head { display: flex; justify-content: space-between; gap: 10px; align-items: start; margin-bottom: 10px; }
+  .prediction-name { font-weight: 800; }
+  .prediction-list { display: flex; flex-direction: column; gap: 8px; }
+  .prediction-game {
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    background: var(--panel-2);
+  }
+  .prediction-title { font-size: 0.84rem; font-weight: 750; overflow-wrap: anywhere; }
+  .prediction-score { margin-top: 4px; color: var(--blue); font-size: 0.92rem; font-weight: 800; }
+  .prediction-meta { margin-top: 5px; color: var(--muted); font-size: 0.74rem; line-height: 1.45; }
   .metrics {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
@@ -181,7 +200,7 @@
   }
   @media (max-width: 900px) {
     .metrics { grid-template-columns: repeat(3, 1fr); }
-    .rule-strip, .formula-grid, .strategy-grid, .dash-grid { grid-template-columns: 1fr; }
+    .rule-strip, .formula-grid, .prediction-grid, .strategy-grid, .dash-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 560px) {
     .wrap { padding: 16px 12px 32px; }
@@ -230,6 +249,46 @@
         <div class="rule-note">兩位歸零即停止</div>
       </div>
     </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>台灣時間隔天賽程與比分預測</h2>
+      <div class="hint">
+        {% if next_day_predictions %}{{ next_day_predictions.target_date }} · {{ next_day_predictions.timezone }}{% else %}尚未產生{% endif %}
+      </div>
+    </div>
+    {% if next_day_predictions and next_day_predictions.strategies %}
+      <div class="hint">{{ next_day_predictions.source_note }}</div>
+      <div class="prediction-grid" style="margin-top: 10px;">
+      {% for st in next_day_predictions.strategies %}
+        <article class="prediction-card">
+          <div class="prediction-head">
+            <div class="prediction-name">{{ st.name }}</div>
+            <span class="pill">{{ st.total_games }} 場</span>
+          </div>
+          {% if st.games %}
+          <div class="prediction-list">
+          {% for g in st.games %}
+            <div class="prediction-game">
+              <div class="prediction-title">{{ g.sport }} · {{ g.matchup }}</div>
+              <div class="prediction-score">{{ g.predicted_score }}</div>
+              <div class="prediction-meta">
+                {{ g.tw_time }} · 預測勝方 {{ g.predicted_winner }} · 信心 {{ g.confidence }}
+                {% if g.home_starter or g.away_starter %}<br>先發：{{ g.away_starter or "TBD" }} / {{ g.home_starter or "TBD" }}{% endif %}
+              </div>
+            </div>
+          {% endfor %}
+          </div>
+          {% else %}
+            <div class="empty">隔天暫無可預測賽程</div>
+          {% endif %}
+        </article>
+      {% endfor %}
+      </div>
+    {% else %}
+      <div class="list-panel empty">尚未取得隔天賽程，報表排程會在台灣時間 24:00 前更新。</div>
+    {% endif %}
   </section>
 
   <section class="section">

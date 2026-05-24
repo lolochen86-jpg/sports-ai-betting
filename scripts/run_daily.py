@@ -11,7 +11,7 @@
 
 import os
 import sys
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 from utils import (
@@ -19,6 +19,9 @@ from utils import (
     get_logger, save_json, load_json, json_exists, parse_date, today_tw
 )
 import fetch_odds
+import fetch_mlb
+import fetch_nba
+import score_predictions
 from analyze import (
     DailyPlan,
     run as analyze_run,
@@ -139,6 +142,22 @@ def run(report_date: date | str | None = None, dry_run: bool = False) -> None:
         "aggressive":   plan_a,
         "underdog":     plan_u,
     }
+
+    # 預先準備台灣時間隔天賽程與三位分析師比分預測。
+    next_d = d + timedelta(days=1)
+    for pred_source_d in [d, next_d]:
+        try:
+            fetch_nba.run(pred_source_d)
+        except Exception as e:
+            logger.warning(f"NBA 台灣隔天預測來源資料準備失敗：{pred_source_d} {e}")
+        try:
+            fetch_mlb.run(pred_source_d)
+        except Exception as e:
+            logger.warning(f"MLB 台灣隔天預測來源資料準備失敗：{pred_source_d} {e}")
+    try:
+        score_predictions.run(d)
+    except Exception as e:
+        logger.warning(f"隔天比分預測產生失敗：{next_d} {e}")
 
     # 4. 序列化計劃（Pick / Parlay dataclass → dict）
     import dataclasses

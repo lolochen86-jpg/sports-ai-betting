@@ -600,6 +600,34 @@ def _():
     assert normal, "mandatory parlay must be added without removing normal parlays"
 
 
+@test("score predictions: strategy rows include Taiwan time and score")
+def _():
+    from score_predictions import _apply_strategy
+
+    base = {
+        "sport": "MLB",
+        "game_id": "demo",
+        "matchup": "AAA@BBB",
+        "home_team": "BBB",
+        "away_team": "AAA",
+        "home_win_prob": 0.58,
+        "base_home_score": 4.8,
+        "base_away_score": 3.9,
+        "tw_time": "05/25 09:00",
+        "tw_datetime_sort": "2026-05-25T09:00:00+08:00",
+        "venue": "Demo Park",
+        "data_quality": "model",
+        "home_starter": "Home Starter",
+        "away_starter": "Away Starter",
+    }
+    profile = {"total_mult": 1.0, "margin_mult": 1.0, "underdog_shift": 0.0}
+    row = _apply_strategy(base, "conservative", profile)
+    assert row["tw_time"] == "05/25 09:00"
+    assert row["predicted_score"].startswith("AAA ")
+    assert row["predicted_winner"] in {"AAA", "BBB"}
+    assert row["confidence"] in {"高", "中", "低"}
+
+
 def print_results() -> int:
     print()
     print("=" * 60)
