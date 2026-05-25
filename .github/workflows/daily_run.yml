@@ -106,7 +106,7 @@ jobs:
         run: |
           python scripts/fetch_odds.py NBA ${{ steps.date.outputs.date }}
           python scripts/fetch_odds.py MLB ${{ steps.date.outputs.date }}
-        continue-on-error: false
+        continue-on-error: true   # 賠率失敗不中斷流程，run_daily 會再試一次
 
       # ── P4 + P7：分析 + 報告 ────────────────────────────
       - name: Run analysis engine
