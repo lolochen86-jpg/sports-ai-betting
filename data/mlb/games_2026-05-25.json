@@ -28,6 +28,16 @@
     "away_runs_per_game": 4.529411764705882,
     "home_bullpen_era_3d": 4.2,
     "away_bullpen_era_3d": 4.2,
-    "park_factor": 100
+    "park_factor": 100,
+    "home_odds": 1.446,
+    "away_odds": 2.836,
+    "spread": -1.5,
+    "spread_home_odds": 1.976,
+    "spread_away_odds": 1.851,
+    "total_line": 7.5,
+    "over_odds": 1.918,
+    "under_odds": 1.884,
+    "odds_source": "pinnacle_direct",
+    "odds_timestamp": "2026-05-25T21:22:55.315002+08:00"
   }
 ]
