@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Score-to-Odds Edge Analyzer</title>
+<style>
+  :root { --bg: #0b0f14; --panel: #121821; --panel-2: #171f2b; --line: #273244; --text: #e7edf5; --muted: #8a97aa; --blue: #56a8e8; --green: #48c78e; --amber: #f3c969; --red: #f87171; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: "Segoe UI", "Noto Sans TC", system-ui, sans-serif; line-height: 1.65; }
+  a { color: var(--blue); text-decoration: none; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 18px 54px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+  .brand-title { font-size: clamp(1.6rem, 4vw, 2.5rem); font-weight: 850; color: var(--blue); }
+  .brand-sub { margin-top: 6px; color: var(--muted); }
+  .btn { display: inline-flex; align-items: center; min-height: 38px; padding: 0 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); font-size: 0.9rem; font-weight: 700; }
+  .hero { margin-top: 24px; padding: 22px; border: 1px solid rgba(86,168,232,0.38); border-radius: 8px; background: rgba(86,168,232,0.10); }
+  .hero h1 { margin: 0; font-size: clamp(1.7rem, 4vw, 3rem); line-height: 1.12; }
+  .hero p { max-width: 820px; margin: 14px 0 0; color: var(--muted); font-size: 1rem; }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+  .card { padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+  .card h3 { margin: 0 0 8px; color: var(--blue); font-size: 1rem; }
+  .card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+  .section { margin-top: 28px; }
+  h2 { margin: 0 0 12px; color: var(--blue); font-size: 1.15rem; }
+  .flow { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+  .step { min-height: 84px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); font-weight: 800; font-size: 0.88rem; }
+  .step span { display: block; margin-top: 6px; color: var(--muted); font-weight: 500; font-size: 0.75rem; }
+  table { width: 100%; border-collapse: collapse; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+  th, td { padding: 11px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; font-size: 0.9rem; }
+  th { color: var(--blue); background: var(--panel-2); }
+  tr:last-child td { border-bottom: 0; }
+  code, pre { font-family: Consolas, "SFMono-Regular", monospace; }
+  pre { overflow-x: auto; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: #090d12; color: #d7e5f5; }
+  .tag { color: var(--green); font-weight: 800; }
+  .warn { color: var(--amber); font-weight: 800; }
+  .danger { color: var(--red); font-weight: 800; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  ul { margin: 8px 0 0; padding-left: 20px; color: var(--muted); }
+  li { margin: 5px 0; }
+  @media (max-width: 820px) { .topbar { align-items: flex-start; flex-direction: column; } .grid, .two { grid-template-columns: 1fr; } .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="topbar">
+    <div>
+      <div class="brand-title">Score-to-Odds Edge Analyzer</div>
+      <div class="brand-sub">AI 比數預測轉賠率，直接對比國際盤與台灣運彩 OCR。</div>
+    </div>
+    <a class="btn" href="index.html">返回首頁</a>
+  </header>
+
+  <section class="hero">
+    <h1>從預測比分，找出真正有 Edge 的盤</h1>
+    <p>本功能不是從既有報告頁抓資料，而是直接串接各大國際盤 odds API，將 NBA / MLB 預測比分轉換成 moneyline、讓分與大小分機率，再與台灣運彩拍照 OCR 的盤口互相比對。</p>
+  </section>
+
+  <section class="section">
+    <h2>核心流程</h2>
+    <div class="flow">
+      <div class="step">AI 預測比數<span>NBA / MLB predicted score</span></div>
+      <div class="step">轉市場機率<span>ML / spread / total</span></div>
+      <div class="step">公平賠率<span>fair odds</span></div>
+      <div class="step">國際盤 API<span>multi-book odds</span></div>
+      <div class="step">台彩 OCR<span>photo upload parse</span></div>
+      <div class="step">Edge 決策<span>EV / Kelly / recommendation</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>國際盤來源</h2>
+    <div class="grid">
+      <div class="card"><h3>The Odds API</h3><p>第一優先。使用 NBA / MLB sport key，抓 h2h、spreads、totals，並依 bookmaker 比價。</p></div>
+      <div class="card"><h3>Pinnacle / Sharp Source</h3><p>作為 sharp baseline，用來判斷市場共識與台彩盤是否偏離。</p></div>
+      <div class="card"><h3>第二聚合來源</h3><p>OddsPapi、odds-api.io、TXOdds 等來源可補強 bookmaker 覆蓋與歷史盤。</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>比數轉賠率</h2>
+    <div class="two">
+      <div class="card"><h3>Moneyline</h3><pre>model_home_prob = score_model_home_win_probability
+home_fair_odds = 1 / model_home_prob
+away_fair_odds = 1 / (1 - model_home_prob)</pre></div>
+      <div class="card"><h3>Spread / Total</h3><pre>spread_cover_prob = P(model_margin > sportsbook_spread)
+over_prob = P(model_total > sportsbook_total)</pre></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>三方比對欄位</h2>
+    <table>
+      <thead><tr><th>欄位</th><th>用途</th></tr></thead>
+      <tbody>
+        <tr><td>AI predicted score</td><td>模型原始比分判斷。</td></tr>
+        <tr><td>Model probability / fair odds</td><td>將比分轉成勝率與合理賠率。</td></tr>
+        <tr><td>International best odds</td><td>各大國際盤中同市場、同盤口最佳賠率。</td></tr>
+        <tr><td>Sharp no-vig probability</td><td>去水後市場共識機率，Pinnacle 或 sharp source 優先。</td></tr>
+        <tr><td>Taiwan OCR odds</td><td>使用者上傳台灣運彩照片後辨識出的盤口與賠率。</td></tr>
+        <tr><td>Edge / EV / Kelly</td><td>判斷是否正期望值，以及建議投注比例。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>推薦等級</h2>
+    <table>
+      <thead><tr><th>等級</th><th>條件</th><th>行動</th></tr></thead>
+      <tbody>
+        <tr><td class="danger">Pass</td><td>EV <= 0 或 Edge < 2%</td><td>不下注。</td></tr>
+        <tr><td class="warn">Watch</td><td>Edge >= 2%</td><td>觀察盤口變化。</td></tr>
+        <tr><td class="tag">Small Edge</td><td>Edge >= 4% 且 EV > 0</td><td>小注候選。</td></tr>
+        <tr><td class="tag">Strong Edge</td><td>Edge >= 7% 且 EV >= 5%</td><td>優先候選，仍受 Kelly 與單注上限限制。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>台灣運彩 OCR</h2>
+    <div class="card">
+      <p>OCR 只做初步辨識，必須提供人工校正。尤其是隊名、讓分正負號、大小分盤口與小數賠率，任何一個錯誤都會讓 Edge 計算失真。</p>
+      <ul>
+        <li>上傳照片後建立 ocr_upload 紀錄。</li>
+        <li>解析 game、market、line、odds、timestamp、confidence。</li>
+        <li>顯示校正 UI，使用者確認後才進入比對。</li>
+        <li>同市場同盤口才直接比；盤口不同時需重新計算 cover probability。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>下一步實作</h2>
+    <table>
+      <thead><tr><th>順序</th><th>任務</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>建立 odds-provider abstraction：international、sharp、taiwan_ocr。</td></tr>
+        <tr><td>2</td><td>建立 score-to-market converter：moneyline、spread、total。</td></tr>
+        <tr><td>3</td><td>串 The Odds API，正規化 bookmaker / team / market。</td></tr>
+        <tr><td>4</td><td>建立 OCR upload pipeline 與人工校正頁。</td></tr>
+        <tr><td>5</td><td>建立 comparison engine：AI vs international、AI vs Taiwan、Taiwan vs international。</td></tr>
+        <tr><td>6</td><td>報告頁新增每場最佳 Edge、台彩是否優於國際盤、不下注原因。</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>
