@@ -264,6 +264,7 @@ def fetch_today_games(as_of_date: date | str) -> Optional[list]:
                     "away_team_id":   away.get("teamId", 0),
                     "home_team_abbr": home.get("teamTricode", ""),
                     "away_team_abbr": away.get("teamTricode", ""),
+                    "game_time_utc":  g.get("gameTimeUTC", "") or g.get("gameTimeUtc", ""),
                     "game_status":    g.get("gameStatus", 1),
                     "arena":          g.get("arena", {}).get("arenaName", ""),
                 })
@@ -404,6 +405,8 @@ def build_nba_game_data(
         "game_date":  game["game_date"],
         "home_team":  home,
         "away_team":  away,
+        "game_time_utc": game.get("game_time_utc", ""),
+        "arena": game.get("arena", ""),
 
         # 效率數據
         "home_ortg":   eff_home["ortg"],

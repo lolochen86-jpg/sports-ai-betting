@@ -11,7 +11,7 @@
 
 import os
 import sys
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 from utils import (
@@ -19,7 +19,16 @@ from utils import (
     get_logger, save_json, load_json, json_exists, parse_date, today_tw
 )
 import fetch_odds
-from analyze import run as analyze_run, CONSERVATIVE, AGGRESSIVE, UNDERDOG
+import fetch_mlb
+import fetch_nba
+import score_predictions
+from analyze import (
+    DailyPlan,
+    run as analyze_run,
+    CONSERVATIVE,
+    AGGRESSIVE,
+    UNDERDOG,
+)
 
 logger = get_logger("run_daily")
 
@@ -73,35 +82,82 @@ def run(report_date: date | str | None = None, dry_run: bool = False) -> None:
     bankroll_u = _load_strategy_bankroll("underdog")
     logger.info(f"  本金 穩健型 NT${bankroll_c:,.0f} / 激進型 NT${bankroll_a:,.0f} / 冷門型 NT${bankroll_u:,.0f}")
 
-    # ── 停利停損檢查（以 underdog 本金為基準）──────────────
+    # ── 停利停損檢查（三策略各自判斷，不只看 underdog）────────
     from analyze import check_stop_condition, _TARGET_BANKROLL, _RUIN_THRESHOLD
-    should_stop, stop_reason = check_stop_condition(bankroll_u)
-    if should_stop:
-        logger.warning(f"===== 停止交易 =====")
-        logger.warning(stop_reason)
-        # 更新 bankroll_underdog.json 狀態
-        bk_u = load_json(DATA_DIR / "bankroll_underdog.json") if json_exists(DATA_DIR / "bankroll_underdog.json") else {}
-        bk_u["status"]      = "target_reached" if bankroll_u >= _TARGET_BANKROLL else "ruined"
-        bk_u["stop_date"]   = d.isoformat()
-        bk_u["stop_reason"] = stop_reason
-        save_json(bk_u, DATA_DIR / "bankroll_underdog.json")
-        # 同步 bankroll.json
-        save_json(bk_u, DATA_DIR / "bankroll.json")
-        # 仍生成報告（但無下注計劃）
-        import report_gen
-        report_gen.run(plan=None, report_date=d)
-        return
+    strategy_inputs = {
+        "conservative": (CONSERVATIVE, bankroll_c),
+        "aggressive": (AGGRESSIVE, bankroll_a),
+        "underdog": (UNDERDOG, bankroll_u),
+    }
+    stopped: dict[str, str] = {}
+    for slug, (_, bankroll) in strategy_inputs.items():
+        should_stop, stop_reason = check_stop_condition(bankroll)
+        if not should_stop:
+            continue
+        stopped[slug] = stop_reason
+        logger.warning(f"[{slug}] 停止交易：{stop_reason}")
+        bk_path = DATA_DIR / f"bankroll_{slug}.json"
+        bk = load_json(bk_path) if json_exists(bk_path) else {
+            "initial": 3000.0, "current": bankroll, "peak": max(3000.0, bankroll),
+            "strategy": slug, "history": [],
+        }
+        bk["current"] = bankroll
+        bk["status"] = "target_reached" if bankroll >= _TARGET_BANKROLL else "ruined"
+        bk["stop_date"] = d.isoformat()
+        bk["stop_reason"] = stop_reason
+        save_json(bk, bk_path)
+        if slug == "underdog":
+            save_json(bk, DATA_DIR / "bankroll.json")
 
-    # 三個策略分別執行，使用各自本金
-    plan_c = analyze_run(nba_games, mlb_games, bankroll_c, d.isoformat(), cfg=CONSERVATIVE)
-    plan_a = analyze_run(nba_games, mlb_games, bankroll_a, d.isoformat(), cfg=AGGRESSIVE)
-    plan_u = analyze_run(nba_games, mlb_games, bankroll_u, d.isoformat(), cfg=UNDERDOG)
+    def _empty_stopped_plan(bankroll: float, reason: str) -> DailyPlan:
+        return DailyPlan(
+            date=d.isoformat(),
+            bankroll=bankroll,
+            single_picks=[],
+            parlays=[],
+            total_bet=0.0,
+            reserved=bankroll,
+            required_5_leg_note=f"stopped; {reason}",
+        )
+
+    # 三個策略分別執行，使用各自本金；已停用者保留空計劃供報表顯示原因。
+    plan_c = (
+        _empty_stopped_plan(bankroll_c, stopped["conservative"])
+        if "conservative" in stopped
+        else analyze_run(nba_games, mlb_games, bankroll_c, d.isoformat(), cfg=CONSERVATIVE)
+    )
+    plan_a = (
+        _empty_stopped_plan(bankroll_a, stopped["aggressive"])
+        if "aggressive" in stopped
+        else analyze_run(nba_games, mlb_games, bankroll_a, d.isoformat(), cfg=AGGRESSIVE)
+    )
+    plan_u = (
+        _empty_stopped_plan(bankroll_u, stopped["underdog"])
+        if "underdog" in stopped
+        else analyze_run(nba_games, mlb_games, bankroll_u, d.isoformat(), cfg=UNDERDOG)
+    )
 
     plans = {
         "conservative": plan_c,
         "aggressive":   plan_a,
         "underdog":     plan_u,
     }
+
+    # 預先準備台灣時間隔天賽程與三位分析師比分預測。
+    next_d = d + timedelta(days=1)
+    for pred_source_d in [d, next_d]:
+        try:
+            fetch_nba.run(pred_source_d)
+        except Exception as e:
+            logger.warning(f"NBA 台灣隔天預測來源資料準備失敗：{pred_source_d} {e}")
+        try:
+            fetch_mlb.run(pred_source_d)
+        except Exception as e:
+            logger.warning(f"MLB 台灣隔天預測來源資料準備失敗：{pred_source_d} {e}")
+    try:
+        score_predictions.run(d)
+    except Exception as e:
+        logger.warning(f"隔天比分預測產生失敗：{next_d} {e}")
 
     # 4. 序列化計劃（Pick / Parlay dataclass → dict）
     import dataclasses
@@ -111,6 +167,8 @@ def run(report_date: date | str | None = None, dry_run: bool = False) -> None:
             "date":         plan.date,
             "bankroll":     plan.bankroll,
             "total_bet":    plan.total_bet,
+            "required_5_leg_note": getattr(plan, "required_5_leg_note", ""),
+            "required_5_leg_candidates": getattr(plan, "required_5_leg_candidates", []),
             "single_picks": [dataclasses.asdict(p) for p in plan.single_picks],
             "parlays": [
                 {
@@ -120,6 +178,7 @@ def run(report_date: date | str | None = None, dry_run: bool = False) -> None:
                     "parlay_ev":   par.parlay_ev,
                     "kelly_frac":  par.kelly_frac,
                     "fixed_bet":   par.fixed_bet,
+                    "required_label": getattr(par, "required_label", ""),
                 }
                 for par in plan.parlays
             ],

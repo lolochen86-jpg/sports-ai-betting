@@ -447,8 +447,8 @@ def _():
             sport="MLB", game_id=f"g{i}", game_date="2026-05-23",
             home_team=f"H{i}", away_team=f"A{i}", bet_side="home",
             bet_label=f"H{i} 勝", bet_type="moneyline",
-            odds=1.75 + i * 0.02, true_prob=0.56, implied_prob=0.50,
-            edge=0.06 + i * 0.005, kelly_frac=0.01, grade="B",
+            odds=1.60 + i * 0.01, true_prob=0.75, implied_prob=0.50,
+            edge=0.12 + i * 0.005, kelly_frac=0.01, grade="B",
         )
         for i in range(5)
     ]
@@ -576,6 +576,88 @@ def _():
 # ══════════════════════════════════════════════════════════
 # 輸出結果
 # ══════════════════════════════════════════════════════════
+@test("mandatory parlay is added without removing normal parlays")
+def _():
+    from analyze import Pick, build_parlays
+
+    picks = [
+        Pick(
+            sport="MLB", game_id=f"extra{i}", game_date="2026-05-23",
+            home_team=f"H{i}", away_team=f"A{i}", bet_side="home",
+            bet_label=f"H{i} win", bet_type="moneyline",
+            odds=1.60 + i * 0.01, true_prob=0.75,
+            implied_prob=0.50, edge=0.12 + i * 0.005,
+            kelly_frac=0.01, grade="B",
+        )
+        for i in range(5)
+    ]
+
+    parlays = build_parlays(picks, 3000.0)
+    required = [par for par in parlays if par.fixed_bet > 0]
+    normal = [par for par in parlays if par.fixed_bet <= 0]
+    assert required, "missing mandatory fixed parlay"
+    assert required[0].bet_amount(3000.0) == 10.0, "mandatory parlay must stay NT$10"
+    assert normal, "mandatory parlay must be added without removing normal parlays"
+
+
+@test("score predictions: strategy rows include Taiwan time and score")
+def _():
+    from score_predictions import _apply_strategy
+
+    base = {
+        "sport": "MLB",
+        "game_id": "demo",
+        "matchup": "AAA@BBB",
+        "home_team": "BBB",
+        "away_team": "AAA",
+        "home_win_prob": 0.58,
+        "base_home_score": 4.8,
+        "base_away_score": 3.9,
+        "tw_time": "05/25 09:00",
+        "tw_datetime_sort": "2026-05-25T09:00:00+08:00",
+        "venue": "Demo Park",
+        "data_quality": "model",
+        "home_starter": "Home Starter",
+        "away_starter": "Away Starter",
+    }
+    profile = {"total_mult": 1.0, "margin_mult": 1.0, "underdog_shift": 0.0}
+    row = _apply_strategy(base, "conservative", profile)
+    assert row["tw_time"] == "05/25 09:00"
+    assert row["predicted_score"].startswith("AAA ")
+    assert row["predicted_winner"] in {"AAA", "BBB"}
+    assert row["confidence"] in {"高", "中", "低"}
+
+
+@test("team display names: MLB and NBA matchups are localized")
+def _():
+    from team_names import matchup_zh
+
+    assert matchup_zh("MLB", "PIT", "TOR") == "海盜@藍鳥"
+    assert matchup_zh("NBA", "NYK", "CLE") == "尼克@騎士"
+
+
+@test("mandatory parlay uses valid games even when no normal picks pass Edge")
+def _():
+    from analyze import Pick, make_daily_plan
+
+    forced = [
+        Pick(
+            sport="MLB", game_id=f"forced{i}", game_date="2026-05-24",
+            home_team=f"H{i}", away_team=f"A{i}", bet_side="home",
+            bet_label=f"H{i} win", bet_type="moneyline",
+            odds=1.80 + i * 0.01, true_prob=0.48, implied_prob=0.52,
+            edge=-0.04 + i * 0.001, kelly_frac=0.0, grade="C",
+        )
+        for i in range(5)
+    ]
+
+    plan = make_daily_plan([], 3000.0, "2026-05-24", required_picks=forced)
+    required = [par for par in plan.parlays if par.fixed_bet > 0]
+    assert required, "mandatory fixed parlay should still be created from valid games"
+    assert len(required[0].legs) == 5
+    assert required[0].bet_amount(3000.0) == 10.0
+
+
 def print_results() -> int:
     print()
     print("=" * 60)

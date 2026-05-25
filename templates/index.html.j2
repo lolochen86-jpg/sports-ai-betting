@@ -78,6 +78,40 @@
   .rule-k { color: var(--muted); font-size: 0.75rem; }
   .rule-v { margin-top: 4px; font-size: 1.15rem; font-weight: 800; }
   .rule-note { margin-top: 3px; color: var(--muted); font-size: 0.78rem; }
+  .formula-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .formula {
+    padding: 12px 14px;
+    min-height: 104px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .formula-k { color: var(--muted); font-size: 0.74rem; }
+  .formula-v { margin-top: 5px; font-size: 0.9rem; font-weight: 750; }
+  .formula-note { margin-top: 5px; color: var(--muted); font-size: 0.76rem; }
+  .prediction-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .prediction-card {
+    padding: 14px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .prediction-head { display: flex; justify-content: space-between; gap: 10px; align-items: start; margin-bottom: 10px; }
+  .prediction-name { font-weight: 800; }
+  .prediction-list { display: flex; flex-direction: column; gap: 8px; }
+  .prediction-game {
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    background: var(--panel-2);
+  }
+  .prediction-title { font-size: 0.84rem; font-weight: 750; overflow-wrap: anywhere; }
+  .prediction-score { margin-top: 4px; color: var(--blue); font-size: 0.92rem; font-weight: 800; }
+  .prediction-meta { margin-top: 5px; color: var(--muted); font-size: 0.74rem; line-height: 1.45; }
   .metrics {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
@@ -123,6 +157,7 @@
     background: var(--panel-2);
   }
   .parlay-title { font-size: 0.86rem; font-weight: 700; overflow-wrap: anywhere; }
+  .parlay-legs { margin-top: 4px; color: var(--muted); font-size: 0.76rem; line-height: 1.45; overflow-wrap: anywhere; }
   .parlay-meta {
     display: flex;
     justify-content: space-between;
@@ -165,7 +200,7 @@
   }
   @media (max-width: 900px) {
     .metrics { grid-template-columns: repeat(3, 1fr); }
-    .rule-strip, .strategy-grid, .dash-grid { grid-template-columns: 1fr; }
+    .rule-strip, .formula-grid, .prediction-grid, .strategy-grid, .dash-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 560px) {
     .wrap { padding: 16px 12px 32px; }
@@ -188,6 +223,7 @@
     <nav class="actions">
       <a class="btn primary" href="{{ today }}.html">今日報告</a>
       <a class="btn" href="backtest-2026-04-01.html">回測紀錄</a>
+      <a class="btn" href="odds-edge-roadmap.html">Score-to-Odds Edge</a>
     </nav>
   </header>
 
@@ -212,6 +248,85 @@
         <div class="rule-k">回測起點</div>
         <div class="rule-v">2026-04-01</div>
         <div class="rule-note">兩位歸零即停止</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>台灣時間隔天賽程與比分預測</h2>
+      <div class="hint">
+        {% if next_day_predictions %}{{ next_day_predictions.target_date }} · {{ next_day_predictions.timezone }}{% else %}尚未產生{% endif %}
+      </div>
+    </div>
+    {% if next_day_predictions and next_day_predictions.strategies %}
+      <div class="hint">{{ next_day_predictions.source_note }}</div>
+      <div class="prediction-grid" style="margin-top: 10px;">
+      {% for st in next_day_predictions.strategies %}
+        <article class="prediction-card">
+          <div class="prediction-head">
+            <div class="prediction-name">{{ st.name }}</div>
+            <span class="pill">{{ st.total_games }} 場</span>
+          </div>
+          {% if st.games %}
+          <div class="prediction-list">
+          {% for g in st.games %}
+            <div class="prediction-game">
+              <div class="prediction-title">{{ g.sport }} · {{ g.matchup_zh | default(g.matchup) }}</div>
+              <div class="prediction-score">{{ g.predicted_score_zh | default(g.predicted_score) }}</div>
+              <div class="prediction-meta">
+                {{ g.tw_time }} · 預測勝方 {{ g.predicted_winner_zh | default(g.predicted_winner) }} · 信心 {{ g.confidence }}
+                {% if g.home_starter or g.away_starter %}<br>先發：{{ g.away_starter or "TBD" }} / {{ g.home_starter or "TBD" }}{% endif %}
+              </div>
+            </div>
+          {% endfor %}
+          </div>
+          {% else %}
+            <div class="empty">隔天暫無可預測賽程</div>
+          {% endif %}
+        </article>
+      {% endfor %}
+      </div>
+    {% else %}
+      <div class="list-panel empty">尚未取得隔天賽程，報表排程會在台灣時間 24:00 前更新。</div>
+    {% endif %}
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>下注公式與選單標準</h2>
+      <div class="hint">正式下注與回測共用同一套規則</div>
+    </div>
+    <div class="formula-grid">
+      <div class="formula">
+        <div class="formula-k">候選門檻</div>
+        <div class="formula-v">Edge = 模型勝率 - 賠率隱含勝率</div>
+        <div class="formula-note">一般串關需通過策略 Edge、勝率與賠率範圍；強制 NT$10 串關改由所有資料完整、賠率有效的賽事挑選。</div>
+      </div>
+      <div class="formula">
+        <div class="formula-k">串關篩選</div>
+        <div class="formula-v">EV = 組合勝率 × 總賠率 - 1</div>
+        <div class="formula-note">正常串關只保留 EV 達標組合；正式下注不允許單關，所有注單最少 2 關。</div>
+      </div>
+      <div class="formula">
+        <div class="formula-k">注碼計算</div>
+        <div class="formula-v">Kelly 分數下注，最低 NT$10</div>
+        <div class="formula-note">一般串關依 Kelly 比例與本金上限取 10 元整數倍；固定強制串關不被 Kelly 放大或縮小。</div>
+      </div>
+      <div class="formula">
+        <div class="formula-k">每日強制串關</div>
+        <div class="formula-v">候選足 5 場取最有把握 5 場，固定 NT$10</div>
+        <div class="formula-note">若當天不足 5 場但至少 2 場，剩餘可用賽事全部串成一注；不足 2 場才跳過並顯示原因。</div>
+      </div>
+      <div class="formula">
+        <div class="formula-k">結算盈虧</div>
+        <div class="formula-v">WIN：本金 × (總賠率 - 1)</div>
+        <div class="formula-note">LOSS：-本金；VOID：0。串關需全部命中才 WIN，任一腳無結果則 VOID 或等待資料。</div>
+      </div>
+      <div class="formula">
+        <div class="formula-k">本金與停損</div>
+        <div class="formula-v">每位分析師 NT$3,000 起始</div>
+        <div class="formula-note">Conservative、Aggressive、Underdog 各自計算；回測中任兩位本金低於 NT$10 即停止整體回測。</div>
       </div>
     </div>
   </section>
@@ -277,14 +392,49 @@
           </div>
           {% if st.no_picks %}
             <div class="empty">今日沒有符合門檻的串關</div>
+            {% if st.required_5_leg_note %}
+              <div class="empty">required_5_leg: {{ st.required_5_leg_note }}</div>
+            {% endif %}
+            {% if st.required_5_leg_candidates %}
+              <div class="parlay-list">
+              {% for c in st.required_5_leg_candidates %}
+                <div class="parlay">
+                  <div class="parlay-title">{{ c.bet_label }} · {{ c.matchup }}</div>
+                  <div class="parlay-meta">
+                    <span>候選腳 · Edge {{ "{:+.1f}".format(c.edge * 100) }}%</span>
+                    <strong>@{{ "{:.2f}".format(c.odds) }}</strong>
+                  </div>
+                </div>
+              {% endfor %}
+              </div>
+            {% endif %}
           {% else %}
+            {% if st.required_5_leg_note %}
+              <div class="empty">required_5_leg: {{ st.required_5_leg_note }}</div>
+            {% endif %}
+            {% if st.required_5_leg_candidates %}
+              <div class="parlay-list">
+              {% for c in st.required_5_leg_candidates %}
+                <div class="parlay">
+                  <div class="parlay-title">{{ c.bet_label }} · {{ c.matchup }}</div>
+                  <div class="parlay-meta">
+                    <span>候選腳 · Edge {{ "{:+.1f}".format(c.edge * 100) }}%</span>
+                    <strong>@{{ "{:.2f}".format(c.odds) }}</strong>
+                  </div>
+                </div>
+              {% endfor %}
+              </div>
+            {% endif %}
             <div class="parlay-list">
             {% for p in st.parlays %}
               <div class="parlay">
                 <div class="parlay-title">
                   {{ p.label }}
-                  {% if p.fixed_bet | default(0) | float > 0 %}<span class="tag">保底 5 關</span>{% endif %}
+                  {% if p.required_label %}<span class="tag">{{ p.required_label }}</span>{% elif p.fixed_bet | default(0) | float > 0 %}<span class="tag">強制五關 NT${{ "{:,.0f}".format(p.fixed_bet) }}</span>{% endif %}
                 </div>
+                {% if p.leg_summary %}
+                <div class="parlay-legs">{{ p.leg_summary }}</div>
+                {% endif %}
                 <div class="parlay-meta">
                   <span>{{ p.legs | length }} 關 · 總賠率 {{ "{:.2f}".format(p.parlay_odds) }} · EV {% if p.parlay_ev >= 0 %}+{% endif %}{{ "{:.1f}".format(p.parlay_ev * 100) }}%</span>
                   <strong>NT${{ "{:,.0f}".format(p.amount) }}</strong>

@@ -1,6 +1,4 @@
-"""
-球隊中文名稱對照表（只顯示隊名，不含城市）
-"""
+"""Team abbreviation to Traditional Chinese display names."""
 
 NBA_ZH: dict[str, str] = {
     "ATL": "老鷹",
@@ -14,7 +12,7 @@ NBA_ZH: dict[str, str] = {
     "DET": "活塞",
     "GSW": "勇士",
     "HOU": "火箭",
-    "IND": "步行者",
+    "IND": "溜馬",
     "LAC": "快艇",
     "LAL": "湖人",
     "MEM": "灰熊",
@@ -37,6 +35,7 @@ NBA_ZH: dict[str, str] = {
 
 MLB_ZH: dict[str, str] = {
     "ARI": "響尾蛇",
+    "AZ": "響尾蛇",
     "ATL": "勇士",
     "BAL": "金鶯",
     "BOS": "紅襪",
@@ -44,10 +43,10 @@ MLB_ZH: dict[str, str] = {
     "CWS": "白襪",
     "CIN": "紅人",
     "CLE": "守護者",
-    "COL": "落磯",
+    "COL": "洛磯",
     "DET": "老虎",
     "HOU": "太空人",
-    "KC":  "皇家",
+    "KC": "皇家",
     "LAA": "天使",
     "LAD": "道奇",
     "MIA": "馬林魚",
@@ -56,13 +55,14 @@ MLB_ZH: dict[str, str] = {
     "NYM": "大都會",
     "NYY": "洋基",
     "OAK": "運動家",
+    "ATH": "運動家",
     "PHI": "費城人",
     "PIT": "海盜",
-    "SD":  "教士",
+    "SD": "教士",
     "SEA": "水手",
-    "SF":  "巨人",
+    "SF": "巨人",
     "STL": "紅雀",
-    "TB":  "光芒",
+    "TB": "光芒",
     "TEX": "遊騎兵",
     "TOR": "藍鳥",
     "WSH": "國民",
@@ -70,8 +70,20 @@ MLB_ZH: dict[str, str] = {
 
 
 def nba_zh(abbr: str) -> str:
-    return NBA_ZH.get(abbr, abbr)
+    return NBA_ZH.get(str(abbr).upper(), abbr)
 
 
 def mlb_zh(abbr: str) -> str:
-    return MLB_ZH.get(abbr, abbr)
+    return MLB_ZH.get(str(abbr).upper(), abbr)
+
+
+def team_zh(sport: str, abbr: str) -> str:
+    if str(sport).upper() == "NBA":
+        return nba_zh(abbr)
+    if str(sport).upper() == "MLB":
+        return mlb_zh(abbr)
+    return abbr
+
+
+def matchup_zh(sport: str, away: str, home: str) -> str:
+    return f"{team_zh(sport, away)}@{team_zh(sport, home)}"

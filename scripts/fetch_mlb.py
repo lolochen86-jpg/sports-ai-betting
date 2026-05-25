@@ -391,6 +391,7 @@ def build_mlb_game_data(game: dict, as_of_date: date) -> Optional[dict]:
     return {
         "game_pk":      game["game_pk"],
         "game_date":    game["game_date"],
+        "game_time_utc": game.get("game_time_utc", ""),
         "home_team":    home_abbr,
         "away_team":    away_abbr,
         "home_team_id": home_id,

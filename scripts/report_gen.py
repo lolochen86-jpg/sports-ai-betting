@@ -23,6 +23,8 @@ from utils import (
     ROOT_DIR, DATA_DIR, get_logger, save_json, load_json,
     json_exists, parse_date, today_tw
 )
+from score_predictions import load_predictions
+from team_names import matchup_zh
 
 logger = get_logger("report_gen")
 
@@ -37,6 +39,23 @@ _STRATEGY_LABELS = {"conservative": "穩健型", "aggressive": "激進型", "und
 
 REPORTS_DIR.mkdir(exist_ok=True)
 DOCS_DIR.mkdir(exist_ok=True)
+
+
+def _display_matchup(sport: str, away: str, home: str) -> str:
+    return matchup_zh(sport, away, home)
+
+
+def _localize_candidates(candidates: list[dict]) -> list[dict]:
+    out = []
+    for c in candidates or []:
+        item = dict(c)
+        sport = item.get("sport", "")
+        raw_matchup = str(item.get("matchup", ""))
+        if "@" in raw_matchup:
+            away, home = raw_matchup.split("@", 1)
+            item["matchup"] = _display_matchup(sport, away, home)
+        out.append(item)
+    return out
 
 
 # ── 策略本金帳本 ──────────────────────────────────────────
@@ -297,7 +316,7 @@ def _build_context(
             singles.append({
                 "label":      p.bet_label,
                 "sport":      p.sport,
-                "matchup":    f"{p.away_team}@{p.home_team}",
+                "matchup":    _display_matchup(p.sport, p.away_team, p.home_team),
                 "odds":       p.odds,
                 "true_prob":  p.true_prob,
                 "edge":       p.edge,
@@ -311,11 +330,16 @@ def _build_context(
     if plan:
         for par in plan.parlays:
             amt = par.bet_amount(stats["current"])
+            leg_summary = " / ".join(
+                f"{lg.bet_label} ({_display_matchup(lg.sport, lg.away_team, lg.home_team)})"
+                for lg in par.legs
+            )
             parlays.append({
                 "label":      par.label,
+                "leg_summary": leg_summary,
                 "legs":       [{"label": lg.bet_label, "odds": lg.odds,
                                 "sport": lg.sport,
-                                "matchup": f"{lg.away_team}@{lg.home_team}"}
+                                "matchup": _display_matchup(lg.sport, lg.away_team, lg.home_team)}
                                for lg in par.legs],
                 "parlay_odds": par.parlay_odds,
                 "true_prob":  par.true_prob,
@@ -323,6 +347,7 @@ def _build_context(
                 "amount":     amt,
                 "potential":  round(amt * (par.parlay_odds - 1), 0),
                 "fixed_bet":  getattr(par, "fixed_bet", 0.0),
+                "required_label": getattr(par, "required_label", ""),
             })
 
     total_today = sum(s["amount"] for s in singles) + sum(p["amount"] for p in parlays)
@@ -352,7 +377,7 @@ def _build_context(
                     s_list.append({
                         "label":     pick.bet_label,
                         "sport":     pick.sport,
-                        "matchup":   f"{pick.away_team}@{pick.home_team}",
+                        "matchup":   _display_matchup(pick.sport, pick.away_team, pick.home_team),
                         "odds":      pick.odds,
                         "true_prob": pick.true_prob,
                         "edge":      pick.edge,
@@ -362,18 +387,28 @@ def _build_context(
                     })
                 for par in p.parlays:
                     amt = par.bet_amount(cur_bk)
+                    leg_summary = " / ".join(
+                        f"{lg.bet_label} ({_display_matchup(lg.sport, lg.away_team, lg.home_team)})"
+                        for lg in par.legs
+                    )
                     pa_list.append({
                         "label":       par.label,
+                        "leg_summary": leg_summary,
                         "legs":        [{"label": lg.bet_label, "odds": lg.odds,
-                                         "matchup": f"{lg.away_team}@{lg.home_team}"}
+                                         "matchup": _display_matchup(lg.sport, lg.away_team, lg.home_team)}
                                         for lg in par.legs],
                         "parlay_odds": par.parlay_odds,
                         "parlay_ev":   par.parlay_ev,
                         "amount":      amt,
                         "potential":   round(amt * (par.parlay_odds - 1), 0),
                         "fixed_bet":   getattr(par, "fixed_bet", 0.0),
+                        "required_label": getattr(par, "required_label", ""),
                     })
             total = sum(x["amount"] for x in s_list) + sum(x["amount"] for x in pa_list)
+            required_5_leg_note = getattr(p, "required_5_leg_note", "") if p is not None else ""
+            required_5_leg_candidates = _localize_candidates(
+                getattr(p, "required_5_leg_candidates", []) if p is not None else []
+            )
 
             strategies.append({
                 "name":     label,
@@ -382,6 +417,8 @@ def _build_context(
                 "parlays":  pa_list,
                 "total":    total,
                 "no_picks": len(s_list) == 0 and len(pa_list) == 0,
+                "required_5_leg_note": required_5_leg_note,
+                "required_5_leg_candidates": required_5_leg_candidates,
                 # 本金
                 "bankroll_current": cur_bk,
                 "bankroll_roi":     bk_stats["roi"],
@@ -405,6 +442,7 @@ def _build_context(
     return {
         "report_date":    d.isoformat(),
         "yesterday_date": yesterday.isoformat(),
+        "next_day_predictions": load_predictions(d),
         "publish_time":   "22:00（台灣時間）",
 
         # 本金
@@ -488,6 +526,7 @@ def update_index_html(perf: dict, bankroll: dict,
         recent_reports=recent_reports,
         today=today_tw().isoformat(),
         today_strategies=today_strategies or [],
+        next_day_predictions=load_predictions(today_tw()),
     )
     idx_path = DOCS_DIR / "index.html"
     idx_path.write_text(html, encoding="utf-8")
@@ -521,6 +560,8 @@ class _DictPlan:
     def __init__(self, d: dict):
         self._d = d
         self.bankroll = d.get("bankroll", 3000.0)
+        self.required_5_leg_note = d.get("required_5_leg_note", "")
+        self.required_5_leg_candidates = d.get("required_5_leg_candidates", [])
 
         class _Pick:
             def __init__(self, p):
@@ -534,7 +575,10 @@ class _DictPlan:
                 self.edge       = float(p.get("edge", 0))
                 self.grade      = p.get("grade", "C")
                 self._kf        = float(p.get("kelly_frac", 0))
+                self._amount    = float(p.get("bet_amount", 0) or 0)
             def bet_amount(self, bankroll):
+                if self._amount > 0:
+                    return self._amount
                 raw = self._kf * bankroll
                 return max(10.0, round(raw / 10) * 10)
             def data_card(self, bankroll):
@@ -547,14 +591,23 @@ class _DictPlan:
                 self.true_prob  = float(p.get("true_prob", 0))
                 self.parlay_ev  = float(p.get("parlay_ev", 0))
                 self._kf        = float(p.get("kelly_frac", 0))
-                self._fixed_bet = float(p.get("fixed_bet", 0) or p.get("bet_amount", 0) or 0)
+                self._fixed_bet = float(p.get("fixed_bet", 0) or 0)
+                self._amount    = float(p.get("bet_amount", 0) or 0)
                 self.fixed_bet  = self._fixed_bet
+                self.required_label = p.get("required_label", "")
                 legs_raw = p.get("legs", [])
                 self.legs = [_Pick(lg) for lg in legs_raw]
+                if self._fixed_bet > 0 and not self.required_label:
+                    if len(self.legs) >= 5:
+                        self.required_label = f"強制五關 NT${self._fixed_bet:.0f}"
+                    else:
+                        self.required_label = f"強制多關 NT${self._fixed_bet:.0f}（候選不足 5 場，實際 {len(self.legs)} 關）"
                 self.label = "·".join(lg.bet_label for lg in self.legs)
             def bet_amount(self, bankroll):
                 if self._fixed_bet > 0:
                     return max(10.0, round(self._fixed_bet / 10) * 10)
+                if self._amount > 0:
+                    return self._amount
                 raw = self._kf * bankroll
                 return max(10.0, round(raw / 10) * 10)
 
