@@ -1,0 +1,27 @@
+[
+  {
+    "game_id": "5bacfc86e437d15ee2ffef91a1562308",
+    "sport": "MLB",
+    "game_date": "2026-05-29",
+    "home_team_abbr": "TEX",
+    "away_team_abbr": "HOU",
+    "home_team_name": "Texas Rangers",
+    "away_team_name": "Houston Astros",
+    "source": "pinnacle",
+    "timestamp": "2026-05-29T00:57:32.500200+08:00",
+    "home_odds_raw": 1.79,
+    "away_odds_raw": 2.16,
+    "spread_away_odds_raw": 1.53,
+    "spread": -1.5,
+    "spread_home_odds_raw": 2.67,
+    "total_line": 7.5,
+    "over_odds_raw": 2.07,
+    "under_odds_raw": 1.83,
+    "home_odds": 1.751,
+    "away_odds": 2.113,
+    "spread_home_odds": 2.611,
+    "spread_away_odds": 1.496,
+    "over_odds": 2.025,
+    "under_odds": 1.79
+  }
+]
