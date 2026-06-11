@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>運彩 AI 下注儀表板</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<title>2026-06-12 下注報告</title>
 <style>
   :root {
     --bg: #0b0f14;
@@ -27,20 +26,19 @@
     font-family: "Segoe UI", "Noto Sans TC", system-ui, sans-serif;
     line-height: 1.55;
   }
-  a { color: inherit; text-decoration: none; }
+  a { color: var(--blue); text-decoration: none; }
   .wrap { max-width: 1120px; margin: 0 auto; padding: 22px 18px 42px; }
   .topbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
     padding-bottom: 18px;
     border-bottom: 1px solid var(--line);
   }
-  .brand { display: flex; flex-direction: column; gap: 4px; }
-  .brand-title { font-size: clamp(1.45rem, 3vw, 2.1rem); font-weight: 800; color: var(--blue); }
-  .brand-sub { color: var(--muted); font-size: 0.9rem; }
-  .actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+  .back { color: var(--muted); font-size: 0.86rem; }
+  h1 { margin: 4px 0 0; font-size: clamp(1.35rem, 3vw, 2rem); color: var(--blue); }
+  .sub { color: var(--muted); font-size: 0.88rem; }
   .btn {
     display: inline-flex;
     align-items: center;
@@ -53,7 +51,6 @@
     font-size: 0.88rem;
     font-weight: 650;
   }
-  .btn.primary { border-color: rgba(86,168,232,0.55); color: var(--blue); background: rgba(86,168,232,0.12); }
   .section { margin-top: 24px; }
   .section-head {
     display: flex;
@@ -64,132 +61,127 @@
   }
   h2 { margin: 0; font-size: 1.03rem; color: var(--blue); }
   .hint { color: var(--muted); font-size: 0.82rem; }
-  .rule-strip {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-  }
-  .rule, .metric, .strategy, .chart, .list-panel {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-  }
-  .rule { padding: 14px; min-height: 86px; }
-  .rule-k { color: var(--muted); font-size: 0.75rem; }
-  .rule-v { margin-top: 4px; font-size: 1.15rem; font-weight: 800; }
-  .rule-note { margin-top: 3px; color: var(--muted); font-size: 0.78rem; }
-  .formula-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-  }
-  .formula {
-    padding: 12px 14px;
-    min-height: 104px;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-  }
-  .formula-k { color: var(--muted); font-size: 0.74rem; }
-  .formula-v { margin-top: 5px; font-size: 0.9rem; font-weight: 750; }
-  .formula-note { margin-top: 5px; color: var(--muted); font-size: 0.76rem; }
-  .prediction-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  .prediction-card {
-    padding: 14px;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-  }
-  .prediction-head { display: flex; justify-content: space-between; gap: 10px; align-items: start; margin-bottom: 10px; }
-  .prediction-name { font-weight: 800; }
-  .prediction-list { display: flex; flex-direction: column; gap: 8px; }
-  .prediction-game {
-    padding: 10px;
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 8px;
-    background: var(--panel-2);
-  }
-  .prediction-title { font-size: 0.84rem; font-weight: 750; overflow-wrap: anywhere; }
-  .prediction-score { margin-top: 4px; color: var(--blue); font-size: 0.92rem; font-weight: 800; }
-  .prediction-meta { margin-top: 5px; color: var(--muted); font-size: 0.74rem; line-height: 1.45; }
   .metrics {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 10px;
   }
+  .metric, .panel, .strategy {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
   .metric { padding: 14px; }
   .metric-k { color: var(--muted); font-size: 0.75rem; }
-  .metric-v { margin-top: 4px; font-size: 1.28rem; font-weight: 800; }
-  .blue { color: var(--blue); }
+  .metric-v { margin-top: 4px; font-size: 1.22rem; font-weight: 800; }
   .green { color: var(--green); }
   .red { color: var(--red); }
   .amber { color: var(--amber); }
+  .blue { color: var(--blue); }
   .violet { color: var(--violet); }
-  .dash-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
-    gap: 12px;
-    align-items: start;
-  }
-  .chart { padding: 16px; min-height: 280px; }
-  .strategy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  .strategy { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
-  .strategy-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
-  .strategy-name { font-weight: 800; }
-  .strategy-total { color: var(--muted); font-size: 0.78rem; text-align: right; }
-  .pill {
+  .panel { overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+  th { color: var(--muted); background: var(--panel-2); font-weight: 650; }
+  tr:last-child td { border-bottom: 0; }
+  .badge {
     display: inline-flex;
     align-items: center;
     height: 24px;
     padding: 0 8px;
     border-radius: 999px;
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    color: var(--muted);
-    font-size: 0.74rem;
+    font-size: 0.73rem;
+    font-weight: 700;
     white-space: nowrap;
   }
-  .parlay-list { display: flex; flex-direction: column; gap: 8px; }
-  .parlay {
+  .badge-win { color: var(--green); background: rgba(72,199,142,0.13); }
+  .badge-loss { color: var(--red); background: rgba(248,113,113,0.13); }
+  .badge-void { color: var(--muted); background: rgba(138,151,170,0.13); }
+  .badge-info { color: var(--blue); background: rgba(86,168,232,0.13); }
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .tab {
+    border: 0;
+    border-right: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+    min-height: 62px;
     padding: 10px;
-    border: 1px solid rgba(255,255,255,0.06);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+  }
+  .tab:last-child { border-right: 0; }
+  .tab.active { background: var(--panel-2); box-shadow: inset 0 -3px 0 var(--blue); }
+  .tab-name { display: block; font-weight: 800; }
+  .tab-sub { display: block; color: var(--muted); font-size: 0.76rem; margin-top: 2px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .strategy { padding: 14px; }
+  .strategy-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .mini {
+    padding: 10px;
+    background: var(--panel-2);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 8px;
+  }
+  .mini-k { color: var(--muted); font-size: 0.72rem; }
+  .mini-v { margin-top: 3px; font-weight: 800; }
+  .parlay-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .parlay {
+    border: 1px solid var(--line);
     border-radius: 8px;
     background: var(--panel-2);
+    padding: 12px;
   }
-  .parlay-title { font-size: 0.86rem; font-weight: 700; overflow-wrap: anywhere; }
-  .parlay-legs { margin-top: 4px; color: var(--muted); font-size: 0.76rem; line-height: 1.45; overflow-wrap: anywhere; }
-  .parlay-meta {
-    display: flex;
-    justify-content: space-between;
+  .parlay-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .parlay-title { font-weight: 800; overflow-wrap: anywhere; }
+  .parlay-meta { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+  .amount { text-align: right; font-size: 1.05rem; font-weight: 850; color: var(--blue); white-space: nowrap; }
+  .potential { color: var(--muted); font-size: 0.75rem; text-align: right; }
+  .legs { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+  .leg {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 10px;
-    margin-top: 6px;
+    padding: 7px 8px;
+    border-radius: 7px;
+    background: rgba(11,15,20,0.45);
     color: var(--muted);
-    font-size: 0.78rem;
+    font-size: 0.8rem;
   }
-  .empty { padding: 18px 10px; color: var(--muted); text-align: center; font-size: 0.86rem; }
-  .list-panel { overflow: hidden; }
-  .report-link {
+  .leg strong { color: var(--text); font-weight: 700; }
+  .empty { padding: 28px 14px; text-align: center; color: var(--muted); }
+  .summary-line {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
+    margin-top: 14px;
     padding: 12px 14px;
-    border-bottom: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel-2);
+    border: 1px solid rgba(255,255,255,0.05);
     font-size: 0.9rem;
   }
-  .report-link:last-child { border-bottom: 0; }
-  .report-link:hover { background: var(--panel-2); }
-  .tag {
-    display: inline-flex;
-    align-items: center;
-    height: 22px;
-    padding: 0 7px;
-    border-radius: 5px;
-    background: rgba(86,168,232,0.13);
-    color: var(--blue);
-    font-size: 0.72rem;
-    margin-left: 6px;
-  }
+  .prediction-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .prediction-card { padding: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  .prediction-name { font-weight: 800; margin-bottom: 10px; }
+  .prediction-game { padding: 10px; border-radius: 8px; background: var(--panel-2); border: 1px solid rgba(255,255,255,0.05); margin-top: 8px; }
+  .prediction-title { font-weight: 750; font-size: 0.84rem; overflow-wrap: anywhere; }
+  .prediction-score { color: var(--blue); font-weight: 800; margin-top: 4px; }
+  .prediction-meta { color: var(--muted); font-size: 0.74rem; margin-top: 5px; line-height: 1.45; }
   footer {
     margin-top: 34px;
     padding-top: 16px;
@@ -200,566 +192,44 @@
   }
   @media (max-width: 900px) {
     .metrics { grid-template-columns: repeat(3, 1fr); }
-    .rule-strip, .formula-grid, .prediction-grid, .strategy-grid, .dash-grid { grid-template-columns: 1fr; }
+    .strategy-summary, .parlay-grid, .prediction-grid { grid-template-columns: 1fr; }
   }
   @media (max-width: 560px) {
     .wrap { padding: 16px 12px 32px; }
     .topbar, .section-head { align-items: flex-start; flex-direction: column; }
-    .actions { justify-content: flex-start; width: 100%; }
-    .btn { flex: 1; justify-content: center; }
     .metrics { grid-template-columns: repeat(2, 1fr); }
-    .metric-v { font-size: 1.08rem; }
-    .parlay-meta { flex-direction: column; gap: 2px; }
+    .tabs { grid-template-columns: 1fr; }
+    .tab { border-right: 0; border-bottom: 1px solid var(--line); }
+    .tab:last-child { border-bottom: 0; }
+    .parlay-head, .summary-line { flex-direction: column; align-items: stretch; }
+    .amount, .potential { text-align: left; }
+    table { font-size: 0.78rem; }
+    th, td { padding: 8px; }
   }
 </style>
 </head>
 <body>
 <main class="wrap">
   <header class="topbar">
-    <div class="brand">
-      <div class="brand-title">運彩 AI 下注儀表板</div>
-      <div class="brand-sub">NBA / MLB 串關策略，三位分析師各自追蹤本金與績效</div>
+    <div>
+      <a class="back" href="index.html">返回首頁</a>
+      <h1>2026-06-12 下注報告</h1>
+      <div class="sub">正式規則：只做 2 關以上串關；候選足夠時每日固定 5 關 NT$10</div>
     </div>
-    <nav class="actions">
-      <a class="btn primary" href="2026-06-12.html">今日報告</a>
-      <a class="btn" href="backtest-2026-04-01.html">回測紀錄</a>
-      <a class="btn" href="odds-edge-roadmap.html">Score-to-Odds Edge</a>
-    </nav>
+    <a class="btn" href="backtest-2026-04-01.html">查看回測</a>
   </header>
 
   <section class="section">
-    <div class="rule-strip">
-      <div class="rule">
-        <div class="rule-k">下注型態</div>
-        <div class="rule-v">只做串關</div>
-        <div class="rule-note">正式單關已停用</div>
-      </div>
-      <div class="rule">
-        <div class="rule-k">最低門檻</div>
-        <div class="rule-v">2 關以上</div>
-        <div class="rule-note">每注都必須至少串 2 關</div>
-      </div>
-      <div class="rule">
-        <div class="rule-k">每日固定</div>
-        <div class="rule-v">5 關 NT$10</div>
-        <div class="rule-note">候選足夠時自動加入</div>
-      </div>
-      <div class="rule">
-        <div class="rule-k">回測起點</div>
-        <div class="rule-v">2026-04-01</div>
-        <div class="rule-note">兩位歸零即停止</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="section-head">
-      <h2>台灣時間隔天賽程與比分預測</h2>
-      <div class="hint">
-        2026-06-13 · Asia/Taipei
-      </div>
-    </div>
-    
-      <div class="hint">目前僅有隔天賽程，比分以聯盟平均與主場修正預估</div>
-      <div class="prediction-grid" style="margin-top: 10px;">
-      
-        <article class="prediction-card">
-          <div class="prediction-head">
-            <div class="prediction-name">穩健型 Conservative</div>
-            <span class="pill">15 場</span>
-          </div>
-          
-          <div class="prediction-list">
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 馬林魚@海盜</div>
-              <div class="prediction-score">馬林魚 4 - 海盜 5</div>
-              <div class="prediction-meta">
-                06/13 06:40 · 預測勝方 海盜 · 信心 低
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 水手@國民</div>
-              <div class="prediction-score">水手 4 - 國民 5</div>
-              <div class="prediction-meta">
-                06/13 06:45 · 預測勝方 國民 · 信心 低
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 教士@金鶯</div>
-              <div class="prediction-score">教士 4 - 金鶯 5</div>
-              <div class="prediction-meta">
-                06/13 07:05 · 預測勝方 金鶯 · 信心 低
-                <br>先發：Griffin Canning / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 老虎@守護者</div>
-              <div class="prediction-score">老虎 4 - 守護者 5</div>
-              <div class="prediction-meta">
-                06/13 07:10 · 預測勝方 守護者 · 信心 低
-                <br>先發：TBD / Tanner Bibee
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 遊騎兵@紅襪</div>
-              <div class="prediction-score">遊騎兵 4 - 紅襪 5</div>
-              <div class="prediction-meta">
-                06/13 07:10 · 預測勝方 紅襪 · 信心 低
-                <br>先發：TBD / Sonny Gray
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 勇士@大都會</div>
-              <div class="prediction-score">勇士 4 - 大都會 5</div>
-              <div class="prediction-meta">
-                06/13 07:15 · 預測勝方 大都會 · 信心 低
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 響尾蛇@紅人</div>
-              <div class="prediction-score">響尾蛇 4 - 紅人 5</div>
-              <div class="prediction-meta">
-                06/13 07:15 · 預測勝方 紅人 · 信心 低
-                <br>先發：TBD / Nick Lodolo
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 洋基@藍鳥</div>
-              <div class="prediction-score">洋基 4 - 藍鳥 5</div>
-              <div class="prediction-meta">
-                06/13 07:37 · 預測勝方 藍鳥 · 信心 低
-                <br>先發：Ryan Weathers / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 道奇@白襪</div>
-              <div class="prediction-score">道奇 4 - 白襪 5</div>
-              <div class="prediction-meta">
-                06/13 07:40 · 預測勝方 白襪 · 信心 低
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 費城人@釀酒人</div>
-              <div class="prediction-score">費城人 4 - 釀酒人 5</div>
-              <div class="prediction-meta">
-                06/13 07:40 · 預測勝方 釀酒人 · 信心 低
-                <br>先發：TBD / Jacob Misiorowski
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 太空人@皇家</div>
-              <div class="prediction-score">太空人 4 - 皇家 5</div>
-              <div class="prediction-meta">
-                06/13 08:10 · 預測勝方 皇家 · 信心 低
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 紅雀@雙城</div>
-              <div class="prediction-score">紅雀 4 - 雙城 5</div>
-              <div class="prediction-meta">
-                06/13 08:10 · 預測勝方 雙城 · 信心 低
-                <br>先發：Kyle Leahy / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 光芒@天使</div>
-              <div class="prediction-score">光芒 4 - 天使 5</div>
-              <div class="prediction-meta">
-                06/13 09:38 · 預測勝方 天使 · 信心 低
-                <br>先發：Shane McClanahan / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 洛磯@運動家</div>
-              <div class="prediction-score">洛磯 4 - 運動家 5</div>
-              <div class="prediction-meta">
-                06/13 10:05 · 預測勝方 運動家 · 信心 低
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 小熊@巨人</div>
-              <div class="prediction-score">小熊 4 - 巨人 5</div>
-              <div class="prediction-meta">
-                06/13 10:15 · 預測勝方 巨人 · 信心 低
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-          </div>
-          
-        </article>
-      
-        <article class="prediction-card">
-          <div class="prediction-head">
-            <div class="prediction-name">激進型 Aggressive</div>
-            <span class="pill">15 場</span>
-          </div>
-          
-          <div class="prediction-list">
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 馬林魚@海盜</div>
-              <div class="prediction-score">馬林魚 4 - 海盜 5</div>
-              <div class="prediction-meta">
-                06/13 06:40 · 預測勝方 海盜 · 信心 低
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 水手@國民</div>
-              <div class="prediction-score">水手 4 - 國民 5</div>
-              <div class="prediction-meta">
-                06/13 06:45 · 預測勝方 國民 · 信心 低
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 教士@金鶯</div>
-              <div class="prediction-score">教士 4 - 金鶯 5</div>
-              <div class="prediction-meta">
-                06/13 07:05 · 預測勝方 金鶯 · 信心 低
-                <br>先發：Griffin Canning / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 老虎@守護者</div>
-              <div class="prediction-score">老虎 4 - 守護者 5</div>
-              <div class="prediction-meta">
-                06/13 07:10 · 預測勝方 守護者 · 信心 低
-                <br>先發：TBD / Tanner Bibee
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 遊騎兵@紅襪</div>
-              <div class="prediction-score">遊騎兵 4 - 紅襪 5</div>
-              <div class="prediction-meta">
-                06/13 07:10 · 預測勝方 紅襪 · 信心 低
-                <br>先發：TBD / Sonny Gray
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 勇士@大都會</div>
-              <div class="prediction-score">勇士 4 - 大都會 5</div>
-              <div class="prediction-meta">
-                06/13 07:15 · 預測勝方 大都會 · 信心 低
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 響尾蛇@紅人</div>
-              <div class="prediction-score">響尾蛇 4 - 紅人 5</div>
-              <div class="prediction-meta">
-                06/13 07:15 · 預測勝方 紅人 · 信心 低
-                <br>先發：TBD / Nick Lodolo
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 洋基@藍鳥</div>
-              <div class="prediction-score">洋基 4 - 藍鳥 5</div>
-              <div class="prediction-meta">
-                06/13 07:37 · 預測勝方 藍鳥 · 信心 低
-                <br>先發：Ryan Weathers / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 道奇@白襪</div>
-              <div class="prediction-score">道奇 4 - 白襪 5</div>
-              <div class="prediction-meta">
-                06/13 07:40 · 預測勝方 白襪 · 信心 低
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 費城人@釀酒人</div>
-              <div class="prediction-score">費城人 4 - 釀酒人 5</div>
-              <div class="prediction-meta">
-                06/13 07:40 · 預測勝方 釀酒人 · 信心 低
-                <br>先發：TBD / Jacob Misiorowski
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 太空人@皇家</div>
-              <div class="prediction-score">太空人 4 - 皇家 5</div>
-              <div class="prediction-meta">
-                06/13 08:10 · 預測勝方 皇家 · 信心 低
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 紅雀@雙城</div>
-              <div class="prediction-score">紅雀 4 - 雙城 5</div>
-              <div class="prediction-meta">
-                06/13 08:10 · 預測勝方 雙城 · 信心 低
-                <br>先發：Kyle Leahy / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 光芒@天使</div>
-              <div class="prediction-score">光芒 4 - 天使 5</div>
-              <div class="prediction-meta">
-                06/13 09:38 · 預測勝方 天使 · 信心 低
-                <br>先發：Shane McClanahan / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 洛磯@運動家</div>
-              <div class="prediction-score">洛磯 4 - 運動家 5</div>
-              <div class="prediction-meta">
-                06/13 10:05 · 預測勝方 運動家 · 信心 低
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 小熊@巨人</div>
-              <div class="prediction-score">小熊 4 - 巨人 5</div>
-              <div class="prediction-meta">
-                06/13 10:15 · 預測勝方 巨人 · 信心 低
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-          </div>
-          
-        </article>
-      
-        <article class="prediction-card">
-          <div class="prediction-head">
-            <div class="prediction-name">冷門獵人 Underdog</div>
-            <span class="pill">15 場</span>
-          </div>
-          
-          <div class="prediction-list">
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 馬林魚@海盜</div>
-              <div class="prediction-score">馬林魚 5 - 海盜 4</div>
-              <div class="prediction-meta">
-                06/13 06:40 · 預測勝方 馬林魚 · 信心 中
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 水手@國民</div>
-              <div class="prediction-score">水手 5 - 國民 4</div>
-              <div class="prediction-meta">
-                06/13 06:45 · 預測勝方 水手 · 信心 中
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 教士@金鶯</div>
-              <div class="prediction-score">教士 5 - 金鶯 4</div>
-              <div class="prediction-meta">
-                06/13 07:05 · 預測勝方 教士 · 信心 中
-                <br>先發：Griffin Canning / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 老虎@守護者</div>
-              <div class="prediction-score">老虎 5 - 守護者 4</div>
-              <div class="prediction-meta">
-                06/13 07:10 · 預測勝方 老虎 · 信心 中
-                <br>先發：TBD / Tanner Bibee
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 遊騎兵@紅襪</div>
-              <div class="prediction-score">遊騎兵 5 - 紅襪 4</div>
-              <div class="prediction-meta">
-                06/13 07:10 · 預測勝方 遊騎兵 · 信心 中
-                <br>先發：TBD / Sonny Gray
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 勇士@大都會</div>
-              <div class="prediction-score">勇士 5 - 大都會 4</div>
-              <div class="prediction-meta">
-                06/13 07:15 · 預測勝方 勇士 · 信心 中
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 響尾蛇@紅人</div>
-              <div class="prediction-score">響尾蛇 5 - 紅人 4</div>
-              <div class="prediction-meta">
-                06/13 07:15 · 預測勝方 響尾蛇 · 信心 中
-                <br>先發：TBD / Nick Lodolo
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 洋基@藍鳥</div>
-              <div class="prediction-score">洋基 5 - 藍鳥 4</div>
-              <div class="prediction-meta">
-                06/13 07:37 · 預測勝方 洋基 · 信心 中
-                <br>先發：Ryan Weathers / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 道奇@白襪</div>
-              <div class="prediction-score">道奇 5 - 白襪 4</div>
-              <div class="prediction-meta">
-                06/13 07:40 · 預測勝方 道奇 · 信心 中
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 費城人@釀酒人</div>
-              <div class="prediction-score">費城人 5 - 釀酒人 4</div>
-              <div class="prediction-meta">
-                06/13 07:40 · 預測勝方 費城人 · 信心 中
-                <br>先發：TBD / Jacob Misiorowski
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 太空人@皇家</div>
-              <div class="prediction-score">太空人 5 - 皇家 4</div>
-              <div class="prediction-meta">
-                06/13 08:10 · 預測勝方 太空人 · 信心 中
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 紅雀@雙城</div>
-              <div class="prediction-score">紅雀 5 - 雙城 4</div>
-              <div class="prediction-meta">
-                06/13 08:10 · 預測勝方 紅雀 · 信心 中
-                <br>先發：Kyle Leahy / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 光芒@天使</div>
-              <div class="prediction-score">光芒 5 - 天使 4</div>
-              <div class="prediction-meta">
-                06/13 09:38 · 預測勝方 光芒 · 信心 中
-                <br>先發：Shane McClanahan / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 洛磯@運動家</div>
-              <div class="prediction-score">洛磯 5 - 運動家 4</div>
-              <div class="prediction-meta">
-                06/13 10:05 · 預測勝方 洛磯 · 信心 中
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-            <div class="prediction-game">
-              <div class="prediction-title">MLB · 小熊@巨人</div>
-              <div class="prediction-score">小熊 5 - 巨人 4</div>
-              <div class="prediction-meta">
-                06/13 10:15 · 預測勝方 小熊 · 信心 中
-                <br>先發：TBD / TBD
-              </div>
-            </div>
-          
-          </div>
-          
-        </article>
-      
-      </div>
-    
-  </section>
-
-  <section class="section">
-    <div class="section-head">
-      <h2>下注公式與選單標準</h2>
-      <div class="hint">正式下注與回測共用同一套規則</div>
-    </div>
-    <div class="formula-grid">
-      <div class="formula">
-        <div class="formula-k">候選門檻</div>
-        <div class="formula-v">Edge = 模型勝率 - 賠率隱含勝率</div>
-        <div class="formula-note">一般串關需通過策略 Edge、勝率與賠率範圍；強制 NT$10 串關改由所有資料完整、賠率有效的賽事挑選。</div>
-      </div>
-      <div class="formula">
-        <div class="formula-k">串關篩選</div>
-        <div class="formula-v">EV = 組合勝率 × 總賠率 - 1</div>
-        <div class="formula-note">正常串關只保留 EV 達標組合；正式下注不允許單關，所有注單最少 2 關。</div>
-      </div>
-      <div class="formula">
-        <div class="formula-k">注碼計算</div>
-        <div class="formula-v">Kelly 分數下注，最低 NT$10</div>
-        <div class="formula-note">一般串關依 Kelly 比例與本金上限取 10 元整數倍；固定強制串關不被 Kelly 放大或縮小。</div>
-      </div>
-      <div class="formula">
-        <div class="formula-k">每日強制串關</div>
-        <div class="formula-v">候選足 5 場取最有把握 5 場，固定 NT$10</div>
-        <div class="formula-note">若當天不足 5 場但至少 2 場，剩餘可用賽事全部串成一注；不足 2 場才跳過並顯示原因。</div>
-      </div>
-      <div class="formula">
-        <div class="formula-k">結算盈虧</div>
-        <div class="formula-v">WIN：本金 × (總賠率 - 1)</div>
-        <div class="formula-note">LOSS：-本金；VOID：0。串關需全部命中才 WIN，任一腳無結果則 VOID 或等待資料。</div>
-      </div>
-      <div class="formula">
-        <div class="formula-k">本金與停損</div>
-        <div class="formula-v">每位分析師 NT$3,000 起始</div>
-        <div class="formula-note">Conservative、Aggressive、Underdog 各自計算；回測中任兩位本金低於 NT$10 即停止整體回測。</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="section-head">
-      <h2>資金總覽</h2>
-      <div class="hint">目前統計以已結算紀錄為準</div>
-    </div>
     <div class="metrics">
       <div class="metric">
         <div class="metric-k">目前本金</div>
         <div class="metric-v blue">NT$3,438</div>
       </div>
       <div class="metric">
-        <div class="metric-k">起始本金</div>
-        <div class="metric-v">NT$3,000</div>
+        <div class="metric-k">昨日盈虧</div>
+        <div class="metric-v green">
+          +NT$0
+        </div>
       </div>
       <div class="metric">
         <div class="metric-k">累積報酬率</div>
@@ -779,204 +249,610 @@
       </div>
       <div class="metric">
         <div class="metric-k">串關命中率</div>
-        <div class="metric-v violet">
-          25.0%
-          
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section dash-grid">
-    <div>
-      <div class="section-head">
-        <h2>今日下注計畫</h2>
-        <div class="hint">2026-06-12</div>
-      </div>
-      
-      <div class="strategy-grid">
-        
-        <article class="strategy">
-          <div class="strategy-top">
-            <div>
-              <div class="strategy-name">穩健型</div>
-              <span class="pill">本金 NT$3,623</span>
-            </div>
-            <div class="strategy-total">
-              今日空手
-            </div>
-          </div>
-          
-            <div class="empty">今日沒有符合門檻的串關</div>
-            
-              <div class="empty">required_5_leg: skipped; only 0 unique candidate games (<2)</div>
-            
-            
-          
-        </article>
-        
-        <article class="strategy">
-          <div class="strategy-top">
-            <div>
-              <div class="strategy-name">激進型</div>
-              <span class="pill">本金 NT$3,012</span>
-            </div>
-            <div class="strategy-total">
-              今日空手
-            </div>
-          </div>
-          
-            <div class="empty">今日沒有符合門檻的串關</div>
-            
-              <div class="empty">required_5_leg: skipped; only 0 unique candidate games (<2)</div>
-            
-            
-          
-        </article>
-        
-        <article class="strategy">
-          <div class="strategy-top">
-            <div>
-              <div class="strategy-name">冷門獵人型</div>
-              <span class="pill">本金 NT$3,438</span>
-            </div>
-            <div class="strategy-total">
-              今日空手
-            </div>
-          </div>
-          
-            <div class="empty">今日沒有符合門檻的串關</div>
-            
-              <div class="empty">required_5_leg: skipped; only 0 unique candidate games (<2)</div>
-            
-            
-          
-        </article>
-        
-      </div>
-      
-    </div>
-
-    <div>
-      <div class="section-head">
-        <h2>本金走勢</h2>
-        <div class="hint">最近 30 筆</div>
-      </div>
-      <div class="chart">
-        <canvas id="bankrollChart" height="220"></canvas>
+        <div class="metric-v violet">25.0%</div>
       </div>
     </div>
   </section>
 
   <section class="section">
     <div class="section-head">
-      <h2>紀錄入口</h2>
-      <div class="hint">回測與近期每日報告</div>
+      <h2>昨日成績</h2>
+      <div class="hint">2026-06-11</div>
     </div>
-    <div class="list-panel">
-      <a class="report-link" href="backtest-2026-04-01.html">
-        <span>2026-04-01 起三策略回測</span>
-        <span class="tag">回測</span>
-      </a>
+    
+    <div class="panel empty">昨日沒有下注紀錄</div>
+    
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>今日三策略下注</h2>
+      <div class="hint">2026-06-12</div>
+    </div>
+
+    
+    <div class="tabs">
       
-      <a class="report-link" href="2026-06-12.html">
-        <span>2026-06-12<span class="tag">今日</span></span>
-        <span>查看</span>
-      </a>
+      <button class="tab active" onclick="switchTab(0, this)">
+        <span class="tab-name">穩健型</span>
+        <span class="tab-sub">
+          今日空手
+        </span>
+      </button>
       
-      <a class="report-link" href="2026-06-11.html">
-        <span>2026-06-11</span>
-        <span>查看</span>
-      </a>
+      <button class="tab " onclick="switchTab(1, this)">
+        <span class="tab-name">激進型</span>
+        <span class="tab-sub">
+          今日空手
+        </span>
+      </button>
       
-      <a class="report-link" href="2026-06-09.html">
-        <span>2026-06-09</span>
-        <span>查看</span>
-      </a>
-      
-      <a class="report-link" href="2026-06-07.html">
-        <span>2026-06-07</span>
-        <span>查看</span>
-      </a>
-      
-      <a class="report-link" href="2026-06-06.html">
-        <span>2026-06-06</span>
-        <span>查看</span>
-      </a>
-      
-      <a class="report-link" href="2026-06-05.html">
-        <span>2026-06-05</span>
-        <span>查看</span>
-      </a>
-      
-      <a class="report-link" href="2026-06-04.html">
-        <span>2026-06-04</span>
-        <span>查看</span>
-      </a>
-      
-      <a class="report-link" href="2026-06-03.html">
-        <span>2026-06-03</span>
-        <span>查看</span>
-      </a>
-      
-      <a class="report-link" href="2026-06-02.html">
-        <span>2026-06-02</span>
-        <span>查看</span>
-      </a>
-      
-      <a class="report-link" href="2026-05-31.html">
-        <span>2026-05-31</span>
-        <span>查看</span>
-      </a>
+      <button class="tab " onclick="switchTab(2, this)">
+        <span class="tab-name">冷門獵人型</span>
+        <span class="tab-sub">
+          今日空手
+        </span>
+      </button>
       
     </div>
+
+    
+    <div class="tab-panel active" id="panel-0">
+      <article class="strategy">
+        <div class="strategy-summary">
+          <div class="mini">
+            <div class="mini-k">分析師本金</div>
+            <div class="mini-v blue">NT$3,623</div>
+          </div>
+          <div class="mini">
+            <div class="mini-k">累積報酬率</div>
+            <div class="mini-v green">
+              +20.8%
+            </div>
+          </div>
+          <div class="mini">
+            <div class="mini-k">昨日命中</div>
+            <div class="mini-v">0/0</div>
+          </div>
+          <div class="mini">
+            <div class="mini-k">今日下注</div>
+            <div class="mini-v">NT$0</div>
+          </div>
+        </div>
+
+        
+          <div class="empty">今日沒有符合門檻的串關</div>
+          
+            <div class="empty">required_5_leg: skipped; only 0 unique candidate games (<2)</div>
+          
+          
+        
+      </article>
+    </div>
+    
+    <div class="tab-panel " id="panel-1">
+      <article class="strategy">
+        <div class="strategy-summary">
+          <div class="mini">
+            <div class="mini-k">分析師本金</div>
+            <div class="mini-v blue">NT$3,012</div>
+          </div>
+          <div class="mini">
+            <div class="mini-k">累積報酬率</div>
+            <div class="mini-v green">
+              +0.4%
+            </div>
+          </div>
+          <div class="mini">
+            <div class="mini-k">昨日命中</div>
+            <div class="mini-v">0/0</div>
+          </div>
+          <div class="mini">
+            <div class="mini-k">今日下注</div>
+            <div class="mini-v">NT$0</div>
+          </div>
+        </div>
+
+        
+          <div class="empty">今日沒有符合門檻的串關</div>
+          
+            <div class="empty">required_5_leg: skipped; only 0 unique candidate games (<2)</div>
+          
+          
+        
+      </article>
+    </div>
+    
+    <div class="tab-panel " id="panel-2">
+      <article class="strategy">
+        <div class="strategy-summary">
+          <div class="mini">
+            <div class="mini-k">分析師本金</div>
+            <div class="mini-v blue">NT$3,438</div>
+          </div>
+          <div class="mini">
+            <div class="mini-k">累積報酬率</div>
+            <div class="mini-v green">
+              +14.6%
+            </div>
+          </div>
+          <div class="mini">
+            <div class="mini-k">昨日命中</div>
+            <div class="mini-v">0/0</div>
+          </div>
+          <div class="mini">
+            <div class="mini-k">今日下注</div>
+            <div class="mini-v">NT$0</div>
+          </div>
+        </div>
+
+        
+          <div class="empty">今日沒有符合門檻的串關</div>
+          
+            <div class="empty">required_5_leg: skipped; only 0 unique candidate games (<2)</div>
+          
+          
+        
+      </article>
+    </div>
+    
+    
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>台灣時間隔天賽程與比分預測</h2>
+      <div class="hint">
+        2026-06-13 · Asia/Taipei
+      </div>
+    </div>
+    
+      <div class="hint">目前僅有隔天賽程，比分以聯盟平均與主場修正預估</div>
+      <div class="prediction-grid" style="margin-top: 12px;">
+      
+        <article class="prediction-card">
+          <div class="prediction-name">穩健型 Conservative · 15 場</div>
+          
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 馬林魚@海盜</div>
+              <div class="prediction-score">馬林魚 4 - 海盜 5</div>
+              <div class="prediction-meta">
+                06/13 06:40 · 預測勝方 海盜 · 信心 低
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 水手@國民</div>
+              <div class="prediction-score">水手 4 - 國民 5</div>
+              <div class="prediction-meta">
+                06/13 06:45 · 預測勝方 國民 · 信心 低
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 教士@金鶯</div>
+              <div class="prediction-score">教士 4 - 金鶯 5</div>
+              <div class="prediction-meta">
+                06/13 07:05 · 預測勝方 金鶯 · 信心 低
+                <br>先發：Griffin Canning / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 老虎@守護者</div>
+              <div class="prediction-score">老虎 4 - 守護者 5</div>
+              <div class="prediction-meta">
+                06/13 07:10 · 預測勝方 守護者 · 信心 低
+                <br>先發：TBD / Tanner Bibee
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 遊騎兵@紅襪</div>
+              <div class="prediction-score">遊騎兵 4 - 紅襪 5</div>
+              <div class="prediction-meta">
+                06/13 07:10 · 預測勝方 紅襪 · 信心 低
+                <br>先發：TBD / Sonny Gray
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 勇士@大都會</div>
+              <div class="prediction-score">勇士 4 - 大都會 5</div>
+              <div class="prediction-meta">
+                06/13 07:15 · 預測勝方 大都會 · 信心 低
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 響尾蛇@紅人</div>
+              <div class="prediction-score">響尾蛇 4 - 紅人 5</div>
+              <div class="prediction-meta">
+                06/13 07:15 · 預測勝方 紅人 · 信心 低
+                <br>先發：TBD / Nick Lodolo
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 洋基@藍鳥</div>
+              <div class="prediction-score">洋基 4 - 藍鳥 5</div>
+              <div class="prediction-meta">
+                06/13 07:37 · 預測勝方 藍鳥 · 信心 低
+                <br>先發：Ryan Weathers / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 道奇@白襪</div>
+              <div class="prediction-score">道奇 4 - 白襪 5</div>
+              <div class="prediction-meta">
+                06/13 07:40 · 預測勝方 白襪 · 信心 低
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 費城人@釀酒人</div>
+              <div class="prediction-score">費城人 4 - 釀酒人 5</div>
+              <div class="prediction-meta">
+                06/13 07:40 · 預測勝方 釀酒人 · 信心 低
+                <br>先發：TBD / Jacob Misiorowski
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 太空人@皇家</div>
+              <div class="prediction-score">太空人 4 - 皇家 5</div>
+              <div class="prediction-meta">
+                06/13 08:10 · 預測勝方 皇家 · 信心 低
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 紅雀@雙城</div>
+              <div class="prediction-score">紅雀 4 - 雙城 5</div>
+              <div class="prediction-meta">
+                06/13 08:10 · 預測勝方 雙城 · 信心 低
+                <br>先發：Kyle Leahy / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 光芒@天使</div>
+              <div class="prediction-score">光芒 4 - 天使 5</div>
+              <div class="prediction-meta">
+                06/13 09:38 · 預測勝方 天使 · 信心 低
+                <br>先發：Shane McClanahan / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 洛磯@運動家</div>
+              <div class="prediction-score">洛磯 4 - 運動家 5</div>
+              <div class="prediction-meta">
+                06/13 10:05 · 預測勝方 運動家 · 信心 低
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 小熊@巨人</div>
+              <div class="prediction-score">小熊 4 - 巨人 5</div>
+              <div class="prediction-meta">
+                06/13 10:15 · 預測勝方 巨人 · 信心 低
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+          
+        </article>
+      
+        <article class="prediction-card">
+          <div class="prediction-name">激進型 Aggressive · 15 場</div>
+          
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 馬林魚@海盜</div>
+              <div class="prediction-score">馬林魚 4 - 海盜 5</div>
+              <div class="prediction-meta">
+                06/13 06:40 · 預測勝方 海盜 · 信心 低
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 水手@國民</div>
+              <div class="prediction-score">水手 4 - 國民 5</div>
+              <div class="prediction-meta">
+                06/13 06:45 · 預測勝方 國民 · 信心 低
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 教士@金鶯</div>
+              <div class="prediction-score">教士 4 - 金鶯 5</div>
+              <div class="prediction-meta">
+                06/13 07:05 · 預測勝方 金鶯 · 信心 低
+                <br>先發：Griffin Canning / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 老虎@守護者</div>
+              <div class="prediction-score">老虎 4 - 守護者 5</div>
+              <div class="prediction-meta">
+                06/13 07:10 · 預測勝方 守護者 · 信心 低
+                <br>先發：TBD / Tanner Bibee
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 遊騎兵@紅襪</div>
+              <div class="prediction-score">遊騎兵 4 - 紅襪 5</div>
+              <div class="prediction-meta">
+                06/13 07:10 · 預測勝方 紅襪 · 信心 低
+                <br>先發：TBD / Sonny Gray
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 勇士@大都會</div>
+              <div class="prediction-score">勇士 4 - 大都會 5</div>
+              <div class="prediction-meta">
+                06/13 07:15 · 預測勝方 大都會 · 信心 低
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 響尾蛇@紅人</div>
+              <div class="prediction-score">響尾蛇 4 - 紅人 5</div>
+              <div class="prediction-meta">
+                06/13 07:15 · 預測勝方 紅人 · 信心 低
+                <br>先發：TBD / Nick Lodolo
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 洋基@藍鳥</div>
+              <div class="prediction-score">洋基 4 - 藍鳥 5</div>
+              <div class="prediction-meta">
+                06/13 07:37 · 預測勝方 藍鳥 · 信心 低
+                <br>先發：Ryan Weathers / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 道奇@白襪</div>
+              <div class="prediction-score">道奇 4 - 白襪 5</div>
+              <div class="prediction-meta">
+                06/13 07:40 · 預測勝方 白襪 · 信心 低
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 費城人@釀酒人</div>
+              <div class="prediction-score">費城人 4 - 釀酒人 5</div>
+              <div class="prediction-meta">
+                06/13 07:40 · 預測勝方 釀酒人 · 信心 低
+                <br>先發：TBD / Jacob Misiorowski
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 太空人@皇家</div>
+              <div class="prediction-score">太空人 4 - 皇家 5</div>
+              <div class="prediction-meta">
+                06/13 08:10 · 預測勝方 皇家 · 信心 低
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 紅雀@雙城</div>
+              <div class="prediction-score">紅雀 4 - 雙城 5</div>
+              <div class="prediction-meta">
+                06/13 08:10 · 預測勝方 雙城 · 信心 低
+                <br>先發：Kyle Leahy / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 光芒@天使</div>
+              <div class="prediction-score">光芒 4 - 天使 5</div>
+              <div class="prediction-meta">
+                06/13 09:38 · 預測勝方 天使 · 信心 低
+                <br>先發：Shane McClanahan / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 洛磯@運動家</div>
+              <div class="prediction-score">洛磯 4 - 運動家 5</div>
+              <div class="prediction-meta">
+                06/13 10:05 · 預測勝方 運動家 · 信心 低
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 小熊@巨人</div>
+              <div class="prediction-score">小熊 4 - 巨人 5</div>
+              <div class="prediction-meta">
+                06/13 10:15 · 預測勝方 巨人 · 信心 低
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+          
+        </article>
+      
+        <article class="prediction-card">
+          <div class="prediction-name">冷門獵人 Underdog · 15 場</div>
+          
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 馬林魚@海盜</div>
+              <div class="prediction-score">馬林魚 5 - 海盜 4</div>
+              <div class="prediction-meta">
+                06/13 06:40 · 預測勝方 馬林魚 · 信心 中
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 水手@國民</div>
+              <div class="prediction-score">水手 5 - 國民 4</div>
+              <div class="prediction-meta">
+                06/13 06:45 · 預測勝方 水手 · 信心 中
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 教士@金鶯</div>
+              <div class="prediction-score">教士 5 - 金鶯 4</div>
+              <div class="prediction-meta">
+                06/13 07:05 · 預測勝方 教士 · 信心 中
+                <br>先發：Griffin Canning / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 老虎@守護者</div>
+              <div class="prediction-score">老虎 5 - 守護者 4</div>
+              <div class="prediction-meta">
+                06/13 07:10 · 預測勝方 老虎 · 信心 中
+                <br>先發：TBD / Tanner Bibee
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 遊騎兵@紅襪</div>
+              <div class="prediction-score">遊騎兵 5 - 紅襪 4</div>
+              <div class="prediction-meta">
+                06/13 07:10 · 預測勝方 遊騎兵 · 信心 中
+                <br>先發：TBD / Sonny Gray
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 勇士@大都會</div>
+              <div class="prediction-score">勇士 5 - 大都會 4</div>
+              <div class="prediction-meta">
+                06/13 07:15 · 預測勝方 勇士 · 信心 中
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 響尾蛇@紅人</div>
+              <div class="prediction-score">響尾蛇 5 - 紅人 4</div>
+              <div class="prediction-meta">
+                06/13 07:15 · 預測勝方 響尾蛇 · 信心 中
+                <br>先發：TBD / Nick Lodolo
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 洋基@藍鳥</div>
+              <div class="prediction-score">洋基 5 - 藍鳥 4</div>
+              <div class="prediction-meta">
+                06/13 07:37 · 預測勝方 洋基 · 信心 中
+                <br>先發：Ryan Weathers / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 道奇@白襪</div>
+              <div class="prediction-score">道奇 5 - 白襪 4</div>
+              <div class="prediction-meta">
+                06/13 07:40 · 預測勝方 道奇 · 信心 中
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 費城人@釀酒人</div>
+              <div class="prediction-score">費城人 5 - 釀酒人 4</div>
+              <div class="prediction-meta">
+                06/13 07:40 · 預測勝方 費城人 · 信心 中
+                <br>先發：TBD / Jacob Misiorowski
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 太空人@皇家</div>
+              <div class="prediction-score">太空人 5 - 皇家 4</div>
+              <div class="prediction-meta">
+                06/13 08:10 · 預測勝方 太空人 · 信心 中
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 紅雀@雙城</div>
+              <div class="prediction-score">紅雀 5 - 雙城 4</div>
+              <div class="prediction-meta">
+                06/13 08:10 · 預測勝方 紅雀 · 信心 中
+                <br>先發：Kyle Leahy / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 光芒@天使</div>
+              <div class="prediction-score">光芒 5 - 天使 4</div>
+              <div class="prediction-meta">
+                06/13 09:38 · 預測勝方 光芒 · 信心 中
+                <br>先發：Shane McClanahan / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 洛磯@運動家</div>
+              <div class="prediction-score">洛磯 5 - 運動家 4</div>
+              <div class="prediction-meta">
+                06/13 10:05 · 預測勝方 洛磯 · 信心 中
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+            <div class="prediction-game">
+              <div class="prediction-title">MLB · 小熊@巨人</div>
+              <div class="prediction-score">小熊 5 - 巨人 4</div>
+              <div class="prediction-meta">
+                06/13 10:15 · 預測勝方 小熊 · 信心 中
+                <br>先發：TBD / TBD
+              </div>
+            </div>
+            
+          
+        </article>
+      
+      </div>
+    
   </section>
 
   <footer>
+    <a href="index.html">返回首頁</a><br>
     資料來源：NBA Stats API / MLB Stats API / Pinnacle 等效賠率。運彩有風險，請理性控管本金。
   </footer>
 </main>
 
 <script>
-const raw = {"labels": ["2026-05-18", "2026-05-19", "2026-05-21", "2026-05-22", "2026-05-23", "2026-05-24", "2026-05-27", "2026-05-28", "2026-05-29", "2026-05-30", "2026-06-02", "2026-06-03", "2026-06-04", "2026-06-05", "2026-06-06", "2026-06-11"], "values": [2900.0, 2840.0, 2840.0, 3365.0, 3275.0, 3448.0, 3448.0, 3448.0, 3448.0, 3448.0, 3448.0, 3448.0, 3448.0, 3448.0, 3438.0, 3438.0], "initial": 3000.0};
-const labels = raw.labels.length ? raw.labels : ['2026-06-12'];
-const values = raw.values.length ? raw.values : [raw.initial];
-const ctx = document.getElementById('bankrollChart').getContext('2d');
-new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels,
-    datasets: [{
-      label: '本金',
-      data: values,
-      borderColor: '#56a8e8',
-      backgroundColor: 'rgba(86,168,232,0.10)',
-      borderWidth: 2,
-      pointRadius: 2,
-      fill: true,
-      tension: 0.25,
-    }, {
-      label: '起始本金',
-      data: labels.map(() => raw.initial),
-      borderColor: 'rgba(138,151,170,0.55)',
-      borderDash: [5, 5],
-      borderWidth: 1,
-      pointRadius: 0,
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { labels: { color: '#8a97aa', font: { size: 11 } } },
-      tooltip: { callbacks: { label: c => `NT$${c.parsed.y.toLocaleString()}` } }
-    },
-    scales: {
-      x: { ticks: { color: '#8a97aa', maxRotation: 0, autoSkip: true }, grid: { color: '#273244' } },
-      y: { ticks: { color: '#8a97aa', callback: v => `NT$${Number(v).toLocaleString()}` }, grid: { color: '#273244' } }
-    }
-  }
-});
+function switchTab(idx, btn) {
+  document.querySelectorAll('.tab').forEach(item => item.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(item => item.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + idx).classList.add('active');
+}
 </script>
 </body>
 </html>

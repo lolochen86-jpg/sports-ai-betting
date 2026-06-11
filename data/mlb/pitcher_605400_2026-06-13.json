@@ -1,0 +1,15 @@
+{
+  "pitcher_id": 605400,
+  "season": 2026,
+  "games_started": 13,
+  "innings_pitched": 66.0,
+  "era": 5.86,
+  "whip": 1.45,
+  "k_per9": 9.27,
+  "bb_per9": 3.0,
+  "h_per9": 10.09,
+  "hr_per9": 1.5,
+  "k_bb_ratio": 3.09,
+  "batting_avg_against": 0.284,
+  "as_of_date": "2026-06-13"
+}
