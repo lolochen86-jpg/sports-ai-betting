@@ -375,7 +375,7 @@
                 <div>
                   <div class="parlay-title">
                     {{ p.label }}
-                    {% if p.fixed_bet | default(0) | float > 0 %}<span class="badge badge-info">保底 5 關</span>{% endif %}
+                    {% if p.required_label %}<span class="badge badge-info">{{ p.required_label }}</span>{% elif p.fixed_bet | default(0) | float > 0 %}<span class="badge badge-info">強制五關 NT${{ "{:,.0f}".format(p.fixed_bet) }}</span>{% endif %}
                   </div>
                   <div class="parlay-meta">
                     {{ p.legs | length }} 關 · 總賠率 {{ "{:.2f}".format(p.parlay_odds) }} · EV {% if p.parlay_ev >= 0 %}+{% endif %}{{ "{:.1f}".format(p.parlay_ev * 100) }}%
