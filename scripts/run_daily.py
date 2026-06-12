@@ -45,6 +45,26 @@ def run(report_date: date | str | None = None, dry_run: bool = False) -> None:
     mlb_path = MLB_DIR / f"games_{d.isoformat()}.json"
     nba_games = load_json(nba_path) if json_exists(nba_path) else []
     mlb_games = load_json(mlb_path) if json_exists(mlb_path) else []
+
+    # Manual runs can happen before data files exist. Fetch current-day games
+    # before odds matching and analysis; otherwise an empty plan is generated
+    # and the mandatory parlay has no candidate games.
+    if not nba_games:
+        try:
+            fetched = fetch_nba.run(d)
+            if fetched:
+                nba_games = fetched
+        except Exception as e:
+            logger.warning(f"NBA daily data fetch failed: {d} {e}")
+
+    if not mlb_games:
+        try:
+            fetched = fetch_mlb.run(d)
+            if fetched:
+                mlb_games = fetched
+        except Exception as e:
+            logger.warning(f"MLB daily data fetch failed: {d} {e}")
+
     logger.info(f"  NBA {len(nba_games)} 場 / MLB {len(mlb_games)} 場")
 
     # 2. 賠率配對
