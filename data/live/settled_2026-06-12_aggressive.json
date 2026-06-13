@@ -5,14 +5,20 @@
     "sport": "PARLAY",
     "parlay_odds": 3.729,
     "bet_amount": 110,
-    "result": "VOID",
-    "pnl": 0.0,
+    "result": "WIN",
+    "pnl": 300.0,
     "leg_results": [
       {
         "game_id": "822726",
         "expected": "SEA",
-        "winner": null,
-        "result": "VOID"
+        "winner": "SEA",
+        "result": "WIN"
+      },
+      {
+        "game_id": "823370",
+        "expected": "MIA",
+        "winner": "MIA",
+        "result": "WIN"
       }
     ],
     "legs": [
@@ -159,14 +165,20 @@
     "sport": "PARLAY",
     "parlay_odds": 3.812,
     "bet_amount": 110,
-    "result": "VOID",
-    "pnl": 0.0,
+    "result": "WIN",
+    "pnl": 309.0,
     "leg_results": [
       {
         "game_id": "822726",
         "expected": "SEA",
-        "winner": null,
-        "result": "VOID"
+        "winner": "SEA",
+        "result": "WIN"
+      },
+      {
+        "game_id": "824588",
+        "expected": "CWS",
+        "winner": "CWS",
+        "result": "WIN"
       }
     ],
     "legs": [
@@ -313,14 +325,26 @@
     "sport": "PARLAY",
     "parlay_odds": 8.353,
     "bet_amount": 70,
-    "result": "VOID",
-    "pnl": 0.0,
+    "result": "WIN",
+    "pnl": 515.0,
     "leg_results": [
       {
         "game_id": "822726",
         "expected": "SEA",
-        "winner": null,
-        "result": "VOID"
+        "winner": "SEA",
+        "result": "WIN"
+      },
+      {
+        "game_id": "823370",
+        "expected": "MIA",
+        "winner": "MIA",
+        "result": "WIN"
+      },
+      {
+        "game_id": "824588",
+        "expected": "CWS",
+        "winner": "CWS",
+        "result": "WIN"
       }
     ],
     "legs": [
@@ -534,14 +558,26 @@
     "sport": "PARLAY",
     "parlay_odds": 7.514,
     "bet_amount": 70,
-    "result": "VOID",
-    "pnl": 0.0,
+    "result": "LOSS",
+    "pnl": -70,
     "leg_results": [
       {
         "game_id": "822726",
         "expected": "SEA",
-        "winner": null,
-        "result": "VOID"
+        "winner": "SEA",
+        "result": "WIN"
+      },
+      {
+        "game_id": "823370",
+        "expected": "MIA",
+        "winner": "MIA",
+        "result": "WIN"
+      },
+      {
+        "game_id": "824425",
+        "expected": "DET",
+        "winner": "CLE",
+        "result": "LOSS"
       }
     ],
     "legs": [
@@ -755,14 +791,32 @@
     "sport": "PARLAY",
     "parlay_odds": 36.878,
     "bet_amount": 10.0,
-    "result": "VOID",
-    "pnl": 0.0,
+    "result": "LOSS",
+    "pnl": -10.0,
     "leg_results": [
       {
         "game_id": "822726",
         "expected": "SEA",
-        "winner": null,
-        "result": "VOID"
+        "winner": "SEA",
+        "result": "WIN"
+      },
+      {
+        "game_id": "823370",
+        "expected": "MIA",
+        "winner": "MIA",
+        "result": "WIN"
+      },
+      {
+        "game_id": "824588",
+        "expected": "CWS",
+        "winner": "CWS",
+        "result": "WIN"
+      },
+      {
+        "game_id": "824425",
+        "expected": "DET",
+        "winner": "CLE",
+        "result": "LOSS"
       }
     ],
     "legs": [

@@ -1,6 +1,6 @@
 {
   "date": "2026-06-13",
-  "bankroll": 3438.0,
+  "bankroll": 3593.0,
   "total_bet": 70,
   "required_5_leg_note": "created fallback 3-leg parlay; fixed_bet=NT$10",
   "required_5_leg_candidates": [
@@ -385,7 +385,7 @@
       "parlay_odds": 12.195,
       "true_prob": 0.139,
       "parlay_ev": 0.6953,
-      "kelly_frac": 0.0029086678301337987,
+      "kelly_frac": 0.0027831895352073478,
       "fixed_bet": 10.0,
       "required_label": "強制多關 NT$10（候選不足 5 場，實際 3 關）"
     }
