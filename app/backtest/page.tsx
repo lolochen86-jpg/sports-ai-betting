@@ -74,6 +74,7 @@ export default function BacktestPage() {
             <Link href="/" className="hover:text-purple-400 transition-colors">決策看盤中心</Link>
             <span className="text-white border-b-2 border-purple-500 pb-1">歷史量化回測</span>
             <Link href="/history" className="hover:text-purple-400 transition-colors">完賽記錄簿</Link>
+            <Link href="/share" className="hover:text-purple-400 transition-colors">📸 戰報字卡</Link>
             <Link href="/betting" className="hover:text-amber-400 text-amber-500/90 font-black transition-colors">🎰 運彩下注</Link>
             <Link href="/#custom-predictor" className="hover:text-purple-400 transition-colors">AI 主力加成沙盤</Link>
           </div>

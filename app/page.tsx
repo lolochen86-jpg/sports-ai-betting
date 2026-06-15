@@ -1341,6 +1341,7 @@ export default function Home() {
             <Link href="/compare" className="hover:text-purple-400 text-purple-300 font-extrabold transition-colors">🔬 新舊模型對照</Link>
             <Link href="/backtest" className="hover:text-purple-400 transition-colors">歷史量化回測</Link>
             <Link href="/history" className="hover:text-purple-400 transition-colors">完賽記錄簿</Link>
+            <Link href="/share" className="hover:text-purple-400 transition-colors">📸 戰報字卡</Link>
             <Link href="/betting" className="hover:text-amber-400 text-amber-500/90 font-black transition-colors">🎰 運彩下注</Link>
             <button className="hover:text-purple-400 transition-colors" onClick={() => document.getElementById('custom-predictor')?.scrollIntoView({ behavior: 'smooth' })}>AI 主力加成沙盤</button>
           </div>

@@ -174,6 +174,7 @@ export default function BettingDashboard() {
             <Link href="/" className="text-gray-400 hover:text-white transition-colors">決策看盤中心</Link>
             <Link href="/backtest" className="text-gray-400 hover:text-white transition-colors">歷史量化回測</Link>
             <Link href="/history" className="text-gray-400 hover:text-white transition-colors">完賽記錄簿</Link>
+            <Link href="/share" className="text-gray-400 hover:text-white transition-colors">📸 戰報字卡</Link>
             <Link href="/betting" className="text-amber-400 border-b-2 border-amber-500 pb-1">🎰 運彩下注</Link>
           </div>
         </nav>

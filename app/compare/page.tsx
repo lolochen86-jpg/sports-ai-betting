@@ -185,6 +185,8 @@ export default function ComparePage() {
             <span className="text-white border-b-2 border-purple-500 pb-1">🔬 新舊模型對照實驗室</span>
             <Link href="/backtest" className="hover:text-purple-400 transition-colors">歷史量化回測</Link>
             <Link href="/history" className="hover:text-purple-400 transition-colors">完賽記錄簿</Link>
+            <Link href="/share" className="hover:text-purple-400 transition-colors">📸 戰報字卡</Link>
+            <Link href="/betting" className="hover:text-amber-400 text-amber-500/90 font-black transition-colors">🎰 運彩下注</Link>
           </div>
 
           <div className="flex items-center gap-2">

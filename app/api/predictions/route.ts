@@ -75,3 +75,67 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// GET: 批次獲取指定日期的預測資料
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const dateStr = searchParams.get('date'); // YYYY-MM-DD
+  const league = searchParams.get('league')?.toUpperCase() || 'ALL';
+
+  if (!dateStr) {
+    return NextResponse.json({ success: false, error: '缺少 date 參數' }, { status: 400 });
+  }
+
+  try {
+    const formattedDate = dateStr.split('T')[0];
+    let games: any[] = [];
+
+    if (league === 'MLB') {
+      games = await fetchMLBGames(formattedDate);
+    } else if (league === 'NBA') {
+      games = await fetchNBAGames(formattedDate);
+    } else {
+      const [mlb, nba] = await Promise.all([
+        fetchMLBGames(formattedDate),
+        fetchNBAGames(formattedDate),
+      ]);
+      games = [...nba, ...mlb];
+    }
+
+    const predictionsList = await Promise.all(
+      games.map(async (game) => {
+        try {
+          const cacheKey = `prediction_result:${game.league.toLowerCase()}:${game.id}`;
+          let prediction = apiCache.get(cacheKey);
+
+          if (!prediction) {
+            prediction = await generatePrediction(game, game.league);
+            apiCache.set(cacheKey, prediction, CACHE_TTL_PREDICTION_ROUTE);
+          }
+
+          return {
+            gameId: String(game.id),
+            prediction,
+          };
+        } catch (err) {
+          console.error(`Failed to generate prediction for game ${game.id}:`, err);
+          return {
+            gameId: String(game.id),
+            error: String(err),
+          };
+        }
+      })
+    );
+
+    return NextResponse.json({
+      success: true,
+      data: predictionsList,
+    });
+  } catch (error) {
+    console.error('Predictions GET API error:', error);
+    return NextResponse.json(
+      { success: false, error: error instanceof Error ? error.message : '取得預測資料失敗' },
+      { status: 500 }
+    );
+  }
+}
