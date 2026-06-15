@@ -1,0 +1,383 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Team {
+  id            Int     @id @default(autoincrement())
+  league        String
+  name          String  @unique
+  code          String  @unique
+  city          String
+  state         String?
+  logo          String?
+  establishedYear Int?
+  
+  homeGames     Game[]  @relation("homeTeam")
+  awayGames     Game[]  @relation("awayTeam")
+  players       Player[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([league])
+  @@index([code])
+}
+
+model Player {
+  id            Int     @id @default(autoincrement())
+  teamId        Int
+  team          Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  name          String
+  position      String
+  number        Int?
+  height        String?
+  weight        Int?
+  dateOfBirth   DateTime?
+  nationality   String?
+  imageUrl      String?
+  
+  stats         PlayerStat[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([teamId, number])
+  @@index([teamId])
+  @@index([name])
+}
+
+model Game {
+  id              Int     @id @default(autoincrement())
+  league          String
+  externalId      String? @unique
+  
+  homeTeamId      Int
+  awayTeamId      Int
+  homeTeam        Team    @relation("homeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
+  awayTeam        Team    @relation("awayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
+  
+  gameDate        DateTime
+  season          Int
+  status          String
+  
+  homeScore       Int?
+  awayScore       Int?
+  homeOdds        Float?
+  awayOdds        Float?
+  
+  venue           String?
+  attendance      Int?
+  duration        String?
+  
+  prediction      Prediction?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([league])
+  @@index([gameDate])
+  @@index([status])
+  @@index([homeTeamId])
+  @@index([awayTeamId])
+}
+
+model Prediction {
+  id              Int     @id @default(autoincrement())
+  gameId          Int     @unique
+  game            Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  
+  predictedWinner String
+  confidence      Float
+  modelVersion    String
+  
+  reasoningFactors String?
+  
+  isCorrect       Boolean?
+  accuracy        Float?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([gameId])
+  @@index([createdAt])
+}
+
+model PlayerStat {
+  id              Int     @id @default(autoincrement())
+  playerId        Int
+  player          Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  
+  season          Int
+  league          String
+  
+  hits            Int?
+  runs            Int?
+  rbis            Int?
+  homeRuns        Int?
+  stolenBases     Int?
+  battingAvg      Float?
+  era             Float?
+  strikeouts      Int?
+  wins            Int?
+  saves           Int?
+  
+  points          Int?
+  rebounds        Int?
+  assists         Int?
+  steals          Int?
+  blocks          Int?
+  fieldGoalPct    Float?
+  threePointPct   Float?
+  freethrowPct    Float?
+  
+  gamesPlayed     Int?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([playerId, season])
+  @@index([playerId])
+  @@index([season])
+}
+
+model User {
+  id              Int     @id @default(autoincrement())
+  email           String  @unique
+  name            String?
+  password        String
+  
+  emailVerified   DateTime?
+  image           String?
+  
+  favoriteTeams   String?
+  preferredLeague String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([email])
+}
+
+model Session {
+  id              Int     @id @default(autoincrement())
+  sessionToken    String  @unique
+  userId          Int
+  
+  expires         DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model ApiCache {
+  id              Int     @id @default(autoincrement())
+  key             String  @unique
+  data            String
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+// ─────────────────────────────────────────────
+// 🎰 Betting Mode Models
+// ─────────────────────────────────────────────
+
+model OddsTaiwan {
+  id                  Int       @id @default(autoincrement())
+  gameExternalId      String
+  league              String
+  gameDate            DateTime
+  homeTeam            String
+  awayTeam            String
+  marketType          String    // 'moneyline' | 'spread' | 'totals' | 'period_highest'
+  selection           String    // e.g. 'home', 'away', 'over', 'under', '第5局'
+  taiwanOdds          Float
+  line                Float?
+  impliedProbability  Float
+  source              String    @default("manual") // 'manual' | 'csv'
+
+  edgeSignals         EdgeSignal[]
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@unique([gameExternalId, marketType, selection])
+  @@index([gameDate])
+  @@index([league])
+}
+
+model BettingModelPrediction {
+  id                  Int       @id @default(autoincrement())
+  gameExternalId      String
+  league              String
+  model               String    // 'MetaModel' | 'SportsAI' | 'EloRating' | 'MonteCarlo'
+  predictedWinner     String
+  confidence          Float
+  homeProb            Float
+  awayProb            Float
+  homeExpectedScore   Float
+  awayExpectedScore   Float
+  ouPick              String
+  ouLine              Float
+
+  edgeSignals         EdgeSignal[]
+
+  createdAt           DateTime  @default(now())
+
+  @@unique([gameExternalId, model])
+  @@index([gameExternalId])
+}
+
+model EdgeSignal {
+  id                  Int       @id @default(autoincrement())
+  oddsId              Int
+  odds                OddsTaiwan @relation(fields: [oddsId], references: [id], onDelete: Cascade)
+  modelPredId         Int
+  modelPred           BettingModelPrediction @relation(fields: [modelPredId], references: [id], onDelete: Cascade)
+  modelProbability    Float
+  fairOdds            Float
+  expectedValue       Float
+  edgePercent         Float
+  confidenceScore     Float
+  isPositiveEdge      Boolean
+  modelSource         String
+
+  recommendationLegs  BetRecommendationLeg[]
+
+  createdAt           DateTime  @default(now())
+
+  @@index([isPositiveEdge])
+  @@index([expectedValue])
+}
+
+model BetRecommendation {
+  id                  Int       @id @default(autoincrement())
+  date                DateTime
+  status              String    @default("recommended") // 'recommended' | 'accepted' | 'rejected' | 'expired'
+  totalStake          Float
+  parlayLegs          Int
+  parlayOdds          Float
+  estimatedPayout     Float
+  ruleCheckJson       String?   // JSON string of RuleCheckResult
+
+  legs                BetRecommendationLeg[]
+  tickets             BetTicket[]
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([date])
+  @@index([status])
+}
+
+model BetRecommendationLeg {
+  id                  Int       @id @default(autoincrement())
+  recommendationId    Int
+  recommendation      BetRecommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  edgeSignalId        Int
+  edgeSignal          EdgeSignal @relation(fields: [edgeSignalId], references: [id], onDelete: Cascade)
+  gameExternalId      String
+  league              String
+  homeTeam            String
+  awayTeam            String
+  marketType          String
+  selection           String
+  odds                Float
+
+  @@index([recommendationId])
+}
+
+model BetTicket {
+  id                  Int       @id @default(autoincrement())
+  date                DateTime
+  stake               Float
+  parlayOdds          Float
+  estimatedPayout     Float
+  status              String    @default("pending") // 'pending' | 'won' | 'lost' | 'void' | 'cancelled'
+  fromRecommendationId Int?
+  fromRecommendation  BetRecommendation? @relation(fields: [fromRecommendationId], references: [id])
+
+  legs                BetTicketLeg[]
+  settlement          MyBet?
+
+  notes               String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([date])
+  @@index([status])
+}
+
+model BetTicketLeg {
+  id                  Int       @id @default(autoincrement())
+  ticketId            Int
+  ticket              BetTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  gameExternalId      String
+  league              String
+  homeTeam            String
+  awayTeam            String
+  marketType          String
+  selection           String
+  odds                Float
+  line                Float?
+  result              String?   // 'won' | 'lost' | 'void' | null (pending)
+
+  @@index([ticketId])
+}
+
+model MyBet {
+  id                  Int       @id @default(autoincrement())
+  ticketId            Int       @unique
+  ticket              BetTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  actualResult        String    // 'won' | 'lost' | 'void'
+  actualPayout        Float
+  profitLoss          Float
+
+  createdAt           DateTime  @default(now())
+
+  @@index([actualResult])
+}
+
+model MyDailyBudget {
+  id                  Int       @id @default(autoincrement())
+  date                DateTime  @unique
+  totalBudget         Float     @default(200)
+  spent               Float     @default(0)
+  remaining           Float     @default(200)
+  maxTickets          Int       @default(2)
+  ticketsUsed         Int       @default(0)
+  stakePerTicket      Float     @default(100)
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model MyStrategyRules {
+  id                  Int       @id @default(autoincrement())
+  key                 String    @unique
+  value               String
+  description         String?
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model MyMistakeLog {
+  id                  Int       @id @default(autoincrement())
+  date                DateTime
+  ticketId            Int?
+  category            String    // 'tilt' | 'overbet' | 'chasing' | 'ignore_edge' | 'other'
+  description         String
+  lesson              String
+
+  createdAt           DateTime  @default(now())
+
+  @@index([date])
+  @@index([category])
+}
