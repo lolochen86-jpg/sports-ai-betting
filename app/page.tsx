@@ -18,8 +18,17 @@ import {
 import { 
   getBettingGrade, 
   getGradeText, 
-  getParlayRecommendation 
+  getParlayRecommendation,
+  calculateParlay,
+  generateParlaySuggestions,
+  type ParlayLeg,
+  type ParlayResult,
 } from '@/lib/betting/edgeEngine';
+import {
+  DEFAULT_BETTING_SETTINGS,
+  BETTING_SETTINGS_KEY,
+  type BettingSettings,
+} from '@/lib/betting/bettingSettings';
 
 
 // SVG Icons
@@ -617,7 +626,46 @@ export default function Home() {
     });
   };
 
+  // ─── Betting Settings State ───────────────────────────────────────────────
+  const [bettingSettings, setBettingSettings] = useState<BettingSettings>(DEFAULT_BETTING_SETTINGS);
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(BETTING_SETTINGS_KEY);
+      if (saved) setBettingSettings({ ...DEFAULT_BETTING_SETTINGS, ...JSON.parse(saved) });
+    } catch { /* ignore */ }
+  }, []);
+
+  const updateSetting = <K extends keyof BettingSettings>(key: K, value: BettingSettings[K]) => {
+    setBettingSettings(prev => {
+      const next = { ...prev, [key]: value };
+      localStorage.setItem(BETTING_SETTINGS_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  // ─── Parlay Cart State ────────────────────────────────────────────────────
+  /** gameId → side ('home'|'away') */
+  const [parlayCart, setParlayCart] = useState<Record<string, 'home' | 'away'>>({});
+  const [parlayFilterGrade, setParlayFilterGrade] = useState<'ALL' | 'A' | 'B'>('ALL');
+  const [parlayFilterSingle, setParlayFilterSingle] = useState(false);
+  const [parlayFilterParlay, setParlayFilterParlay] = useState(false);
+  const [parlaySortBy, setParlaySortBy] = useState<'edge' | 'ev'>('edge');
+
+  const toggleParlayCart = (gameId: string, side: 'home' | 'away') => {
+    setParlayCart(prev => {
+      if (prev[gameId] === side) {
+        const next = { ...prev };
+        delete next[gameId];
+        return next;
+      }
+      return { ...prev, [gameId]: side };
+    });
+  };
+
   // International Odds State (The Odds API)
+
   const [intlOdds, setIntlOdds] = useState<Record<string, {
     hasData: boolean;
     avgAwayOdds?: number;
@@ -1186,6 +1234,83 @@ export default function Home() {
       setFavTeam('LAL');
     }
   };
+
+  // ─── Derived Parlay and Betting Calculations ──────────────────────────────
+  const allLegs: ParlayLeg[] = games.flatMap(game => {
+    const pred = getAdjustedPrediction(game);
+    const activePred = pred ? (pred.models?.[selectedModelTab] || pred) : null;
+    if (!activePred) return [];
+    
+    const homeProb = (activePred.winner === 'home' ? activePred.confidence : (100 - activePred.confidence)) / 100;
+    const awayProb = (activePred.winner === 'away' ? activePred.confidence : (100 - activePred.confidence)) / 100;
+    
+    const gameOdds = manualOdds[game.id];
+    if (!gameOdds) return [];
+
+    const gameLegs: ParlayLeg[] = [];
+    const awayOddsNum = parseFloat(gameOdds.away) || 0;
+    const homeOddsNum = parseFloat(gameOdds.home) || 0;
+    const legLimit = gameOdds.legLimit || 1;
+
+    if (awayOddsNum > 0) {
+      const edge = calculateEdge(awayProb, awayOddsNum);
+      const evRoi = calculateEvRoi(awayProb, awayOddsNum);
+      const grade = getBettingGrade(edge, evRoi);
+      gameLegs.push({
+        gameId: game.id,
+        label: `${game.awayTeam.nameCn || game.awayTeam.name} (客)`,
+        aiProb: awayProb,
+        odds: awayOddsNum,
+        grade,
+        edge,
+        evRoi,
+        legLimit,
+      });
+    }
+
+    if (homeOddsNum > 0) {
+      const edge = calculateEdge(homeProb, homeOddsNum);
+      const evRoi = calculateEvRoi(homeProb, homeOddsNum);
+      const grade = getBettingGrade(edge, evRoi);
+      gameLegs.push({
+        gameId: game.id,
+        label: `${game.homeTeam.nameCn || game.homeTeam.name} (主)`,
+        aiProb: homeProb,
+        odds: homeOddsNum,
+        grade,
+        edge,
+        evRoi,
+        legLimit,
+      });
+    }
+
+    return gameLegs;
+  });
+
+  const selectedLegs = Object.entries(parlayCart)
+    .map(([gameId, side]) => {
+      const suffix = side === 'away' ? ' (客)' : ' (主)';
+      return allLegs.find(l => l.gameId === gameId && l.label.endsWith(suffix));
+    })
+    .filter((l): l is ParlayLeg => l !== undefined);
+
+  const parlaySuggestions = generateParlaySuggestions(allLegs, bettingSettings.maxParlayBet);
+
+  const filteredLegs = allLegs.filter(leg => {
+    if (parlayFilterGrade === 'A' && leg.grade !== 'A') return false;
+    if (parlayFilterGrade === 'B' && leg.grade !== 'B') return false;
+    if (parlayFilterSingle && leg.legLimit !== 1) return false;
+    if (parlayFilterParlay && leg.legLimit <= 1) return false;
+    return true;
+  });
+
+  const sortedLegs = [...filteredLegs].sort((a, b) => {
+    if (parlaySortBy === 'edge') {
+      return b.edge - a.edge;
+    } else {
+      return b.evRoi - a.evRoi;
+    }
+  });
 
   return (
     <div className="flex-1 w-full min-h-screen bg-[#030712] cyber-grid relative pb-20">
@@ -1861,20 +1986,129 @@ export default function Home() {
                                     </div>
                                   </div>
                                   
-                                  {/* Leg Limit Control */}
-                                  <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 self-start sm:self-auto">
-                                    <span className="text-xs text-gray-400 font-sans font-bold">過關限制：</span>
-                                    <select
-                                      value={gameOdds.legLimit || 1}
-                                      onChange={(e) => updateManualOdds(game.id, 'legLimit', Number(e.target.value))}
-                                      className="bg-transparent text-xs font-black text-white focus:outline-none cursor-pointer"
+                                  {/* Controls Container */}
+                                  <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                                    {/* Leg Limit Control */}
+                                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5">
+                                      <span className="text-xs text-gray-400 font-sans font-bold">過關限制：</span>
+                                      <select
+                                        value={gameOdds.legLimit || 1}
+                                        onChange={(e) => updateManualOdds(game.id, 'legLimit', Number(e.target.value))}
+                                        className="bg-transparent text-xs font-black text-white focus:outline-none cursor-pointer"
+                                      >
+                                        <option value={1} className="bg-zinc-900 text-white">1 (可單關)</option>
+                                        <option value={2} className="bg-zinc-900 text-white">2 (至少 2 關)</option>
+                                        <option value={3} className="bg-zinc-900 text-white">3 (至少 3 關)</option>
+                                      </select>
+                                    </div>
+
+                                    {/* Betting Settings Trigger */}
+                                    <button
+                                      onClick={() => setShowSettingsPanel(!showSettingsPanel)}
+                                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all duration-300 ${
+                                        showSettingsPanel
+                                          ? 'bg-amber-500 text-black border-amber-500 hover:bg-amber-600'
+                                          : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white'
+                                      }`}
                                     >
-                                      <option value={1} className="bg-zinc-900 text-white">1 (可單關)</option>
-                                      <option value={2} className="bg-zinc-900 text-white">2 (至少 2 關)</option>
-                                      <option value={3} className="bg-zinc-900 text-white">3 (至少 3 關)</option>
-                                    </select>
+                                      <span>⚙️</span>
+                                      <span>下注設定</span>
+                                    </button>
                                   </div>
                                 </div>
+
+                                {/* Betting Settings Panel */}
+                                {showSettingsPanel && (
+                                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-6 animate-fade-in text-xs relative z-10">
+                                    <h5 className="font-black text-amber-400 mb-3 flex items-center gap-1.5">
+                                      <span>⚙️</span> 全局下注策略設定
+                                    </h5>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                      <div>
+                                        <label className="text-[10px] text-gray-400 font-bold block mb-1">本金 (bankroll)</label>
+                                        <input
+                                          type="number"
+                                          value={bettingSettings.bankroll}
+                                          onChange={(e) => updateSetting('bankroll', Number(e.target.value))}
+                                          className="w-full bg-zinc-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-amber-500 font-mono font-bold"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="text-[10px] text-gray-400 font-bold block mb-1">每日上限 (dailyLimit)</label>
+                                        <input
+                                          type="number"
+                                          value={bettingSettings.dailyLimit}
+                                          onChange={(e) => updateSetting('dailyLimit', Number(e.target.value))}
+                                          className="w-full bg-zinc-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-amber-500 font-mono font-bold"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="text-[10px] text-gray-400 font-bold block mb-1">要求 Edge%</label>
+                                        <div className="relative">
+                                          <input
+                                            type="number"
+                                            value={Math.round(bettingSettings.requiredEdge * 100)}
+                                            onChange={(e) => updateSetting('requiredEdge', Number(e.target.value) / 100)}
+                                            className="w-full bg-zinc-900 border border-white/10 rounded-lg pl-2.5 pr-6 py-1.5 text-white focus:outline-none focus:border-amber-500 font-mono font-bold"
+                                          />
+                                          <span className="absolute right-2.5 top-1.5 text-gray-400 font-bold">%</span>
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <label className="text-[10px] text-gray-400 font-bold block mb-1">目標 EV ROI</label>
+                                        <div className="relative">
+                                          <input
+                                            type="number"
+                                            value={Math.round(bettingSettings.targetEvRoi * 100)}
+                                            onChange={(e) => updateSetting('targetEvRoi', Number(e.target.value) / 100)}
+                                            className="w-full bg-zinc-900 border border-white/10 rounded-lg pl-2.5 pr-6 py-1.5 text-white focus:outline-none focus:border-amber-500 font-mono font-bold"
+                                          />
+                                          <span className="absolute right-2.5 top-1.5 text-gray-400 font-bold">%</span>
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <label className="text-[10px] text-gray-400 font-bold block mb-1">Kelly 倍數</label>
+                                        <input
+                                          type="number"
+                                          step="0.05"
+                                          value={bettingSettings.kellyMultiplier}
+                                          onChange={(e) => updateSetting('kellyMultiplier', Number(e.target.value))}
+                                          className="w-full bg-zinc-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-amber-500 font-mono font-bold"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="text-[10px] text-gray-400 font-bold block mb-1">單場最高下注 (maxSingleBet)</label>
+                                        <input
+                                          type="number"
+                                          value={bettingSettings.maxSingleBet}
+                                          onChange={(e) => updateSetting('maxSingleBet', Number(e.target.value))}
+                                          className="w-full bg-zinc-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-amber-500 font-mono font-bold"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="text-[10px] text-gray-400 font-bold block mb-1">串關最高下注 (maxParlayBet)</label>
+                                        <input
+                                          type="number"
+                                          value={bettingSettings.maxParlayBet}
+                                          onChange={(e) => updateSetting('maxParlayBet', Number(e.target.value))}
+                                          className="w-full bg-zinc-900 border border-white/10 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-amber-500 font-mono font-bold"
+                                        />
+                                      </div>
+                                      <div className="flex items-end">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setBettingSettings(DEFAULT_BETTING_SETTINGS);
+                                            localStorage.setItem(BETTING_SETTINGS_KEY, JSON.stringify(DEFAULT_BETTING_SETTINGS));
+                                          }}
+                                          className="w-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-gray-300 hover:text-white rounded-lg py-1.5 text-center font-bold transition-all"
+                                        >
+                                          重置預設值
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
 
                                 {/* Table/Grid for calculations */}
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1891,8 +2125,10 @@ export default function Home() {
                                     const edge = oddsNum > 0 ? calculateEdge(prob, oddsNum) : 0;
                                     const evRoi = oddsNum > 0 ? calculateEvRoi(prob, oddsNum) : 0;
                                     const grade = oddsNum > 0 ? getBettingGrade(edge, evRoi) : 'D';
-                                    const suggestedBet = oddsNum > 0 ? calculateSuggestedBet(prob, oddsNum, 10000) : 0;
+                                    const suggestedBet = oddsNum > 0 ? Math.min(calculateSuggestedBet(prob, oddsNum, bettingSettings.bankroll), bettingSettings.maxSingleBet) : 0;
                                     const parlayAdvice = getParlayRecommendation(gameOdds.legLimit || 1, edge, grade);
+                                    const isInCart = parlayCart[game.id] === 'away';
+
                                     
                                     return (
                                       <div className="bg-white/[0.01] border border-white/5 rounded-xl p-4 flex flex-col justify-between gap-4">
@@ -1978,6 +2214,18 @@ export default function Home() {
                                               </span>
                                             </div>
 
+                                            <button
+                                              type="button"
+                                              onClick={() => toggleParlayCart(game.id, 'away')}
+                                              className={`w-full py-1.5 rounded-xl text-[11px] font-black tracking-wide border transition-all duration-300 ${
+                                                isInCart
+                                                  ? 'bg-amber-500 text-black border-amber-500 hover:bg-amber-600 hover:border-amber-600 shadow-md shadow-amber-500/10'
+                                                  : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white'
+                                              }`}
+                                            >
+                                              {isInCart ? '已加入串關組合 ✓' : '加入串關組合 +'}
+                                            </button>
+
                                             <div className={`rounded-xl p-2.5 text-[11px] font-sans font-semibold border ${
                                               parlayAdvice.isSuitableForParlay 
                                                 ? 'bg-amber-500/5 border-amber-500/20 text-amber-300' 
@@ -2003,8 +2251,10 @@ export default function Home() {
                                     const edge = oddsNum > 0 ? calculateEdge(prob, oddsNum) : 0;
                                     const evRoi = oddsNum > 0 ? calculateEvRoi(prob, oddsNum) : 0;
                                     const grade = oddsNum > 0 ? getBettingGrade(edge, evRoi) : 'D';
-                                    const suggestedBet = oddsNum > 0 ? calculateSuggestedBet(prob, oddsNum, 10000) : 0;
+                                    const suggestedBet = oddsNum > 0 ? Math.min(calculateSuggestedBet(prob, oddsNum, bettingSettings.bankroll), bettingSettings.maxSingleBet) : 0;
                                     const parlayAdvice = getParlayRecommendation(gameOdds.legLimit || 1, edge, grade);
+                                    const isInCart = parlayCart[game.id] === 'home';
+
                                     
                                     return (
                                       <div className="bg-white/[0.01] border border-white/5 rounded-xl p-4 flex flex-col justify-between gap-4">
@@ -2089,6 +2339,18 @@ export default function Home() {
                                                 {suggestedBet > 0 ? `$${suggestedBet.toLocaleString()} NTD` : '$0 NTD (不建議)'}
                                               </span>
                                             </div>
+
+                                            <button
+                                              type="button"
+                                              onClick={() => toggleParlayCart(game.id, 'home')}
+                                              className={`w-full py-1.5 rounded-xl text-[11px] font-black tracking-wide border transition-all duration-300 ${
+                                                isInCart
+                                                  ? 'bg-amber-500 text-black border-amber-500 hover:bg-amber-600 hover:border-amber-600 shadow-md shadow-amber-500/10'
+                                                  : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white'
+                                              }`}
+                                            >
+                                              {isInCart ? '已加入串關組合 ✓' : '加入串關組合 +'}
+                                            </button>
 
                                             <div className={`rounded-xl p-2.5 text-[11px] font-sans font-semibold border ${
                                               parlayAdvice.isSuitableForParlay 
@@ -2383,6 +2645,337 @@ export default function Home() {
                 })}
               </div>
             )}
+
+            {/* 🎯 串關組合分析與下注策略面板 */}
+            <div className="bg-gradient-to-br from-violet-950/[0.08] to-fuchsia-950/[0.08] border border-violet-500/20 rounded-3xl p-6 md:p-8 relative overflow-hidden mt-8">
+              {/* Ambient purple glow */}
+              <div className="absolute top-0 right-0 w-48 h-48 bg-violet-500/10 rounded-full filter blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-fuchsia-500/10 rounded-full filter blur-3xl pointer-events-none" />
+
+              {/* Title Header */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-white/5 pb-6">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🎯</span>
+                  <div>
+                    <h3 className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400 tracking-wider font-sans">
+                      串關組合分析與下注策略面板
+                    </h3>
+                    <p className="text-[10px] text-gray-400 font-sans mt-0.5">
+                      自動計算多場次串關之期望值與勝率，提供科學下注水位建議
+                    </p>
+                  </div>
+                </div>
+
+                {/* Current settings stats summary */}
+                <div className="flex flex-wrap items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-[10px] text-gray-400 font-mono">
+                  <span className="text-violet-400 font-bold">目前設定:</span>
+                  <span>本金: ${bettingSettings.bankroll}</span>
+                  <span className="text-gray-600">|</span>
+                  <span>每日上限: ${bettingSettings.dailyLimit}</span>
+                  <span className="text-gray-600">|</span>
+                  <span>Edge%: {(bettingSettings.requiredEdge * 100).toFixed(0)}%</span>
+                  <span className="text-gray-600">|</span>
+                  <span>EV ROI: {(bettingSettings.targetEvRoi * 100).toFixed(0)}%</span>
+                </div>
+              </div>
+
+              {/* Rational Betting Alert Box */}
+              <div className="bg-red-500/10 border border-red-500/25 rounded-2xl p-4 mb-6 text-xs text-red-200 flex items-start gap-3">
+                <span className="text-lg shrink-0">⚠️</span>
+                <div>
+                  <span className="font-black block text-red-400 mb-0.5">理性投注警示</span>
+                  <span className="font-semibold leading-relaxed">不要為了湊關硬買，低賠不等於安全。請嚴格遵守每日最高下注限制與 Kelly 倉位控管。</span>
+                </div>
+              </div>
+
+              {/* Content Grid */}
+              <div className="space-y-8">
+                
+                {/* 1. Parlay Cart Section */}
+                <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-5">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-4">
+                    <h4 className="text-xs font-black text-violet-400 uppercase tracking-wider font-sans flex items-center gap-1.5">
+                      <span>🎟️</span> 我的自選串關組合
+                    </h4>
+                    <span className="text-[10px] font-mono text-gray-400 bg-white/5 px-2 py-0.5 rounded-full font-bold">
+                      已選 {selectedLegs.length} 場
+                    </span>
+                  </div>
+
+                  {selectedLegs.length === 0 ? (
+                    <div className="text-center py-6 text-xs text-gray-500 font-sans font-bold">
+                      💡 請在上方今日賽事中點擊 <span className="text-amber-400 font-mono">「加入串關組合 +」</span> 來建立您的自選串關單。
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Cart items */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {selectedLegs.map((leg) => (
+                          <div key={`${leg.gameId}-${leg.label}`} className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between gap-3 text-xs">
+                            <div>
+                              <div className="font-black text-white">{leg.label}</div>
+                              <div className="text-[10px] text-gray-400 font-mono mt-0.5">
+                                賠率: {leg.odds.toFixed(2)} | AI勝率: {(leg.aiProb * 100).toFixed(1)}%
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={`px-1.5 py-0.5 rounded text-[8px] font-black tracking-wide ${
+                                leg.grade === 'A' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black' :
+                                leg.grade === 'B' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
+                                leg.grade === 'C' ? 'bg-yellow-500/5 text-yellow-300 border border-yellow-500/10' :
+                                'bg-red-500/5 text-gray-500 border border-red-500/10'
+                              }`}>
+                                {leg.grade} 級
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => toggleParlayCart(leg.gameId, leg.label.endsWith('(客)') ? 'away' : 'home')}
+                                className="text-gray-400 hover:text-red-400 transition-colors p-1 font-bold"
+                                title="移除"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Parlay Ticket calculations */}
+                      {selectedLegs.length < 2 ? (
+                        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3 text-center text-[11px] text-gray-400 font-sans font-bold">
+                          ⚠️ 請至少選擇 2 場賽事以進行串關過關計算。
+                        </div>
+                      ) : (() => {
+                        const res = calculateParlay(selectedLegs, bettingSettings.maxParlayBet);
+                        return (
+                          <div className="bg-violet-500/5 border border-violet-500/20 rounded-xl p-4 space-y-3 font-sans">
+                            <div className="grid grid-cols-3 gap-3 text-center text-xs font-mono">
+                              <div className="bg-white/5 rounded-lg p-2">
+                                <span className="text-[9px] text-gray-500 block mb-0.5 font-bold">串關總賠率</span>
+                                <span className="text-base font-black text-white">{res.parlayOdds.toFixed(3)}</span>
+                              </div>
+                              <div className="bg-white/5 rounded-lg p-2">
+                                <span className="text-[9px] text-gray-500 block mb-0.5 font-bold">預估組合勝率</span>
+                                <span className="text-base font-black text-white">{((res.parlayProb) * 100).toFixed(2)}%</span>
+                              </div>
+                              <div className="bg-white/5 rounded-lg p-2">
+                                <span className="text-[9px] text-gray-500 block mb-0.5 font-bold">組合 EV ROI</span>
+                                <span className={`text-base font-black ${res.parlayEv >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                  {(res.parlayEv * 100).toFixed(1)}%
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs pt-2 border-t border-white/5">
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
+                                  res.parlayGrade === 'AA' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black' :
+                                  res.parlayGrade === 'AB' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
+                                  res.parlayGrade === 'BB' ? 'bg-yellow-500/5 text-yellow-300 border border-yellow-500/10' :
+                                  'bg-red-500/10 text-red-400 border border-red-500/20'
+                                }`}>
+                                  組合級別 {res.parlayGrade.toUpperCase()}
+                                </span>
+                                <span className="text-gray-300 font-semibold">{res.advice}</span>
+                              </div>
+
+                              {res.suggestedBet > 0 && (
+                                <div className="text-right sm:text-right">
+                                  <span className="text-[10px] text-gray-400 block font-bold">凱利水位建議下注：</span>
+                                  <span className="text-violet-400 font-mono font-black text-base">${res.suggestedBet} NTD</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Parlay Suggestions */}
+                <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-5">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-4">
+                    <h4 className="text-xs font-black text-fuchsia-400 uppercase tracking-wider font-sans flex items-center gap-1.5">
+                      <span>🤖</span> AI 推薦 2 串 1 最佳組合 (A+A / A+B 優先)
+                    </h4>
+                    <span className="text-[10px] font-mono text-gray-400 font-bold">
+                      共 {parlaySuggestions.length} 組推薦
+                    </span>
+                  </div>
+
+                  {parlaySuggestions.length === 0 ? (
+                    <div className="text-center py-6 text-xs text-gray-500 font-sans font-bold">
+                      💡 目前無符合高價值的 AI 2串1 串關推薦。請輸入更多賽事賠率（需為 A/B 級項目且 EV ROI &gt; 0）。
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {parlaySuggestions.map((sug, idx) => (
+                        <div key={idx} className="bg-white/5 border border-white/10 hover:border-fuchsia-500/40 rounded-2xl p-4 space-y-3 transition-all duration-300 relative">
+                          <div className="absolute top-3 right-3 text-[10px] font-mono text-fuchsia-400 bg-fuchsia-500/10 px-2 py-0.5 rounded-full font-bold">
+                            推薦 #{idx + 1}
+                          </div>
+
+                          <div className="space-y-2">
+                            {sug.legs.map((leg, lIdx) => (
+                              <div key={lIdx} className="flex justify-between items-center text-xs">
+                                <span className="font-black text-white">{leg.label}</span>
+                                <span className="font-mono text-gray-400">賠率: {leg.odds.toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-mono border-t border-white/5 pt-2">
+                            <div>
+                              <span className="text-[9px] text-gray-500 block">過關賠率</span>
+                              <span className="font-black text-white">{sug.parlayOdds.toFixed(3)}</span>
+                            </div>
+                            <div>
+                              <span className="text-[9px] text-gray-500 block">組合勝率</span>
+                              <span className="font-black text-white">{((sug.parlayProb) * 100).toFixed(1)}%</span>
+                            </div>
+                            <div>
+                              <span className="text-[9px] text-gray-500 block">組合 EV</span>
+                              <span className="font-black text-emerald-400">{(sug.parlayEv * 100).toFixed(1)}%</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between text-[11px] bg-white/5 rounded-xl p-2 mt-2">
+                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${
+                              sug.parlayGrade === 'AA' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow' : 'bg-orange-500/10 text-orange-400'
+                            }`}>
+                              {sug.parlayGrade} 級
+                            </span>
+                            <span className="text-fuchsia-300 font-bold font-sans">建議投注: ${sug.suggestedBet} 元</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. All Value Bets Pool */}
+                <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/5 pb-4 mb-4 gap-3">
+                    <h4 className="text-xs font-black text-violet-400 uppercase tracking-wider font-sans flex items-center gap-1.5">
+                      <span>📊</span> 大數據價值投注項目池 (台灣運彩已入賠率)
+                    </h4>
+                    
+                    {/* Filters and sorting controls */}
+                    <div className="flex flex-wrap items-center gap-2 text-[10px] font-sans">
+                      {/* Grade filter */}
+                      <select
+                        value={parlayFilterGrade}
+                        onChange={(e) => setParlayFilterGrade(e.target.value as 'ALL' | 'A' | 'B')}
+                        className="bg-zinc-900 border border-white/10 rounded-lg px-2 py-1 text-white font-bold cursor-pointer"
+                      >
+                        <option value="ALL">全部評級 (A+B)</option>
+                        <option value="A">評級 A 級</option>
+                        <option value="B">評級 B 級</option>
+                      </select>
+
+                      {/* Single / Parlay toggle buttons */}
+                      <button
+                        type="button"
+                        onClick={() => setParlayFilterSingle(!parlayFilterSingle)}
+                        className={`px-2 py-1 rounded-lg border font-bold transition-all duration-300 ${
+                          parlayFilterSingle
+                            ? 'bg-violet-500 text-black border-violet-500 shadow-md shadow-violet-500/10'
+                            : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        單關
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setParlayFilterParlay(!parlayFilterParlay)}
+                        className={`px-2 py-1 rounded-lg border font-bold transition-all duration-300 ${
+                          parlayFilterParlay
+                            ? 'bg-violet-500 text-black border-violet-500 shadow-md shadow-violet-500/10'
+                            : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        需過關
+                      </button>
+
+                      {/* Sort toggle */}
+                      <select
+                        value={parlaySortBy}
+                        onChange={(e) => setParlaySortBy(e.target.value as 'edge' | 'ev')}
+                        className="bg-zinc-900 border border-white/10 rounded-lg px-2 py-1 text-white font-bold cursor-pointer"
+                      >
+                        <option value="edge">依 Edge% 排序</option>
+                        <option value="ev">依 EV ROI 排序</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {sortedLegs.length === 0 ? (
+                    <div className="text-center py-6 text-xs text-gray-500 font-sans font-bold">
+                      💡 沒有符合當前篩選條件的價值下注項目。請點擊上方賽事並輸入對應的台灣運彩賠率。
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="text-[10px] text-gray-500 font-mono uppercase border-b border-white/5 font-bold">
+                            <th className="pb-2">投注項目</th>
+                            <th className="pb-2">評級</th>
+                            <th className="pb-2">台運賠率</th>
+                            <th className="pb-2">Edge%</th>
+                            <th className="pb-2">EV ROI</th>
+                            <th className="pb-2 text-center">過關限制</th>
+                            <th className="pb-2 text-right">選入</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/[0.02] font-semibold">
+                          {sortedLegs.map((leg) => {
+                            const isInCart = parlayCart[leg.gameId] === (leg.label.endsWith('(客)') ? 'away' : 'home');
+                            return (
+                              <tr key={`${leg.gameId}-${leg.label}`} className="hover:bg-white/[0.01] transition-colors">
+                                <td className="py-2.5 font-bold text-white pr-2">{leg.label}</td>
+                                <td className="py-2.5">
+                                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-black ${
+                                    leg.grade === 'A' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold' : 'bg-orange-500/10 text-orange-400'
+                                  }`}>
+                                    {leg.grade}
+                                  </span>
+                                </td>
+                                <td className="py-2.5 font-mono font-bold text-gray-300">{leg.odds.toFixed(2)}</td>
+                                <td className={`py-2.5 font-mono font-bold ${leg.edge >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                  {(leg.edge * 100).toFixed(1)}%
+                                </td>
+                                <td className={`py-2.5 font-mono font-bold ${leg.evRoi >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                  {(leg.evRoi * 100).toFixed(1)}%
+                                </td>
+                                <td className="py-2.5 font-mono text-center text-gray-400">
+                                  {leg.legLimit === 1 ? '單關' : `至少 ${leg.legLimit} 關`}
+                                </td>
+                                <td className="py-2.5 text-right">
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleParlayCart(leg.gameId, leg.label.endsWith('(客)') ? 'away' : 'home')}
+                                    className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${
+                                      isInCart
+                                        ? 'bg-amber-500 text-black border-amber-500'
+                                        : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
+                                    }`}
+                                  >
+                                    {isInCart ? '已選 ✓' : '選入 +'}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </div>
           </div>
 
           {/* Right sidebar: AI Metrics and Custom Predictor */}
