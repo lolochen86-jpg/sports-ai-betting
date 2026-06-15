@@ -163,19 +163,29 @@ export default function BettingDashboard() {
 
       {/* ───── 導航列 ───── */}
       <header className="sticky top-0 z-50 glass-panel border-b border-white/5">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
-            <span className="text-2xl">🏀⚾</span>
-            <span className="bg-gradient-to-r from-orange-400 via-purple-500 to-cyan-400 text-transparent bg-clip-text">
-              AI 預測平台
-            </span>
-          </Link>
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-center justify-between py-3 md:py-0 h-auto md:h-16 gap-3 md:gap-0">
+          <div className="flex items-center justify-between w-full md:w-auto">
+            <Link href="/" className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
+              <span className="text-2xl">🏀⚾</span>
+              <span className="bg-gradient-to-r from-orange-400 via-purple-500 to-cyan-400 text-transparent bg-clip-text">
+                AI 預測平台
+              </span>
+            </Link>
+          </div>
           <div className="hidden md:flex items-center gap-6 text-sm">
             <Link href="/" className="text-gray-400 hover:text-white transition-colors">決策看盤中心</Link>
             <Link href="/backtest" className="text-gray-400 hover:text-white transition-colors">歷史量化回測</Link>
             <Link href="/history" className="text-gray-400 hover:text-white transition-colors">完賽記錄簿</Link>
             <Link href="/share" className="text-gray-400 hover:text-white transition-colors">📸 戰報字卡</Link>
             <Link href="/betting" className="text-amber-400 border-b-2 border-amber-500 pb-1">🎰 運彩下注</Link>
+          </div>
+          {/* Mobile Navigation Links */}
+          <div className="flex md:hidden items-center gap-4 overflow-x-auto whitespace-nowrap w-full text-xs scrollbar-none font-bold text-gray-300">
+            <Link href="/" className="text-gray-400 hover:text-white shrink-0">決策看盤</Link>
+            <Link href="/backtest" className="text-gray-400 hover:text-white shrink-0">量化回測</Link>
+            <Link href="/history" className="text-gray-400 hover:text-white shrink-0">完賽記錄</Link>
+            <Link href="/share" className="text-gray-400 hover:text-white shrink-0">📸 戰報字卡</Link>
+            <span className="text-amber-400 border-b-2 border-amber-500 pb-0.5 shrink-0">🎰 下注</span>
           </div>
         </nav>
       </header>

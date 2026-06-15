@@ -1379,6 +1379,15 @@ export default function Home() {
             )}
           </div>
         </div>
+        {/* Mobile Navigation Links */}
+        <div className="flex md:hidden items-center gap-4 overflow-x-auto whitespace-nowrap pt-3 mt-3 border-t border-white/5 text-xs scrollbar-none font-bold text-gray-300">
+          <span className="text-white border-b-2 border-purple-500 pb-0.5 shrink-0">決策看盤</span>
+          <Link href="/compare" className="hover:text-purple-400 text-purple-300 font-extrabold shrink-0">🔬 對照</Link>
+          <Link href="/backtest" className="hover:text-purple-400 shrink-0">量化回測</Link>
+          <Link href="/history" className="hover:text-purple-400 shrink-0">完賽記錄</Link>
+          <Link href="/share" className="hover:text-purple-400 shrink-0">📸 戰報字卡</Link>
+          <Link href="/betting" className="hover:text-amber-400 text-amber-500/90 font-black shrink-0">🎰 下注</Link>
+        </div>
       </nav>
 
       {/* 2. Hero Section */}
