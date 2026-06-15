@@ -1,0 +1,22 @@
+[
+  {
+    "game_id": "0042500207",
+    "game_date": "2026-05-17",
+    "home_team_id": 1610612765,
+    "away_team_id": 1610612739,
+    "home_team_abbr": "DET",
+    "away_team_abbr": "CLE",
+    "game_status": 1,
+    "arena": "Little Caesars Arena"
+  },
+  {
+    "game_id": "0042500237",
+    "game_date": "2026-05-17",
+    "home_team_id": 1610612759,
+    "away_team_id": 1610612750,
+    "home_team_abbr": "SAS",
+    "away_team_abbr": "MIN",
+    "game_status": 1,
+    "arena": "Frost Bank Center"
+  }
+]

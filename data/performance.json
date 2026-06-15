@@ -1,0 +1,83 @@
+{
+  "total_bets": 15,
+  "wins": 4,
+  "losses": 6,
+  "total_wagered": 930.0,
+  "total_pnl": 485.0,
+  "single_bets": 6,
+  "single_wins": 2,
+  "parlay_bets": 9,
+  "parlay_wins": 2,
+  "by_sport": {
+    "NBA": {
+      "bets": 0,
+      "wins": 0
+    },
+    "MLB": {
+      "bets": 6,
+      "wins": 2
+    }
+  },
+  "daily": [
+    {
+      "date": "2026-05-17",
+      "bets": 0,
+      "wins": 0,
+      "pnl": 0
+    },
+    {
+      "date": "2026-05-18",
+      "bets": 1,
+      "wins": 0,
+      "pnl": -100.0
+    },
+    {
+      "date": "2026-05-19",
+      "bets": 1,
+      "wins": 0,
+      "pnl": -60.0
+    },
+    {
+      "date": "2026-05-20",
+      "bets": 1,
+      "wins": 0,
+      "pnl": 0.0
+    },
+    {
+      "date": "2026-05-21",
+      "bets": 0,
+      "wins": 0,
+      "pnl": 0
+    },
+    {
+      "date": "2026-05-22",
+      "bets": 4,
+      "wins": 3,
+      "pnl": 525.0
+    },
+    {
+      "date": "2026-05-23",
+      "bets": 3,
+      "wins": 0,
+      "pnl": -90.0
+    },
+    {
+      "date": "2026-06-11",
+      "bets": 0,
+      "wins": 0,
+      "pnl": 0
+    },
+    {
+      "date": "2026-06-12",
+      "bets": 3,
+      "wins": 0,
+      "pnl": 0.0
+    },
+    {
+      "date": "2026-06-13",
+      "bets": 2,
+      "wins": 1,
+      "pnl": 210.0
+    }
+  ]
+}

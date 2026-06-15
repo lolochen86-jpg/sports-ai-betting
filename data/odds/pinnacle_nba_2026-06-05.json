@@ -1,0 +1,27 @@
+[
+  {
+    "game_id": "pin_1631571438",
+    "sport": "NBA",
+    "game_date": "2026-06-05",
+    "home_team_abbr": "SAS",
+    "away_team_abbr": "NYK",
+    "home_team_name": "San Antonio Spurs",
+    "away_team_name": "New York Knicks",
+    "source": "pinnacle_direct",
+    "timestamp": "2026-06-05T00:23:55.395906+08:00",
+    "home_odds_raw": 1.4566,
+    "away_odds_raw": 2.89,
+    "spread": -6.5,
+    "spread_home_odds_raw": 1.9901,
+    "spread_away_odds_raw": 1.8929,
+    "total_line": 215.0,
+    "over_odds_raw": 1.9524,
+    "under_odds_raw": 1.9174,
+    "home_odds": 1.425,
+    "away_odds": 2.827,
+    "spread_home_odds": 1.946,
+    "spread_away_odds": 1.851,
+    "over_odds": 1.91,
+    "under_odds": 1.875
+  }
+]

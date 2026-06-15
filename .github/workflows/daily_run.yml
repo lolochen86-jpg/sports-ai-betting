@@ -1,0 +1,196 @@
+name: 運彩AI — 每日分析與報告
+
+on:
+  schedule:
+    # UTC 13:00 = 台灣時間 21:00（每日晚上分析）
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+    inputs:
+      report_date:
+        description: '📅 指定日期 (YYYY-MM-DD)，留空使用今日'
+        required: false
+        default: ''
+      dry_run:
+        description: '🧪 乾跑模式（只分析不下注，不更新 bankroll）'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      schedule_hour_tw:
+        description: '⏰ 自訂執行時段（台灣時間），僅供手動觸發紀錄用'
+        required: false
+        default: '21'
+        type: choice
+        options:
+          - '9'    # 早上 09:00
+          - '12'   # 中午 12:00
+          - '15'   # 下午 15:00
+          - '18'   # 傍晚 18:00
+          - '21'   # 晚上 21:00（預設排程時間）
+
+env:
+  ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+  TZ: Asia/Taipei
+
+jobs:
+  daily-analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 需要完整歷史以計算 Elo
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Chrome for Selenium（運彩官網備援）
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Determine report date
+        id: date
+        run: |
+          if [ -n "${{ github.event.inputs.report_date }}" ]; then
+            echo "date=${{ github.event.inputs.report_date }}" >> $GITHUB_OUTPUT
+          else
+            echo "date=$(TZ=Asia/Taipei date '+%Y-%m-%d')" >> $GITHUB_OUTPUT
+          fi
+          echo "yesterday=$(TZ=Asia/Taipei date -d 'yesterday' '+%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+          # 顯示觸發資訊
+          TRIGGER="${{ github.event_name }}"
+          HOUR="${{ github.event.inputs.schedule_hour_tw }}"
+          if [ "$TRIGGER" = "workflow_dispatch" ]; then
+            echo "🖐️ 手動觸發：台灣時間 ${HOUR:-21}:00" | tee -a $GITHUB_STEP_SUMMARY
+          else
+            echo "⏰ 排程觸發：台灣時間 21:00" | tee -a $GITHUB_STEP_SUMMARY
+          fi
+
+      # ── P9：整合測試（快速驗證模型未崩潰）──────────────
+      - name: Integration tests
+        run: python scripts/test_integration.py
+        continue-on-error: false   # 測試失敗則中止整個 workflow
+
+      # ── P8：結算昨日成績 ────────────────────────────────
+      - name: Settle yesterday results
+        run: python scripts/settle.py ${{ steps.date.outputs.yesterday }}
+        continue-on-error: true    # 昨日結算失敗不中斷今日分析
+
+      # ── P2：抓取今日數據 ────────────────────────────────
+      - name: Fetch NBA data
+        run: python scripts/fetch_nba.py ${{ steps.date.outputs.date }}
+        continue-on-error: false
+
+      - name: Fetch MLB data
+        run: python scripts/fetch_mlb.py ${{ steps.date.outputs.date }}
+        continue-on-error: false
+
+      - name: Fetch odds
+        run: |
+          python scripts/fetch_odds.py NBA ${{ steps.date.outputs.date }}
+          python scripts/fetch_odds.py MLB ${{ steps.date.outputs.date }}
+        continue-on-error: true   # 賠率失敗不中斷流程，run_daily 會再試一次
+
+      # ── P4 + P7：分析 + 報告 ────────────────────────────
+      - name: Run analysis engine
+        run: python scripts/run_daily.py ${{ steps.date.outputs.date }}
+        env:
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+
+      # ── Commit ──────────────────────────────────────────
+      - name: Commit & push reports
+        run: |
+          git config --global user.name  "Sports AI Bot"
+          git config --global user.email "bot@users.noreply.github.com"
+          git add reports/ docs/ data/bankroll.json data/performance.json \
+                  data/bankroll_conservative.json data/bankroll_aggressive.json data/bankroll_underdog.json \
+                  data/live/ data/nba/ data/mlb/ data/odds/
+          git diff --staged --quiet || git commit -m "📊 每日報告 ${{ steps.date.outputs.date }}"
+          git push
+
+      - name: Report summary
+        run: |
+          echo "## 📊 運彩AI 每日報告 — ${{ steps.date.outputs.date }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          python -c "
+          import json, pathlib
+
+          bk_path = pathlib.Path('data/bankroll.json')
+          bk = json.loads(bk_path.read_text()) if bk_path.exists() else {}
+
+          initial  = bk.get('initial', 3000.0)
+          current  = bk.get('current', 3000.0)
+          peak     = bk.get('peak', current)
+          target   = bk.get('target', 6000.0)
+          ruin     = bk.get('ruin_threshold', 10.0)
+          status   = bk.get('status', 'active')
+          history  = bk.get('history', [])
+
+          roi      = (current - initial) / initial * 100
+          to_target = target - current
+          progress  = (current - initial) / (target - initial) * 100
+          dd       = (peak - current) / peak * 100 if peak > 0 else 0
+
+          # 連勝/連虧
+          streak = 0
+          if history:
+              sign = 1 if history[-1].get('pnl', 0) >= 0 else -1
+              for h in reversed(history):
+                  if (h.get('pnl', 0) >= 0) == (sign == 1):
+                      streak += sign
+                  else:
+                      break
+
+          status_emoji = {'active': '🟢 進行中', 'target_reached': '🎯 已停利', 'ruined': '⛔ 已歸零'}.get(status, status)
+
+          print(f'### 💰 本金狀態')
+          print(f'| 項目 | 數值 |')
+          print(f'|---|---|')
+          print(f'| 狀態 | {status_emoji} |')
+          print(f'| 起始本金 | NT\${initial:,.0f} |')
+          print(f'| 目前本金 | NT\${current:,.0f} |')
+          print(f'| 歷史峰值 | NT\${peak:,.0f} |')
+          print(f'| 累積 ROI | {roi:+.1f}% |')
+          print(f'| 最大回撤 | -{dd:.1f}% |')
+          print(f'| 連勝/連虧 | {streak:+d} 天 |')
+          print()
+          print(f'### 🎯 目標進度')
+          print(f'| 項目 | 數值 |')
+          print(f'|---|---|')
+          print(f'| 停利目標 | NT\${target:,.0f} |')
+          print(f'| 距目標還差 | NT\${to_target:,.0f} |')
+          print(f'| 進度 | {progress:.1f}% |')
+          print(f'| 停損門檻 | NT\${ruin:,.0f}（歸零） |')
+          print()
+
+          # 近 7 天成績
+          recent = history[-7:] if len(history) >= 7 else history
+          if recent:
+              print(f'### 📈 近 {len(recent)} 日成績')
+              print(f'| 日期 | 下注 | 盈虧 | 本金 |')
+              print(f'|---|---|---|---|')
+              for h in recent:
+                  pnl_str = f'+NT\${h[\"pnl\"]:,.0f}' if h.get('pnl',0) >= 0 else f'-NT\${abs(h[\"pnl\"]):,.0f}'
+                  icon = '✅' if h.get('pnl',0) > 0 else ('❌' if h.get('pnl',0) < 0 else '⚪')
+                  print(f'| {h[\"date\"]} | {h.get(\"bets\",0)} 注 | {icon} {pnl_str} | NT\${h[\"close\"]:,.0f} |')
+          " >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "⏰ 排程時間：台灣時間 21:00 | 策略：凱利注碼 | 起始：NT\$3,000 | 停利：NT\$6,000 | 停損：歸零" >> $GITHUB_STEP_SUMMARY

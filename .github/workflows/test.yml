@@ -1,0 +1,72 @@
+name: 自動測試
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'scripts/**.py'
+      - 'requirements.txt'
+      - '.github/workflows/test.yml'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      verbose:
+        description: '顯示詳細測試輸出'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+jobs:
+  test:
+    name: 整合測試
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run integration tests
+        id: tests
+        run: |
+          cd scripts
+          python test_integration.py 2>&1 | tee /tmp/test_output.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+
+      - name: Test summary
+        if: always()
+        run: |
+          echo "## 🧪 整合測試結果" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat /tmp/test_output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # 判斷結果
+          if grep -q "全部通過" /tmp/test_output.txt; then
+            PASS=$(grep -o "[0-9]* 通過" /tmp/test_output.txt | grep -o "[0-9]*")
+            echo "### ✅ 全部 ${PASS} 項測試通過" >> $GITHUB_STEP_SUMMARY
+          else
+            FAIL=$(grep -o "[0-9]* 失敗" /tmp/test_output.txt | grep -o "[0-9]*")
+            echo "### ❌ 有 ${FAIL} 項測試失敗，請查看上方輸出" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Fail if tests failed
+        if: steps.tests.outputs.exit_code != '0'
+        run: exit 1

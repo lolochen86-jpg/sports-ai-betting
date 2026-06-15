@@ -1,0 +1,192 @@
+{
+  "initial": 3000.0,
+  "current": 3803.0,
+  "peak": 3803.0,
+  "target": 12000.0,
+  "ruin_threshold": 10.0,
+  "status": "active",
+  "start_date": "2026-05-18",
+  "history": [
+    {
+      "date": "2026-05-18",
+      "open": 3000.0,
+      "close": 2900.0,
+      "pnl": -100.0,
+      "bets": 1,
+      "wins": 0,
+      "losses": 1,
+      "voids": 0
+    },
+    {
+      "date": "2026-05-19",
+      "open": 2900.0,
+      "close": 2840.0,
+      "pnl": -60.0,
+      "bets": 1,
+      "wins": 0,
+      "losses": 1,
+      "voids": 0
+    },
+    {
+      "date": "2026-05-21",
+      "open": 2840.0,
+      "close": 2840.0,
+      "pnl": 0.0,
+      "bets": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0
+    },
+    {
+      "date": "2026-05-22",
+      "open": 2840.0,
+      "close": 3365.0,
+      "pnl": 525.0,
+      "bets": 4,
+      "wins": 3,
+      "losses": 1,
+      "voids": 0
+    },
+    {
+      "date": "2026-05-23",
+      "open": 3365.0,
+      "close": 3275.0,
+      "pnl": -90.0,
+      "bets": 3,
+      "wins": 0,
+      "losses": 3,
+      "voids": 0
+    },
+    {
+      "date": "2026-05-24",
+      "open": 3275.0,
+      "close": 3448.0,
+      "pnl": 173.0,
+      "bets": 2,
+      "wins": 1,
+      "losses": 1,
+      "voids": 0
+    },
+    {
+      "date": "2026-05-27",
+      "open": 3448.0,
+      "close": 3448.0,
+      "pnl": 0.0,
+      "bets": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0
+    },
+    {
+      "date": "2026-05-28",
+      "open": 3448.0,
+      "close": 3448.0,
+      "pnl": 0.0,
+      "bets": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0
+    },
+    {
+      "date": "2026-05-29",
+      "open": 3448.0,
+      "close": 3448.0,
+      "pnl": 0.0,
+      "bets": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0
+    },
+    {
+      "date": "2026-05-30",
+      "open": 3448.0,
+      "close": 3448.0,
+      "pnl": 0.0,
+      "bets": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0
+    },
+    {
+      "date": "2026-06-02",
+      "open": 3448.0,
+      "close": 3448.0,
+      "pnl": 0.0,
+      "bets": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0
+    },
+    {
+      "date": "2026-06-03",
+      "open": 3448.0,
+      "close": 3448.0,
+      "pnl": 0.0,
+      "bets": 1,
+      "wins": 0,
+      "losses": 0,
+      "voids": 1
+    },
+    {
+      "date": "2026-06-04",
+      "open": 3448.0,
+      "close": 3448.0,
+      "pnl": 0.0,
+      "bets": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0
+    },
+    {
+      "date": "2026-06-05",
+      "open": 3448.0,
+      "close": 3448.0,
+      "pnl": 0.0,
+      "bets": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0
+    },
+    {
+      "date": "2026-06-06",
+      "open": 3448.0,
+      "close": 3438.0,
+      "pnl": -10.0,
+      "bets": 1,
+      "wins": 0,
+      "losses": 1,
+      "voids": 0
+    },
+    {
+      "date": "2026-06-11",
+      "open": 3438.0,
+      "close": 3438.0,
+      "pnl": 0.0,
+      "bets": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0
+    },
+    {
+      "date": "2026-06-12",
+      "open": 3438.0,
+      "close": 3593.0,
+      "pnl": 155.0,
+      "bets": 3,
+      "wins": 1,
+      "losses": 2,
+      "voids": 0
+    },
+    {
+      "date": "2026-06-13",
+      "open": 3593.0,
+      "close": 3803.0,
+      "pnl": 210.0,
+      "bets": 2,
+      "wins": 1,
+      "losses": 0,
+      "voids": 1
+    }
+  ],
+  "strategy": "underdog"
+}

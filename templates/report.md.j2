@@ -1,0 +1,152 @@
+# 運彩AI分析師 — {{ report_date }} 下注明細
+
+> 發布時間：{{ publish_time }} | 本報告由 AI 自動生成，僅供研究參考
+
+---
+
+## 📊 資金狀況
+
+| 項目 | 金額 |
+|---|---|
+| 起始本金 | {{ bankroll_initial | ntd }} |
+| 昨日投入 | {{ yesterday_total_bet | ntd }} |
+| 昨日盈虧 | {{ yesterday_pnl | sign_ntd }} |
+| **目前餘額** | **{{ bankroll_current | ntd }}** |
+| 累積報酬率 | {{ bankroll_roi | round(1) }}% |
+| 本金高點 | {{ bankroll_peak | ntd }} |
+| 距高點回撤 | -{{ bankroll_dd | round(1) }}% |
+{% if bankroll_streak > 0 %}| 目前連盈 | {{ bankroll_streak }} 天 |
+{% elif bankroll_streak < 0 %}| 目前連虧 | {{ bankroll_streak | abs }} 天 |
+{% endif %}
+
+---
+
+## ✅ 昨日成績（{{ yesterday_date }} 賽事）
+
+{% if yesterday_results %}
+| # | 下注內容 | 球種 | 賠率 | 下注額 | 結果 | 盈虧 |
+|---|---|---|---|---|---|---|
+{% for r in yesterday_results %}| {{ loop.index }} | {{ r.bet_label }} | {{ r.sport }} | {{ r.odds | default(r.parlay_odds | default(0)) | float | round(2) }} | {{ r.bet_amount | float | ntd }} | {{ r.result | result_icon }} {{ r.result }} | {{ r.pnl | float | sign_ntd }} |
+{% endfor %}
+
+**昨日合計**：投入 {{ yesterday_total_bet | ntd }}，盈虧 {{ yesterday_pnl | sign_ntd }}，命中 {{ yesterday_wins }}/{{ yesterday_total }}
+{% else %}
+*昨日無下注記錄。*
+{% endif %}
+
+---
+
+## 🎯 今日下注明細（{{ report_date }} 賽事）
+
+{% if strategies %}
+{% for strat in strategies %}
+### {{ strat.name }}{% if strat.bankroll_current is defined %} · 本金 NT${{ "{:,.0f}".format(strat.bankroll_current) }}（{% if strat.bankroll_roi >= 0 %}+{% endif %}{{ "{:.1f}".format(strat.bankroll_roi) }}%）{% endif %}
+
+**昨日成績（{{ yesterday_date }}）**
+
+{% if strat.no_yesterday %}
+*昨日此策略無下注記錄。*
+{% else %}
+| # | 下注內容 | 球種 | 賠率 | 下注額 | 結果 | 盈虧 |
+|---|---|---|---|---|---|---|
+{% for r in strat.yesterday_results %}| {{ loop.index }} | {{ r.bet_label }} | {{ r.sport }} | {{ r.odds | default(r.parlay_odds | default(0)) | float | round(2) }} | {{ r.bet_amount | float | ntd }} | {{ r.result }} | {{ r.pnl | float | sign_ntd }} |
+{% endfor %}
+合計：{{ strat.yesterday_total }} 注，命中 {{ strat.yesterday_wins }}/{{ strat.yesterday_total }}，盈虧 {{ strat.yesterday_pnl | sign_ntd }}
+{% endif %}
+
+**今日計劃（{{ report_date }}）**
+
+{% if strat.no_picks %}
+> 今日無符合門檻的選場。
+
+{% if strat.required_5_leg_note %}> required_5_leg: {{ strat.required_5_leg_note }}
+
+{% endif %}
+{% if strat.required_5_leg_candidates %}
+| 5關候選 | 賽事 | 賠率 | Edge |
+|---|---|---|---|
+{% for c in strat.required_5_leg_candidates %}| {{ c.bet_label }} | {{ c.matchup }} | {{ c.odds | odds_fmt }} | {{ c.edge | pct }} |
+{% endfor %}
+
+{% endif %}
+{% else %}
+{% if strat.required_5_leg_note %}
+> required_5_leg: {{ strat.required_5_leg_note }}
+
+{% endif %}
+{% if strat.required_5_leg_candidates %}
+| 5關候選 | 賽事 | 賠率 | Edge |
+|---|---|---|---|
+{% for c in strat.required_5_leg_candidates %}| {{ c.bet_label }} | {{ c.matchup }} | {{ c.odds | odds_fmt }} | {{ c.edge | pct }} |
+{% endfor %}
+
+{% endif %}
+{% if strat.singles %}
+**單關**
+
+| # | 賽事 | 下注方向 | 賠率 | 估算勝率 | Edge | 信心 | 下注額 | 潛在獎金 |
+|---|---|---|---|---|---|---|---|---|
+{% for s in strat.singles %}| {{ loop.index }} | {{ s.matchup }} | **{{ s.label }}** | {{ s.odds | odds_fmt }} | {{ s.true_prob | pct }} | {{ s.edge | pct }} | {{ s.grade }} | {{ s.amount | ntd }} | +{{ s.potential | ntd }} |
+{% endfor %}
+
+{% endif %}
+{% if strat.parlays %}
+**串關**
+
+| # | 組合 | 總賠率 | 串關EV | 下注額 | 潛在獎金 |
+|---|---|---|---|---|---|
+{% for p in strat.parlays %}| {{ loop.index }} | {{ p.leg_summary | default(p.label) }} | {{ p.parlay_odds | odds_fmt }} | {{ (p.parlay_ev * 100) | round(1) }}% | {{ p.amount | ntd }} | +{{ p.potential | ntd }} |
+{% endfor %}
+
+{% endif %}
+**小計**：{{ strat.total | ntd }}
+{% endif %}
+
+---
+{% endfor %}
+
+{% else %}
+{% if no_picks %}
+> **今日無符合門檻的選場**（Edge < 4% 或數據不足）。
+> 寧可空手，不強行下注。
+{% else %}
+{% if singles %}
+### 單關
+
+| # | 賽事 | 下注方向 | 賠率 | 估算勝率 | Edge | 信心 | 下注額 | 潛在獎金 |
+|---|---|---|---|---|---|---|---|---|
+{% for s in singles %}| {{ loop.index }} | {{ s.matchup }} | **{{ s.label }}** | {{ s.odds | odds_fmt }} | {{ s.true_prob | pct }} | {{ s.edge | pct }} | {{ s.grade }} | {{ s.amount | ntd }} | +{{ s.potential | ntd }} |
+{% endfor %}
+
+{% endif %}
+{% if parlays %}
+### 串關
+
+| # | 組合 | 總賠率 | 串關EV | 下注額 | 潛在獎金 |
+|---|---|---|---|---|---|
+{% for p in parlays %}| {{ loop.index + singles | length }} | {{ p.leg_summary | default(p.label) }} | {{ p.parlay_odds | odds_fmt }} | {{ (p.parlay_ev * 100) | round(1) }}% | {{ p.amount | ntd }} | +{{ p.potential | ntd }} |
+{% endfor %}
+
+{% endif %}
+**今日合計下注**：{{ total_today | ntd }}
+{% endif %}
+{% endif %}
+
+---
+
+## 📈 累積績效
+
+| 指標 | 數值 |
+|---|---|
+| 總下注次數 | {{ perf_total_bets }} 注 |
+| 投資報酬率 | {{ perf_roi | round(1) }}% |
+| 單關命中率 | {{ win_rate_single | round(1) }}% |
+| 串關命中率 | {{ win_rate_parlay | round(1) }}% |
+| NBA 戰績 | {{ perf_nba_wins }}/{{ perf_nba_bets }} |
+| MLB 戰績 | {{ perf_mlb_wins }}/{{ perf_mlb_bets }} |
+
+---
+
+*數據來源：NBA Stats API、MLB Stats API、台灣運彩官網 / Pinnacle*
+*模型：Elo + 效率差（NBA）、先發 FIP 對決（MLB）、1/4 分數凱利注碼*
+*運彩有風險，理性下注，本報告不構成投資建議。*

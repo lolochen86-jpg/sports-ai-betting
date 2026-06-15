@@ -1,0 +1,27 @@
+[
+  {
+    "game_id": "9ea306ebbe68ff94dfa5b88d1e250b37",
+    "sport": "NBA",
+    "game_date": "2026-06-11",
+    "home_team_abbr": "NYK",
+    "away_team_abbr": "SAS",
+    "home_team_name": "New York Knicks",
+    "away_team_name": "San Antonio Spurs",
+    "source": "pinnacle",
+    "timestamp": "2026-06-11T00:38:28.266021+08:00",
+    "home_odds_raw": 1.79,
+    "away_odds_raw": 2.15,
+    "spread": -2.0,
+    "spread_home_odds_raw": 1.92,
+    "spread_away_odds_raw": 1.99,
+    "total_line": 216.5,
+    "over_odds_raw": 1.89,
+    "under_odds_raw": 2.0,
+    "home_odds": 1.751,
+    "away_odds": 2.103,
+    "spread_home_odds": 1.878,
+    "spread_away_odds": 1.946,
+    "over_odds": 1.849,
+    "under_odds": 1.956
+  }
+]

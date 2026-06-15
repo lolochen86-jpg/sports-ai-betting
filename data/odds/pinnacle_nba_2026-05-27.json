@@ -1,0 +1,27 @@
+[
+  {
+    "game_id": "197dd95ba7880a2cd6a00df88014610b",
+    "sport": "NBA",
+    "game_date": "2026-05-27",
+    "home_team_abbr": "OKC",
+    "away_team_abbr": "SAS",
+    "home_team_name": "Oklahoma City Thunder",
+    "away_team_name": "San Antonio Spurs",
+    "source": "pinnacle",
+    "timestamp": "2026-05-27T00:45:54.766947+08:00",
+    "home_odds_raw": 1.61,
+    "away_odds_raw": 2.47,
+    "spread": -4.5,
+    "spread_home_odds_raw": 2.01,
+    "spread_away_odds_raw": 1.9,
+    "total_line": 216.5,
+    "over_odds_raw": 1.9,
+    "under_odds_raw": 1.99,
+    "home_odds": 1.575,
+    "away_odds": 2.416,
+    "spread_home_odds": 1.966,
+    "spread_away_odds": 1.858,
+    "over_odds": 1.858,
+    "under_odds": 1.946
+  }
+]
