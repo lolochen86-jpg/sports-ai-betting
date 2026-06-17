@@ -373,8 +373,8 @@ export async function generatePrediction(
   
   // ─── 1. Parallel live feature extraction ───
   const [homeRecent, awayRecent] = await Promise.all([
-    extractRecentStats(homeId, league),
-    extractRecentStats(awayId, league),
+    extractRecentStats(homeId, league, game.id, game.gameDate),
+    extractRecentStats(awayId, league, game.id, game.gameDate),
   ]);
   
   // ─── 2. Run MODEL 1: SportsAI 特徵加權權重模型 (v4.2) ───
@@ -676,9 +676,9 @@ export async function generatePredictionV2(
     awayFatigue,
     pitchers
   ] = await Promise.all([
-    extractRecentStats(homeId, league),
-    extractRecentStats(awayId, league),
-    fetchH2HRecord(homeId, awayId, league),
+    extractRecentStats(homeId, league, game.id, game.gameDate),
+    extractRecentStats(awayId, league, game.id, game.gameDate),
+    fetchH2HRecord(homeId, awayId, league, game.id, game.gameDate),
     detectFatigue(homeId, dateStr, league),
     detectFatigue(awayId, dateStr, league),
     league === 'MLB' ? fetchStartingPitcher(game.id) : Promise.resolve({ home: null, away: null })

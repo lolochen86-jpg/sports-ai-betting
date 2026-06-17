@@ -825,7 +825,7 @@ export default function SharePage() {
                     {/* Match Score Display */}
                     <div className="flex items-center justify-between py-2">
                       {/* Away Team */}
-                      <div className="flex items-center space-x-3 w-[40%]">
+                      <div className="flex items-center space-x-2.5 flex-1 min-w-0">
                         <div
                           style={{
                             background: `linear-gradient(135deg, ${awayGradient[0]}, ${awayGradient[1]})`
@@ -843,19 +843,19 @@ export default function SharePage() {
                       </div>
 
                       {/* Score or VS */}
-                      <div className="flex items-center justify-center space-x-4 w-[20%] text-center">
-                        <span className="text-xl font-black text-white tracking-widest">
+                      <div className="flex items-center justify-center space-x-2.5 px-3 shrink-0 text-center font-mono">
+                        <span className="text-xl font-black text-white">
                           {awayScoreDisp}
                         </span>
-                        <span className="text-xs italic font-extrabold text-gray-600">VS</span>
-                        <span className="text-xl font-black text-white tracking-widest">
+                        <span className="text-xs italic font-black text-gray-500 select-none">VS</span>
+                        <span className="text-xl font-black text-white">
                           {homeScoreDisp}
                         </span>
                       </div>
 
                       {/* Home Team */}
-                      <div className="flex items-center space-x-3 w-[40%] justify-end text-right">
-                        <div className="truncate mr-3">
+                      <div className="flex items-center space-x-2.5 flex-1 min-w-0 justify-end text-right">
+                        <div className="truncate">
                           <h4 className="text-sm font-black text-white truncate">
                             {getTeamNameCn(game.homeTeam.code, game.league)}
                           </h4>

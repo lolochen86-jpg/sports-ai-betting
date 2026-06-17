@@ -21,7 +21,7 @@ function calculateSlope(values: number[]): number {
 
 // ─── MLB Live Game Logs Fetcher ───
 
-async function fetchMLBRecentStats(teamId: string): Promise<TeamRecentStats> {
+async function fetchMLBRecentStats(teamId: string, excludeGameId?: string, targetGameDate?: string): Promise<TeamRecentStats> {
   try {
     const today = new Date();
     const thirtyDaysAgo = new Date();
@@ -40,9 +40,14 @@ async function fetchMLBRecentStats(teamId: string): Promise<TeamRecentStats> {
     /* eslint-disable @typescript-eslint/no-explicit-any */
     const allGames = (json.dates ?? []).flatMap((d: any) => d.games ?? []);
     
-    // Filter completed games
+    // Filter completed games, excluding the target game to prevent look-ahead bias
     const completedGames = allGames
-      .filter((g: any) => g.status?.detailedState === 'Final' && g.teams?.home?.score !== undefined)
+      .filter((g: any) => {
+        const isCompleted = g.status?.detailedState === 'Final' && g.teams?.home?.score !== undefined;
+        const isExcluded = excludeGameId && String(g.gamePk) === String(excludeGameId);
+        const isBefore = !targetGameDate || new Date(g.gameDate).getTime() < new Date(targetGameDate).getTime();
+        return isCompleted && !isExcluded && isBefore;
+      })
       .sort((a: any, b: any) => new Date(b.gameDate).getTime() - new Date(a.gameDate).getTime()); // Newest first
     
     const last5 = completedGames.slice(0, 5);
@@ -138,7 +143,7 @@ async function fetchMLBRecentStats(teamId: string): Promise<TeamRecentStats> {
 
 // ─── NBA Live Game Logs Fetcher ───
 
-async function fetchNBARecentStats(teamId: string): Promise<TeamRecentStats> {
+async function fetchNBARecentStats(teamId: string, excludeGameId?: string, targetGameDate?: string): Promise<TeamRecentStats> {
   try {
     // ESPN API for team schedule
     const url = `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/${teamId}/schedule`;
@@ -147,13 +152,16 @@ async function fetchNBARecentStats(teamId: string): Promise<TeamRecentStats> {
     if (!res.ok) throw new Error(`ESPN NBA team schedule fetch failed: ${res.status}`);
     const json = await res.json();
     
-    // Filter completed events
+    // Filter completed events, excluding the target game to prevent look-ahead bias
     /* eslint-disable @typescript-eslint/no-explicit-any */
     const events = json.events ?? [];
     const completedEvents = events
       .filter((e: any) => {
         const status = e.status?.type?.name;
-        return status === 'STATUS_FINAL' || status === 'Final';
+        const isCompleted = status === 'STATUS_FINAL' || status === 'Final';
+        const isExcluded = excludeGameId && String(e.id) === String(excludeGameId);
+        const isBefore = !targetGameDate || new Date(e.date).getTime() < new Date(targetGameDate).getTime();
+        return isCompleted && !isExcluded && isBefore;
       })
       .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Newest first
     
@@ -288,17 +296,19 @@ function getFallbackStats(teamId: string, league: League): TeamRecentStats {
 
 export async function extractRecentStats(
   teamId: string,
-  league: League
+  league: League,
+  excludeGameId?: string,
+  targetGameDate?: string
 ): Promise<TeamRecentStats> {
-  const cacheKey = `features:${league.toLowerCase()}:${teamId}`;
+  const cacheKey = `features:${league.toLowerCase()}:${teamId}${excludeGameId ? `:${excludeGameId}` : ''}${targetGameDate ? `:${targetGameDate}` : ''}`;
   const cached = apiCache.get<TeamRecentStats>(cacheKey);
   if (cached) return cached;
 
   let stats: TeamRecentStats;
   if (league === 'MLB') {
-    stats = await fetchMLBRecentStats(teamId);
+    stats = await fetchMLBRecentStats(teamId, excludeGameId, targetGameDate);
   } else {
-    stats = await fetchNBARecentStats(teamId);
+    stats = await fetchNBARecentStats(teamId, excludeGameId, targetGameDate);
   }
 
   apiCache.set(cacheKey, stats, CACHE_TTL_FEATURES);
@@ -310,9 +320,11 @@ export async function extractRecentStats(
 export async function fetchH2HRecord(
   teamAId: string,
   teamBId: string,
-  league: League
+  league: League,
+  excludeGameId?: string,
+  targetGameDate?: string
 ): Promise<H2HRecord | null> {
-  const cacheKey = `h2h:${league}:${teamAId}:${teamBId}`;
+  const cacheKey = `h2h:${league}:${teamAId}:${teamBId}${excludeGameId ? `:${excludeGameId}` : ''}${targetGameDate ? `:${targetGameDate}` : ''}`;
   const cached = apiCache.get<H2HRecord>(cacheKey);
   if (cached) return cached;
 
@@ -327,8 +339,13 @@ export async function fetchH2HRecord(
       const json = await res.json();
       const events = json.events ?? [];
       const completed = events.filter(
-        (e: any) =>
-          e.status?.type?.name === 'STATUS_FINAL' || e.status?.type?.name === 'Final'
+        (e: any) => {
+          const status = e.status?.type?.name;
+          const isCompleted = status === 'STATUS_FINAL' || status === 'Final';
+          const isExcluded = excludeGameId && String(e.id) === String(excludeGameId);
+          const isBefore = !targetGameDate || new Date(e.date).getTime() < new Date(targetGameDate).getTime();
+          return isCompleted && !isExcluded && isBefore;
+        }
       );
 
       for (const e of completed) {
@@ -356,7 +373,12 @@ export async function fetchH2HRecord(
       const json = await res.json();
       const allGames = (json.dates ?? []).flatMap((d: any) => d.games ?? []);
       const completed = allGames.filter(
-        (g: any) => g.status?.detailedState === 'Final' && g.teams?.home?.score !== undefined
+        (g: any) => {
+          const isCompleted = g.status?.detailedState === 'Final' && g.teams?.home?.score !== undefined;
+          const isExcluded = excludeGameId && String(g.gamePk) === String(excludeGameId);
+          const isBefore = !targetGameDate || new Date(g.gameDate).getTime() < new Date(targetGameDate).getTime();
+          return isCompleted && !isExcluded && isBefore;
+        }
       );
 
       for (const g of completed) {

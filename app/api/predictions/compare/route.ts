@@ -63,9 +63,9 @@ export async function POST(request: NextRequest) {
     const dateStr = game.gameDate.split('T')[0];
 
     const [homeRecent, awayRecent, h2hRecord, homeFatigue, awayFatigue, pitchers] = await Promise.all([
-      extractRecentStats(homeId, leagueUpper),
-      extractRecentStats(awayId, leagueUpper),
-      fetchH2HRecord(homeId, awayId, leagueUpper),
+      extractRecentStats(homeId, leagueUpper, game.id, game.gameDate),
+      extractRecentStats(awayId, leagueUpper, game.id, game.gameDate),
+      fetchH2HRecord(homeId, awayId, leagueUpper, game.id, game.gameDate),
       detectFatigue(homeId, dateStr, leagueUpper),
       detectFatigue(awayId, dateStr, leagueUpper),
       leagueUpper === 'MLB' ? fetchStartingPitcher(game.id) : Promise.resolve({ home: null, away: null })
