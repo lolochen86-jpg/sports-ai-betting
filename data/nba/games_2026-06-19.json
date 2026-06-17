@@ -1,0 +1,33 @@
+[
+  {
+    "game_id": "0042500407",
+    "game_date": "2026-06-19",
+    "home_team": "SAS",
+    "away_team": "NYK",
+    "game_time_utc": "2026-06-20T00:30:00Z",
+    "arena": "",
+    "home_ortg": 118.7,
+    "home_drtg": 110.4,
+    "home_netrtg": 8.4,
+    "home_pace": 100.72,
+    "away_ortg": 118.7,
+    "away_drtg": 112.3,
+    "away_netrtg": 6.4,
+    "away_pace": 97.71,
+    "home_l10_win_pct": 0.4,
+    "home_win_pct_l10": 0.3333333333333333,
+    "away_win_pct_l10": 1.0,
+    "home_season_win_pct": 0.756,
+    "away_season_win_pct": 0.646,
+    "home_last3_wins": 1,
+    "away_last3_wins": 2,
+    "home_elo": 1500.0,
+    "away_elo": 1500.0,
+    "home_injuries": [],
+    "away_injuries": [],
+    "home_injury_adj": 0.0,
+    "away_injury_adj": 0.0,
+    "home_out_count": 0,
+    "away_out_count": 0
+  }
+]
