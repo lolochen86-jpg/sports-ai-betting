@@ -33,8 +33,8 @@ export async function GET(request: NextRequest) {
       games.map(async (game) => {
         try {
           const [homeStats, awayStats] = await Promise.all([
-            extractRecentStats(game.homeTeam.id, game.league),
-            extractRecentStats(game.awayTeam.id, game.league),
+            extractRecentStats(game.homeTeam.id, game.league, game.id, game.gameDate),
+            extractRecentStats(game.awayTeam.id, game.league, game.id, game.gameDate),
           ]);
           return {
             ...game,

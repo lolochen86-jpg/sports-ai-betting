@@ -470,8 +470,9 @@ def run(as_of_date: date | str | None = None) -> Optional[list]:
             save_json([], output_path)
         return []
 
-    eff       = fetch_team_efficiency(d)
-    records   = fetch_team_recent_records(d)
+    prev_d    = d - timedelta(days=1)
+    eff       = fetch_team_efficiency(prev_d)
+    records   = fetch_team_recent_records(prev_d)
     injuries  = fetch_injury_report(d)
     elo       = load_or_init_elo(d)
 
