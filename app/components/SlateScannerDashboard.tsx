@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export interface ScannerGame {
   id: string;
@@ -37,6 +37,9 @@ export interface ScannerGame {
     // NBA Specific injury impact scores (higher = more key players missing)
     injuryImpactHome?: number;
     injuryImpactAway?: number;
+
+    // AI Insight Report
+    insightReport?: string;
   };
 }
 
@@ -44,159 +47,67 @@ interface SlateScannerDashboardProps {
   initialGames?: ScannerGame[];
 }
 
-// High-Fidelity Mock Data for Preview / Fallback
-const DEFAULT_MOCK_GAMES: ScannerGame[] = [
-  {
-    id: "g-1",
-    league: "MLB",
-    gameDate: "2026-06-18T23:05:00Z",
-    homeTeam: {
-      code: "PHI",
-      nameCn: "費城費城人",
-      avgPoints: 5.3,
-      recentForm: ["W", "W", "L", "W", "W"]
-    },
-    awayTeam: {
-      code: "MIA",
-      nameCn: "邁阿密馬林魚",
-      avgPoints: 2.6,
-      recentForm: ["L", "L", "W", "L", "L"]
-    },
-    bookmakerSpread: -1.5,
-    bookmakerTotal: 8.0,
-    prediction: {
-      winner: "home",
-      winProbability: 0.74,
-      predictedSpread: -4.1,
-      predictedTotal: 9.3,
-      pitcherNameHome: "Zack Wheeler",
-      pitcherEraHome: 2.45,
-      pitcherNameAway: "Edward Cabrera",
-      pitcherEraAway: 4.80
-    }
-  },
-  {
-    id: "g-2",
-    league: "NBA",
-    gameDate: "2026-06-19T00:30:00Z",
-    homeTeam: {
-      code: "BOS",
-      nameCn: "波士頓塞爾提克",
-      avgPoints: 114.5,
-      recentForm: ["W", "W", "W", "L", "W"]
-    },
-    awayTeam: {
-      code: "DAL",
-      nameCn: "達拉斯獨行俠",
-      avgPoints: 109.2,
-      recentForm: ["L", "L", "W", "W", "L"]
-    },
-    bookmakerSpread: -6.5,
-    bookmakerTotal: 212.5,
-    prediction: {
-      winner: "home",
-      winProbability: 0.695,
-      predictedSpread: -9.2,
-      predictedTotal: 215.8,
-      injuryImpactHome: 1.2, // Porzingis questionable
-      injuryImpactAway: 0.0  // Doncic/Kyrie fully fit
-    }
-  },
-  {
-    id: "g-3",
-    league: "MLB",
-    gameDate: "2026-06-18T22:40:00Z",
-    homeTeam: {
-      code: "NYY",
-      nameCn: "紐約洋基",
-      avgPoints: 6.2,
-      recentForm: ["W", "L", "W", "W", "W"]
-    },
-    awayTeam: {
-      code: "CWS",
-      nameCn: "芝加哥白襪",
-      avgPoints: 3.9,
-      recentForm: ["L", "L", "L", "W", "L"]
-    },
-    bookmakerSpread: -2.5,
-    bookmakerTotal: 8.5,
-    prediction: {
-      winner: "home",
-      winProbability: 0.815,
-      predictedSpread: -4.7,
-      predictedTotal: 10.1,
-      pitcherNameHome: "Gerrit Cole",
-      pitcherEraHome: 2.10,
-      pitcherNameAway: "Chris Flexen",
-      pitcherEraAway: 5.25
-    }
-  },
-  {
-    id: "g-4",
-    league: "NBA",
-    gameDate: "2026-06-19T02:00:00Z",
-    homeTeam: {
-      code: "LAL",
-      nameCn: "洛杉磯湖人",
-      avgPoints: 112.8,
-      recentForm: ["W", "L", "W", "L", "W"]
-    },
-    awayTeam: {
-      code: "GSW",
-      nameCn: "金州勇士",
-      avgPoints: 115.4,
-      recentForm: ["L", "W", "W", "W", "L"]
-    },
-    bookmakerSpread: -1.5,
-    bookmakerTotal: 224.5,
-    prediction: {
-      winner: "away",
-      winProbability: 0.58,
-      predictedSpread: 2.1, // Away favorite
-      predictedTotal: 221.2,
-      injuryImpactHome: 4.8, // Anthony Davis questionable
-      injuryImpactAway: 0.5
-    }
-  },
-  {
-    id: "g-5",
-    league: "MLB",
-    gameDate: "2026-06-18T23:10:00Z",
-    homeTeam: {
-      code: "LAD",
-      nameCn: "洛杉磯道奇",
-      avgPoints: 6.0,
-      recentForm: ["W", "W", "W", "L", "W"]
-    },
-    awayTeam: {
-      code: "TB",
-      nameCn: "坦帕灣光芒",
-      avgPoints: 3.3,
-      recentForm: ["L", "W", "L", "L", "W"]
-    },
-    bookmakerSpread: -1.5,
-    bookmakerTotal: 7.5,
-    prediction: {
-      winner: "home",
-      winProbability: 0.655,
-      predictedSpread: -2.3,
-      predictedTotal: 8.8,
-      pitcherNameHome: "Yoshinobu Yamamoto",
-      pitcherEraHome: 2.90,
-      pitcherNameAway: "Taj Bradley",
-      pitcherEraAway: 3.85
-    }
-  }
-];
+export default function SlateScannerDashboard({ initialGames }: SlateScannerDashboardProps) {
+  // Date selection state (Defaults to today in YYYY-MM-DD local time)
+  const [date, setDate] = useState<string>(() => {
+    const local = new Date();
+    const offset = local.getTimezoneOffset() * 60000;
+    const localTime = new Date(local.getTime() - offset);
+    return localTime.toISOString().split('T')[0];
+  });
 
-export default function SlateScannerDashboard({ initialGames = DEFAULT_MOCK_GAMES }: SlateScannerDashboardProps) {
+  const [games, setGames] = useState<ScannerGame[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeLeague, setActiveLeague] = useState<'ALL' | 'NBA' | 'MLB'>('ALL');
+
   // Sliders state
   const [minSpreadEdge, setMinSpreadEdge] = useState<number>(1.0);
   const [minTotalEdge, setMinTotalEdge] = useState<number>(1.0);
   const [minWinProbability, setMinWinProbability] = useState<number>(55); // in %
 
+  // Fetch games and predictions dynamically from the API
+  useEffect(() => {
+    let active = true;
+    const loadData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/slate-scanner/games?date=${date}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        
+        if (!active) return;
+        
+        if (json.success) {
+          setGames(json.data || []);
+        } else {
+          throw new Error(json.error || '無法載入掃描資料');
+        }
+      } catch (err: any) {
+        if (!active) return;
+        console.error(err);
+        setError(err.message || '載入大數據盤口掃描資料時發生錯誤');
+        setGames([]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    loadData();
+    return () => { active = false; };
+  }, [date]);
+
+  // Fallback to initialGames if API has empty response and it was provided
+  const displayGames = games.length > 0 ? games : (initialGames || []);
+
+  // Filter games based on league select
+  const leagueFilteredGames = displayGames.filter(game => {
+    if (activeLeague === 'ALL') return true;
+    return game.league === activeLeague;
+  });
+
   // Filter games based on sliders
-  const filteredGames = initialGames.filter((game) => {
+  const filteredGames = leagueFilteredGames.filter((game) => {
     // Calculate edges
     const spreadEdge = Math.abs(game.prediction.predictedSpread - game.bookmakerSpread);
     const totalEdge = Math.abs(game.prediction.predictedTotal - game.bookmakerTotal);
@@ -212,7 +123,7 @@ export default function SlateScannerDashboard({ initialGames = DEFAULT_MOCK_GAME
   return (
     <div className="w-full bg-[#070b19] min-h-screen text-gray-100 p-6 md:p-10 font-sans selection:bg-purple-500 selection:text-white">
       {/* Header Widget */}
-      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="mb-8 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6">
         <div>
           <h1 className="text-3xl font-black bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent tracking-tight">
             SLATE SCANNER
@@ -221,11 +132,64 @@ export default function SlateScannerDashboard({ initialGames = DEFAULT_MOCK_GAME
             大數據盤口量化掃描系統
           </p>
         </div>
-        <div className="bg-white/5 border border-white/10 px-4 py-2 rounded-2xl flex items-center gap-3 backdrop-blur-md">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-xs font-mono font-bold text-gray-300">
-            掃描完成：共計 {initialGames.length} 場賽事
-          </span>
+
+        {/* Controls: Date Picker & League Tabs */}
+        <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto">
+          {/* League Filter */}
+          <div className="bg-white/5 border border-white/10 p-1 rounded-2xl flex items-center backdrop-blur-md">
+            <button
+              onClick={() => setActiveLeague('ALL')}
+              className={`px-4 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-300 ${
+                activeLeague === 'ALL'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/20'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              全部聯盟
+            </button>
+            <button
+              onClick={() => setActiveLeague('NBA')}
+              className={`px-4 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-300 ${
+                activeLeague === 'NBA'
+                  ? 'bg-[#ff6b00] text-white shadow-lg shadow-orange-500/20'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              NBA
+            </button>
+            <button
+              onClick={() => setActiveLeague('MLB')}
+              className={`px-4 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-300 ${
+                activeLeague === 'MLB'
+                  ? 'bg-[#005A9C] text-white shadow-lg shadow-blue-500/20'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              MLB
+            </button>
+          </div>
+
+          {/* Date Picker */}
+          <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-2xl backdrop-blur-md">
+            <label htmlFor="scan-date" className="text-xs font-mono font-black text-purple-300">
+              📅 選擇日期:
+            </label>
+            <input
+              type="date"
+              id="scan-date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="bg-transparent text-xs font-bold font-mono text-white border-0 focus:ring-0 cursor-pointer outline-none"
+            />
+          </div>
+
+          {/* Scan Status */}
+          <div className="bg-white/5 border border-white/10 px-4 py-2.5 rounded-2xl flex items-center gap-3 backdrop-blur-md ml-auto xl:ml-0">
+            <span className={`w-2.5 h-2.5 rounded-full ${loading ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500 animate-pulse'}`} />
+            <span className="text-xs font-mono font-bold text-gray-300">
+              {loading ? '掃描中...' : `掃描完成：共計 ${displayGames.length} 場賽事`}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -308,8 +272,23 @@ export default function SlateScannerDashboard({ initialGames = DEFAULT_MOCK_GAME
         </div>
       </div>
 
-      {/* Render Filtered Cards Grid */}
-      {filteredGames.length === 0 ? (
+      {/* Loading & Error States */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <div className="w-12 h-12 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
+          <p className="text-sm font-mono text-purple-400 animate-pulse font-bold">大數據掃描中，請稍候...</p>
+        </div>
+      ) : error ? (
+        <div className="border border-red-500/20 bg-red-950/10 rounded-3xl p-10 max-w-xl mx-auto text-center shadow-xl">
+          <p className="text-red-400 text-sm font-extrabold">⚠️ {error}</p>
+          <button
+            onClick={() => setDate(date)}
+            className="mt-6 px-6 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 text-xs font-bold rounded-xl border border-red-500/30 transition-all cursor-pointer font-sans"
+          >
+            重新整理
+          </button>
+        </div>
+      ) : filteredGames.length === 0 ? (
         <div className="border border-white/5 bg-[#090e24] rounded-3xl p-16 text-center max-w-xl mx-auto flex flex-col items-center justify-center gap-4 shadow-xl">
           <div className="w-16 h-16 rounded-full bg-slate-800/50 flex items-center justify-center text-gray-500 border border-white/5">
             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
@@ -383,7 +362,7 @@ export default function SlateScannerDashboard({ initialGames = DEFAULT_MOCK_GAME
 
                 {/* Score Comparing Box (Bookmaker vs AI Model) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  {/* Let's render Spread Edge section */}
+                  {/* Spread Edge section */}
                   <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex flex-col justify-between relative">
                     <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest font-bold">讓分盤口與預測 (Spread)</span>
                     <div className="flex justify-between items-center mt-3">
@@ -398,7 +377,7 @@ export default function SlateScannerDashboard({ initialGames = DEFAULT_MOCK_GAME
                     </div>
                   </div>
 
-                  {/* Let's render Total Edge section */}
+                  {/* Total Edge section */}
                   <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex flex-col justify-between relative">
                     <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest font-bold">大小分盤口與預測 (Total)</span>
                     <div className="flex justify-between items-center mt-3">
@@ -428,12 +407,25 @@ export default function SlateScannerDashboard({ initialGames = DEFAULT_MOCK_GAME
                   </div>
                 </div>
 
+                {/* AI Insight Report Section */}
+                {game.prediction.insightReport && (
+                  <div className="bg-purple-950/10 border border-purple-500/10 rounded-2xl p-4 mb-6 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-purple-500/5 rounded-bl-full pointer-events-none" />
+                    <span className="text-[10px] font-mono text-purple-400 uppercase tracking-widest font-black block mb-1.5">
+                      💡 AI 盤口數據洞察 (AI Insights)
+                    </span>
+                    <p className="text-xs text-gray-200 leading-relaxed font-semibold">
+                      {game.prediction.insightReport}
+                    </p>
+                  </div>
+                )}
+
                 {/* Matchup Context (對戰脈絡區) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-white/5 pt-4">
                   {/* Left Column: Guest Starter vs Home offense */}
                   <div className="space-y-1">
                     <span className="text-[10px] font-bold text-gray-500 tracking-wider block font-mono">
-                      {game.league === 'MLB' ? '客隊先發投手 vs 主隊火力' : '客隊傷情 vs 主隊火力'}
+                      {game.league === 'MLB' ? '客隊先發投手 vs 主隊火力' : '客隊火力與近況'}
                     </span>
                     {game.league === 'MLB' ? (
                       <div className="text-xs leading-relaxed">
@@ -444,9 +436,9 @@ export default function SlateScannerDashboard({ initialGames = DEFAULT_MOCK_GAME
                       </div>
                     ) : (
                       <div className="text-xs leading-relaxed">
-                        <p className="font-bold text-gray-300">🤕 傷情影響值 (Away): <span className="text-yellow-400 font-mono font-bold">+{game.prediction.injuryImpactAway?.toFixed(1)}</span></p>
+                        <p className="font-semibold text-gray-300">🔥 近況近 5 場: <span className="text-purple-400 font-mono font-bold">{game.awayTeam.recentForm.join('')}</span></p>
                         <p className="text-gray-400 font-mono text-[11px] mt-0.5">
-                          主隊近 5 均得分: <span className="text-white font-bold">{game.homeTeam.avgPoints}分</span>
+                          客隊近 5 均得分: <span className="text-white font-bold">{game.awayTeam.avgPoints}分</span>
                         </p>
                       </div>
                     )}
@@ -455,7 +447,7 @@ export default function SlateScannerDashboard({ initialGames = DEFAULT_MOCK_GAME
                   {/* Right Column: Home Starter vs Guest offense */}
                   <div className="space-y-1 md:border-l md:border-white/5 md:pl-4">
                     <span className="text-[10px] font-bold text-gray-500 tracking-wider block font-mono">
-                      {game.league === 'MLB' ? '主隊先發投手 vs 客隊火力' : '主隊傷情 vs 客隊火力'}
+                      {game.league === 'MLB' ? '主隊先發投手 vs 客隊火力' : '主隊火力與近況'}
                     </span>
                     {game.league === 'MLB' ? (
                       <div className="text-xs leading-relaxed">
@@ -466,9 +458,9 @@ export default function SlateScannerDashboard({ initialGames = DEFAULT_MOCK_GAME
                       </div>
                     ) : (
                       <div className="text-xs leading-relaxed">
-                        <p className="font-bold text-gray-300">🤕 傷情影響值 (Home): <span className="text-yellow-400 font-mono font-bold">+{game.prediction.injuryImpactHome?.toFixed(1)}</span></p>
+                        <p className="font-semibold text-gray-300">🔥 近況近 5 場: <span className="text-purple-400 font-mono font-bold">{game.homeTeam.recentForm.join('')}</span></p>
                         <p className="text-gray-400 font-mono text-[11px] mt-0.5">
-                          客隊近 5 均得分: <span className="text-white font-bold">{game.awayTeam.avgPoints}分</span>
+                          主隊近 5 均得分: <span className="text-white font-bold">{game.homeTeam.avgPoints}分</span>
                         </p>
                       </div>
                     )}

@@ -121,6 +121,23 @@ async function fetchMLBRecentStats(teamId: string, excludeGameId?: string, targe
     const momentumLabel: 'hot' | 'cold' | 'stable' =
       scoringMomentum > 0.5 ? 'hot' : scoringMomentum < -0.5 ? 'cold' : 'stable';
 
+    // Calculate 10-game stats
+    const last10 = completedGames.slice(0, 10);
+    let wins10 = 0;
+    let losses10 = 0;
+    let totalScored10 = 0;
+
+    for (const g of last10) {
+      const isHome = String(g.teams?.home?.team?.id) === teamId;
+      const homeScore = g.teams?.home?.score ?? 0;
+      const awayScore = g.teams?.away?.score ?? 0;
+      const teamScore = isHome ? homeScore : awayScore;
+      const opponentScore = isHome ? awayScore : homeScore;
+      totalScored10 += teamScore;
+      if (teamScore > opponentScore) wins10++;
+      else losses10++;
+    }
+
     return {
       wins,
       losses,
@@ -134,6 +151,10 @@ async function fetchMLBRecentStats(teamId: string, excludeGameId?: string, targe
       scoringMomentum,
       defenseMomentum,
       momentumLabel,
+      wins10,
+      losses10,
+      avgScore10: last10.length > 0 ? Number((totalScored10 / last10.length).toFixed(1)) : undefined,
+      recentForm: results.map(r => r ? 'W' : 'L'),
     };
   } catch (err) {
     console.warn(`Failed to fetch MLB live stats for team ${teamId}, using fallback:`, err);
@@ -237,6 +258,26 @@ async function fetchNBARecentStats(teamId: string, excludeGameId?: string, targe
     const momentumLabel: 'hot' | 'cold' | 'stable' =
       scoringMomentum > 1.5 ? 'hot' : scoringMomentum < -1.5 ? 'cold' : 'stable';
 
+    // Calculate 10-game stats
+    const last10 = completedEvents.slice(0, 10);
+    let wins10 = 0;
+    let losses10 = 0;
+    let totalScored10 = 0;
+
+    for (const e of last10) {
+      const comp = e.competitions?.[0];
+      const competitor = comp?.competitors?.find((c: any) => String(c.team?.id) === teamId);
+      const opponent = comp?.competitors?.find((c: any) => String(c.team?.id) !== teamId);
+      
+      const teamScore = competitor?.score?.value ? Number(competitor.score.value) : 0;
+      const opponentScore = opponent?.score?.value ? Number(opponent.score.value) : 0;
+      
+      totalScored10 += teamScore;
+      const isWin = competitor?.winner === true || teamScore > opponentScore;
+      if (isWin) wins10++;
+      else losses10++;
+    }
+
     return {
       wins,
       losses,
@@ -246,10 +287,14 @@ async function fetchNBARecentStats(teamId: string, excludeGameId?: string, targe
       homeAvgScored: homeCount > 0 ? Number((homeScored / homeCount).toFixed(1)) : undefined,
       awayAvgScored: awayCount > 0 ? Number((awayScored / awayCount).toFixed(1)) : undefined,
       homeAvgConceded: homeCount > 0 ? Number((homeConceded / homeCount).toFixed(1)) : undefined,
-      awayAvgConceded: awayCount > 0 ? Number((awayConceded / awayCount).toFixed(1)) : undefined,
+      awayAvgConceded: awayCount > 0 ? Number((awayScored / awayCount).toFixed(1)) : undefined,
       scoringMomentum,
       defenseMomentum,
       momentumLabel,
+      wins10,
+      losses10,
+      avgScore10: last10.length > 0 ? Number((totalScored10 / last10.length).toFixed(1)) : undefined,
+      recentForm: results.map(r => r ? 'W' : 'L'),
     };
   } catch (err) {
     console.warn(`Failed to fetch NBA live stats for team ${teamId}, using fallback:`, err);
@@ -276,6 +321,10 @@ function getFallbackStats(teamId: string, league: League): TeamRecentStats {
   // If wins >= 3, positive streak; else negative streak
   const streak = wins >= 3 ? (wins - 1) : -(losses - 1);
 
+  const wins10 = Math.min(10, wins * 2);
+  const losses10 = 10 - wins10;
+  const recentForm = Array(5).fill('L').map((_, i) => i < wins ? 'W' : 'L');
+
   return {
     wins,
     losses,
@@ -289,6 +338,10 @@ function getFallbackStats(teamId: string, league: League): TeamRecentStats {
     scoringMomentum: 0,
     defenseMomentum: 0,
     momentumLabel: 'stable' as const,
+    wins10,
+    losses10,
+    avgScore10: Number(baseScore.toFixed(1)),
+    recentForm,
   };
 }
 

@@ -15,6 +15,11 @@ export interface TeamRecentStats {
   scoringMomentum?: number;    // slope of recent scores (positive = hot, negative = cold)
   defenseMomentum?: number;    // slope of recent conceded (positive = defense worsening)
   momentumLabel?: 'hot' | 'cold' | 'stable';
+  // ─── 10-Game and History splits ───
+  wins10?: number;
+  losses10?: number;
+  avgScore10?: number;
+  recentForm?: string[];
 }
 
 export interface H2HRecord {
