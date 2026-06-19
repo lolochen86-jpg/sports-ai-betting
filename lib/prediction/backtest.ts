@@ -9,6 +9,7 @@ import {
   TeamRecentStats
 } from './stats';
 import { getTeamNameCn } from '../sports-api/team-translations';
+import { getMetaModelWeights } from './weights';
 
 // Deterministic Polynomial Hash function
 function getHash(str: string): number {
@@ -105,7 +106,7 @@ export function getStaticLastDate(): string {
 }
 
 // ─── Load Real Historical Games: static JSON + dynamic merge ───
-function loadRealGames(): RawHistoricalGame[] {
+export function loadRealGames(): RawHistoricalGame[] {
   const staticData = realGames as RawHistoricalGame[];
   if (dynamicGames.length === 0) return staticData;
 
@@ -124,6 +125,7 @@ function loadRealGames(): RawHistoricalGame[] {
 // Dynamic real games extractor for a specific date and league
 export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' | 'MLB'): GameBacktestDetail[] {
   const realGames = loadRealGames();
+  const weights = getMetaModelWeights();
   
   // Filter real games from database
   const filtered = realGames.filter((g: any) => {
@@ -172,12 +174,12 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
     const pSports = sportsWinner === 'home' ? sportsConf : 100 - sportsConf;
     const pElo = eloWinner === 'home' ? eloConf : 100 - eloConf;
     const pMc = mcWinner === 'home' ? mcConf : 100 - mcConf;
-    const metaHomeProbVal = 0.45 * pSports + 0.25 * pElo + 0.30 * pMc;
+    const metaHomeProbVal = weights.SportsAI * pSports + weights.EloRating * pElo + weights.MonteCarlo * pMc;
     const metaWinner = metaHomeProbVal >= 50 ? 'home' : 'away';
     const metaConf = Number((metaWinner === 'home' ? metaHomeProbVal : 100 - metaHomeProbVal).toFixed(1));
 
-    const metaHomeExpected = 0.45 * sportsResult.homeExpectedScore + 0.25 * eloResult.homeExpectedScore + 0.30 * mcResult.homeExpectedScore;
-    const metaAwayExpected = 0.45 * sportsResult.awayExpectedScore + 0.25 * eloResult.awayExpectedScore + 0.30 * mcResult.awayExpectedScore;
+    const metaHomeExpected = weights.SportsAI * sportsResult.homeExpectedScore + weights.EloRating * eloResult.homeExpectedScore + weights.MonteCarlo * mcResult.homeExpectedScore;
+    const metaAwayExpected = weights.SportsAI * sportsResult.awayExpectedScore + weights.EloRating * eloResult.awayExpectedScore + weights.MonteCarlo * mcResult.awayExpectedScore;
     const metaT = sportsResult.ouLine; // Store ouLine in ouT (MetaModel uses same line as SportsAI)!
     const metaOuPick = (metaHomeExpected + metaAwayExpected) > sportsResult.ouLine ? 'Over' : 'Under';
     const metaWinnerCorrect = metaWinner === actualWinner;
@@ -270,12 +272,12 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
     const pSportsV2 = sportsWinnerV2 === 'home' ? sportsConfV2 : 100 - sportsConfV2;
     const pEloV2 = eloWinnerV2 === 'home' ? eloConfV2 : 100 - eloConfV2;
     const pMcV2 = mcWinnerV2 === 'home' ? mcConfV2 : 100 - mcConfV2;
-    const metaHomeProbValV2 = 0.45 * pSportsV2 + 0.25 * pEloV2 + 0.30 * pMcV2;
+    const metaHomeProbValV2 = weights.SportsAI * pSportsV2 + weights.EloRating * pEloV2 + weights.MonteCarlo * pMcV2;
     const metaWinnerV2 = metaHomeProbValV2 >= 50 ? 'home' : 'away';
     const metaConfV2 = Number((metaWinnerV2 === 'home' ? metaHomeProbValV2 : 100 - metaHomeProbValV2).toFixed(1));
 
-    const metaHomeExpectedV2 = 0.45 * sportsResultV2.homeExpectedScore + 0.25 * eloResultV2.homeExpectedScore + 0.30 * mcResultV2.homeExpectedScore;
-    const metaAwayExpectedV2 = 0.45 * sportsResultV2.awayExpectedScore + 0.25 * eloResultV2.awayExpectedScore + 0.30 * mcResultV2.awayExpectedScore;
+    const metaHomeExpectedV2 = weights.SportsAI * sportsResultV2.homeExpectedScore + weights.EloRating * eloResultV2.homeExpectedScore + weights.MonteCarlo * mcResultV2.homeExpectedScore;
+    const metaAwayExpectedV2 = weights.SportsAI * sportsResultV2.awayExpectedScore + weights.EloRating * eloResultV2.awayExpectedScore + weights.MonteCarlo * mcResultV2.awayExpectedScore;
     const metaTV2 = sportsResultV2.ouLine;
     const metaOuPickV2 = (metaHomeExpectedV2 + metaAwayExpectedV2) > sportsResultV2.ouLine ? 'Over' : 'Under';
     const metaWinnerCorrectV2 = metaWinnerV2 === actualWinner;

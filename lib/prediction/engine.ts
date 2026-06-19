@@ -1,5 +1,6 @@
 import type { GameWithTeams, League } from '@/types/sports';
 import { extractRecentStats, fetchH2HRecord, detectFatigue, fetchStartingPitcher } from './features';
+import { getMetaModelWeights } from './weights';
 import { 
   calculateWinProbability, 
   calculateEloProbability, 
@@ -535,18 +536,19 @@ export async function generatePrediction(
     : `${sportsWinnerName} 陣容調度深度充足，牛棚/替補席戰力充沛；${sportsLoserName} 連續背靠背客戰，體能消耗恐影響末段防守強度。`;
 
   // ─── 6.5. Run MODEL 4: Stacking Meta-Model 集成堆疊元模型 (v1.0) ───
+  const weights = getMetaModelWeights();
   const getMetaHomeProb = () => {
     const pSports = sportsWinner === 'home' ? sportsConf : 100 - sportsConf;
     const pElo = eloWinner === 'home' ? eloConf : 100 - eloConf;
     const pMc = mcWinner === 'home' ? mcConf : 100 - mcConf;
-    return 0.45 * pSports + 0.25 * pElo + 0.30 * pMc;
+    return weights.SportsAI * pSports + weights.EloRating * pElo + weights.MonteCarlo * pMc;
   };
   const metaHomeProbVal = getMetaHomeProb();
   const metaWinner = metaHomeProbVal >= 50 ? 'home' : 'away';
   const metaConf = Number((metaWinner === 'home' ? metaHomeProbVal : 100 - metaHomeProbVal).toFixed(1));
 
-  let metaHomeExpectedScore = Number((0.45 * sportsResult.homeExpectedScore + 0.25 * eloResult.homeExpectedScore + 0.30 * mcResult.homeExpectedScore).toFixed(1));
-  let metaAwayExpectedScore = Number((0.45 * sportsResult.awayExpectedScore + 0.25 * eloResult.awayExpectedScore + 0.30 * mcResult.awayExpectedScore).toFixed(1));
+  let metaHomeExpectedScore = Number((weights.SportsAI * sportsResult.homeExpectedScore + weights.EloRating * eloResult.homeExpectedScore + weights.MonteCarlo * mcResult.homeExpectedScore).toFixed(1));
+  let metaAwayExpectedScore = Number((weights.SportsAI * sportsResult.awayExpectedScore + weights.EloRating * eloResult.awayExpectedScore + weights.MonteCarlo * mcResult.awayExpectedScore).toFixed(1));
   
   // Enforce consistency: predicted winner must have the higher expected score
   if (metaWinner === 'home' && metaAwayExpectedScore > metaHomeExpectedScore) {
@@ -567,7 +569,7 @@ export async function generatePrediction(
   
   const metaReasoning: string[] = [
     `本場預測採用 Stacking 集成學習元模型 (Meta-Model v1.0) 進行決策堆疊。`,
-    `融合機制以特徵加權迴歸 (45%)、Monte Carlo 萬次模擬 (30%) 與 Elo 實力指數 (25%) 的權重矩陣動態收斂。`,
+    `融合機制以特徵加權迴歸 (${Math.round(weights.SportsAI * 100)}%)、Monte Carlo 萬次模擬 (${Math.round(weights.MonteCarlo * 100)}%) 與 Elo 實力指數 (${Math.round(weights.EloRating * 100)}%) 的權重矩陣動態收斂。`,
     `${metaWinnerName} 在集成特徵對位中取得綜合優勢，勝率傾向【${metaWinnerCode}】勝出（集成決策置信度 ${metaConf}%）。`
   ];
 
@@ -906,18 +908,19 @@ export async function generatePredictionV2(
   }
 
   // ─── 6. Run MODEL 4: Stacking Meta-Model 集成堆疊元模型 (v2.0) ───
+  const weightsV2 = getMetaModelWeights();
   const getMetaHomeProb = () => {
     const pSports = sportsWinner === 'home' ? sportsConf : 100 - sportsConf;
     const pElo = eloWinner === 'home' ? eloConf : 100 - eloConf;
     const pMc = mcWinner === 'home' ? mcConf : 100 - mcConf;
-    return 0.45 * pSports + 0.25 * pElo + 0.30 * pMc;
+    return weightsV2.SportsAI * pSports + weightsV2.EloRating * pElo + weightsV2.MonteCarlo * pMc;
   };
   const metaHomeProbVal = getMetaHomeProb();
   const metaWinner = metaHomeProbVal >= 50 ? 'home' : 'away';
   const metaConf = Number((metaWinner === 'home' ? metaHomeProbVal : 100 - metaHomeProbVal).toFixed(1));
 
-  let metaHomeExpectedScore = Number((0.45 * sportsResult.homeExpectedScore + 0.25 * eloResult.homeExpectedScore + 0.30 * mcResult.homeExpectedScore).toFixed(1));
-  let metaAwayExpectedScore = Number((0.45 * sportsResult.awayExpectedScore + 0.25 * eloResult.awayExpectedScore + 0.30 * mcResult.awayExpectedScore).toFixed(1));
+  let metaHomeExpectedScore = Number((weightsV2.SportsAI * sportsResult.homeExpectedScore + weightsV2.EloRating * eloResult.homeExpectedScore + weightsV2.MonteCarlo * mcResult.homeExpectedScore).toFixed(1));
+  let metaAwayExpectedScore = Number((weightsV2.SportsAI * sportsResult.awayExpectedScore + weightsV2.EloRating * eloResult.awayExpectedScore + weightsV2.MonteCarlo * mcResult.awayExpectedScore).toFixed(1));
   
   // Enforce consistency: predicted winner must have the higher expected score
   if (metaWinner === 'home' && metaAwayExpectedScore > metaHomeExpectedScore) {
@@ -938,7 +941,7 @@ export async function generatePredictionV2(
   
   const metaReasoning: string[] = [
     `本場預測採用 Stacking 集成學習元模型 (Meta-Model v2.0) 進行決策堆疊。`,
-    `融合機制以特徵加權迴歸 (45%)、Monte Carlo 萬次模擬 (30%) 與 Elo 實力指數 (25%) 的權重矩陣動態收斂。`,
+    `融合機制以特徵加權迴歸 (${Math.round(weightsV2.SportsAI * 100)}%)、Monte Carlo 萬次模擬 (${Math.round(weightsV2.MonteCarlo * 100)}%) 與 Elo 實力指數 (${Math.round(weightsV2.EloRating * 100)}%) 的權重矩陣動態收斂。`,
     `${metaWinnerName} 在集成特徵對位中取得綜合優勢，勝率傾向【${metaWinnerCode}】勝出（集成決策置信度 ${metaConf}%）。`
   ];
 
