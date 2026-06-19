@@ -165,6 +165,12 @@
       {
         "game_id": "823533",
         "expected": "CWS",
+        "winner": "CWS",
+        "result": "WIN"
+      },
+      {
+        "game_id": "824911",
+        "expected": "SF",
         "winner": null,
         "result": "VOID"
       }

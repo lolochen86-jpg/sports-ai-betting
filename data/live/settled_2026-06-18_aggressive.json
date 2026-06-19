@@ -11,6 +11,12 @@
       {
         "game_id": "823533",
         "expected": "CWS",
+        "winner": "CWS",
+        "result": "WIN"
+      },
+      {
+        "game_id": "824911",
+        "expected": "SF",
         "winner": null,
         "result": "VOID"
       }
@@ -159,14 +165,20 @@
     "sport": "PARLAY",
     "parlay_odds": 5.306,
     "bet_amount": 80,
-    "result": "VOID",
-    "pnl": 0.0,
+    "result": "WIN",
+    "pnl": 344.0,
     "leg_results": [
       {
         "game_id": "823533",
         "expected": "CWS",
-        "winner": null,
-        "result": "VOID"
+        "winner": "CWS",
+        "result": "WIN"
+      },
+      {
+        "game_id": "824748",
+        "expected": "TOR",
+        "winner": "TOR",
+        "result": "WIN"
       }
     ],
     "legs": [
@@ -319,6 +331,12 @@
       {
         "game_id": "823533",
         "expected": "CWS",
+        "winner": "CWS",
+        "result": "WIN"
+      },
+      {
+        "game_id": "824911",
+        "expected": "SF",
         "winner": null,
         "result": "VOID"
       }
@@ -540,6 +558,12 @@
       {
         "game_id": "823533",
         "expected": "CWS",
+        "winner": "CWS",
+        "result": "WIN"
+      },
+      {
+        "game_id": "824911",
+        "expected": "SF",
         "winner": null,
         "result": "VOID"
       }
