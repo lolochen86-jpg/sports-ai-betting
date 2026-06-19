@@ -1,0 +1,20 @@
+{
+  "date": "2026-06-19",
+  "bankroll": 4201.0,
+  "total_bet": 0,
+  "required_5_leg_note": "skipped; only 1 unique candidate games (<2)",
+  "required_5_leg_candidates": [
+    {
+      "sport": "MLB",
+      "game_id": "824097",
+      "matchup": "STL@KC",
+      "bet_label": "紅雀 勝",
+      "odds": 1.985,
+      "edge": 0.12238224677353476,
+      "true_prob": 0.6049161362417308
+    }
+  ],
+  "single_picks": [],
+  "parlays": [],
+  "dry_run": false
+}
