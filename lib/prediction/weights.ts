@@ -13,6 +13,16 @@ export const DEFAULT_WEIGHTS: MetaModelWeights = {
 // In-memory cache for server-side weights (updated after DB reads or saves)
 let _serverWeightsCache: MetaModelWeights | null = null;
 
+// Helper to get the correct weights file path on server side
+function getWeightsFilePath(): string {
+  const path = eval('require')('path');
+  const isVercel = process.env.VERCEL === '1' || process.env.NOW_BUILDER === '1';
+  if (isVercel) {
+    return path.join('/tmp', 'betting-store', 'meta_model_weights.json');
+  }
+  return path.join(process.cwd(), 'lib', 'prediction', 'weights.json');
+}
+
 /**
  * Synchronously reads meta-model weights.
  * - Browser: reads from localStorage
@@ -42,9 +52,8 @@ export function getMetaModelWeights(): MetaModelWeights {
   }
 
   try {
-    const fs = require('fs');
-    const path = require('path');
-    const weightsFilePath = path.join(process.cwd(), 'lib', 'prediction', 'weights.json');
+    const fs = eval('require')('fs');
+    const weightsFilePath = getWeightsFilePath();
     if (fs.existsSync(weightsFilePath)) {
       const data = fs.readFileSync(weightsFilePath, 'utf8');
       const weights = JSON.parse(data);
@@ -77,7 +86,7 @@ export async function getMetaModelWeightsAsync(): Promise<MetaModelWeights> {
 
   // Try database first
   try {
-    const { prisma } = require('@/lib/prisma');
+    const { prisma } = eval('require')('@/lib/prisma');
     const row = await prisma.myStrategyRules.findUnique({
       where: { key: 'meta_model_weights' }
     });
@@ -106,7 +115,7 @@ export async function getMetaModelWeightsAsync(): Promise<MetaModelWeights> {
 /**
  * Asynchronously saves meta-model weights.
  * Primary: database (works on Vercel's read-only filesystem).
- * Secondary: local JSON file (works in local dev).
+ * Secondary: local JSON file (works in local dev, and uses /tmp on Vercel).
  * Returns true if at least one storage succeeds.
  */
 export async function saveMetaModelWeights(weights: MetaModelWeights): Promise<boolean> {
@@ -122,9 +131,9 @@ export async function saveMetaModelWeights(weights: MetaModelWeights): Promise<b
   let dbSaved = false;
   let fileSaved = false;
 
-  // 1. Write to database FIRST (primary — works on Vercel)
+  // 1. Write to database FIRST (primary — works on Vercel if DB is configured)
   try {
-    const { prisma } = require('@/lib/prisma');
+    const { prisma } = eval('require')('@/lib/prisma');
     await prisma.myStrategyRules.upsert({
       where: { key: 'meta_model_weights' },
       update: {
@@ -143,16 +152,23 @@ export async function saveMetaModelWeights(weights: MetaModelWeights): Promise<b
     console.warn('[Weights Manager] Database save failed:', error);
   }
 
-  // 2. Write to local file (secondary — may fail on Vercel, that's OK)
+  // 2. Write to local file (secondary — using /tmp on Vercel which is writable!)
   try {
-    const fs = require('fs');
-    const path = require('path');
-    const weightsFilePath = path.join(process.cwd(), 'lib', 'prediction', 'weights.json');
+    const fs = eval('require')('fs');
+    const path = eval('require')('path');
+    const weightsFilePath = getWeightsFilePath();
+    
+    // Ensure parent directory exists
+    const dir = path.dirname(weightsFilePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    
     fs.writeFileSync(weightsFilePath, JSON.stringify(weights, null, 2), 'utf8');
     fileSaved = true;
-    console.log('[Weights Manager] Successfully wrote weights to file.');
+    console.log('[Weights Manager] Successfully wrote weights to file:', weightsFilePath);
   } catch (error) {
-    console.warn('[Weights Manager] File write failed (expected on Vercel):', error);
+    console.warn('[Weights Manager] File write failed:', error);
   }
 
   // Update in-memory cache regardless
