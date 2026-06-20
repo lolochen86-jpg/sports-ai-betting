@@ -1,0 +1,117 @@
+name: 運彩AI — 每日下午結算
+
+on:
+  schedule:
+    # UTC 06:00 = 台灣時間 14:00（每日下午對比比賽結果）
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      settle_date:
+        description: '📅 指定結算日期 (YYYY-MM-DD)，留空使用昨日'
+        required: false
+        default: ''
+
+env:
+  ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+  TZ: Asia/Taipei
+
+jobs:
+  daily-settlement:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Chrome for Selenium（運彩官網備援）
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Determine settle date
+        id: date
+        run: |
+          if [ -n "${{ github.event.inputs.settle_date }}" ]; then
+            echo "settle_date=${{ github.event.inputs.settle_date }}" >> $GITHUB_OUTPUT
+          else
+            echo "settle_date=$(TZ=Asia/Taipei date -d 'yesterday' '+%Y-%m-%d')" >> $GITHUB_OUTPUT
+          fi
+
+          TRIGGER="${{ github.event_name }}"
+          if [ "$TRIGGER" = "workflow_dispatch" ]; then
+            echo "🖐️ 手動觸發結算" | tee -a $GITHUB_STEP_SUMMARY
+          else
+            echo "⏰ 排程觸發：台灣時間 14:00 結算" | tee -a $GITHUB_STEP_SUMMARY
+          fi
+
+      # ── 整合測試（快速驗證模組完整性）──────────────
+      - name: Integration tests
+        run: python scripts/test_integration.py
+        continue-on-error: false
+
+      # ── 結算指定日期成績 ────────────────────────────
+      - name: Settle game results
+        run: python scripts/settle.py ${{ steps.date.outputs.settle_date }}
+
+      # ── Commit ──────────────────────────────────────
+      - name: Commit & push settlement results
+        run: |
+          git config --global user.name  "Sports AI Bot"
+          git config --global user.email "bot@users.noreply.github.com"
+          git add data/bankroll.json data/performance.json \
+                  data/bankroll_conservative.json data/bankroll_aggressive.json data/bankroll_underdog.json \
+                  data/live/ data/nba/ data/mlb/
+          git diff --staged --quiet || git commit -m "📋 結算報告 ${{ steps.date.outputs.settle_date }}"
+          git push
+
+      - name: Settlement summary
+        run: |
+          echo "## 📋 運彩AI 結算報告 — ${{ steps.date.outputs.settle_date }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          python -c "
+          import json, pathlib
+
+          strategies = ['conservative', 'aggressive', 'underdog']
+          labels = {'conservative': '🛡️ 穩健型', 'aggressive': '🔥 激進型', 'underdog': '🎯 冷門獵人型'}
+
+          print('| 策略 | 勝 | 負 | 取消 | 盈虧 | 結算後本金 |')
+          print('|---|---|---|---|---|---|')
+
+          for slug in strategies:
+              bk_path = pathlib.Path(f'data/bankroll_{slug}.json')
+              bk = json.loads(bk_path.read_text()) if bk_path.exists() else {}
+              current = bk.get('current', 3000.0)
+              history = bk.get('history', [])
+
+              if history:
+                  last = history[-1]
+                  wins = last.get('wins', 0)
+                  losses = last.get('losses', 0)
+                  voids = last.get('voids', 0)
+                  pnl = last.get('pnl', 0)
+                  pnl_str = f'+NT\${pnl:,.0f}' if pnl >= 0 else f'-NT\${abs(pnl):,.0f}'
+                  icon = '✅' if pnl > 0 else ('❌' if pnl < 0 else '⚪')
+                  print(f'| {labels[slug]} | {wins} | {losses} | {voids} | {icon} {pnl_str} | NT\${current:,.0f} |')
+              else:
+                  print(f'| {labels[slug]} | - | - | - | - | NT\${current:,.0f} |')
+          " >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "⏰ 結算時間：台灣時間 14:00 | 預測時間：台灣時間 22:00" >> $GITHUB_STEP_SUMMARY
