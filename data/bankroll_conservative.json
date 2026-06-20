@@ -196,6 +196,16 @@
       "wins": 0,
       "losses": 0,
       "voids": 2
+    },
+    {
+      "date": "2026-06-19",
+      "open": 4127.0,
+      "close": 4127.0,
+      "pnl": 0.0,
+      "bets": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0
     }
   ],
   "strategy": "conservative"
