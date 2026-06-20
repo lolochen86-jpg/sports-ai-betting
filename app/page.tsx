@@ -718,7 +718,12 @@ export default function Home() {
   const [selectedAwayPlayerId, setSelectedAwayPlayerId] = useState('');
   const [selectedAwayBoostType, setSelectedAwayBoostType] = useState<'hot' | 'return' | 'injured'>('hot');
 
-  // Load rosters when selectedGameId changes
+  // Injury reports state (normalized name -> { status, comment })
+  const [injuryReports, setInjuryReports] = useState<Record<string, { status: string; comment: string }>>({});
+  const [loadingInjuries, setLoadingInjuries] = useState(false);
+  const [autoInjuriesApplied, setAutoInjuriesApplied] = useState<Record<string, boolean>>({});
+
+  // Load rosters and sync injuries when selectedGameId changes
   useEffect(() => {
     if (!selectedGameId) {
       setHomeRoster([]);
@@ -729,23 +734,123 @@ export default function Home() {
     if (!game) return;
 
     setLoadingRoster(true);
+    setLoadingInjuries(true);
     setSelectedHomePlayerId('');
     setSelectedAwayPlayerId('');
 
+    // Normalize text helper to handle name matching and strip accents/diacritics
+    const normalizeText = (text: string) => 
+      text.normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '');
+
     Promise.all([
+      // Fetch rosters
       fetch(`/api/players?league=${game.league}&teamId=${game.homeTeam.id}`).then(res => res.json()),
-      fetch(`/api/players?league=${game.league}&teamId=${game.awayTeam.id}`).then(res => res.json())
-    ]).then(([homeRes, awayRes]) => {
+      fetch(`/api/players?league=${game.league}&teamId=${game.awayTeam.id}`).then(res => res.json()),
+      // Fetch injuries for the league
+      fetch(`/api/predictions/injuries?league=${game.league}`).then(res => res.json()).catch(() => ({ success: false, data: [] }))
+    ]).then(([homeRes, awayRes, injuriesRes]) => {
+      let homePlayers: PlayerInfo[] = [];
+      let awayPlayers: PlayerInfo[] = [];
+
       if (homeRes.success && homeRes.data) {
-        setHomeRoster(homeRes.data);
+        homePlayers = homeRes.data;
+        setHomeRoster(homePlayers);
       }
       if (awayRes.success && awayRes.data) {
-        setAwayRoster(awayRes.data);
+        awayPlayers = awayRes.data;
+        setAwayRoster(awayPlayers);
+      }
+
+      // Handle injury report mapping
+      if (injuriesRes.success && injuriesRes.data) {
+        const reportsMap: Record<string, { status: string; comment: string }> = {};
+        injuriesRes.data.forEach((t: any) => {
+          t.players.forEach((p: any) => {
+            reportsMap[normalizeText(p.name)] = {
+              status: p.status,
+              comment: p.comment
+            };
+          });
+        });
+        setInjuryReports(reportsMap);
+
+        // Auto-apply injuries if not already applied for this game
+        if (!autoInjuriesApplied[selectedGameId]) {
+          const autoBoosts: any[] = [];
+          
+          // Helper to check if team matches (fuzzy substring check)
+          const isTeamMatch = (espnTeam: string, appTeam: string) => {
+            const normEspn = normalizeText(espnTeam);
+            const normApp = normalizeText(appTeam);
+            return normEspn.includes(normApp) || normApp.includes(normEspn);
+          };
+
+          // Find ESPN team injury list
+          const homeTeamInjuries = injuriesRes.data.find((t: any) => isTeamMatch(t.team, game.homeTeam.name))?.players || [];
+          const awayTeamInjuries = injuriesRes.data.find((t: any) => isTeamMatch(t.team, game.awayTeam.name))?.players || [];
+
+          // Match home players
+          homePlayers.forEach(p => {
+            const normPName = normalizeText(p.name);
+            const isInjured = homeTeamInjuries.find((ip: any) => {
+              const normIpName = normalizeText(ip.name);
+              return normPName === normIpName ||
+                     (normPName.length > 5 && normIpName.includes(normPName)) ||
+                     (normIpName.length > 5 && normPName.includes(normIpName));
+            });
+
+            if (isInjured) {
+              autoBoosts.push({
+                playerId: p.id,
+                playerName: translatePlayerName(p.name),
+                teamType: 'home',
+                type: 'injured',
+                jersey: p.number || undefined,
+                position: p.position || undefined
+              });
+            }
+          });
+
+          // Match away players
+          awayPlayers.forEach(p => {
+            const normPName = normalizeText(p.name);
+            const isInjured = awayTeamInjuries.find((ip: any) => {
+              const normIpName = normalizeText(ip.name);
+              return normPName === normIpName ||
+                     (normPName.length > 5 && normIpName.includes(normPName)) ||
+                     (normIpName.length > 5 && normPName.includes(normIpName));
+            });
+
+            if (isInjured) {
+              autoBoosts.push({
+                playerId: p.id,
+                playerName: translatePlayerName(p.name),
+                teamType: 'away',
+                type: 'injured',
+                jersey: p.number || undefined,
+                position: p.position || undefined
+              });
+            }
+          });
+
+          if (autoBoosts.length > 0) {
+            setActiveBoosts(prev => ({
+              ...prev,
+              [selectedGameId]: [...(prev[selectedGameId] || []), ...autoBoosts]
+            }));
+          }
+
+          setAutoInjuriesApplied(prev => ({ ...prev, [selectedGameId]: true }));
+        }
       }
     }).catch(err => {
-      console.error('Failed to load rosters:', err);
+      console.error('Failed to load rosters/injuries:', err);
     }).finally(() => {
       setLoadingRoster(false);
+      setLoadingInjuries(false);
     });
   }, [selectedGameId, games]);
 
@@ -3139,13 +3244,13 @@ export default function Home() {
                           </span>
                         </div>
 
-                        {loadingRoster ? (
+                        {loadingRoster || loadingInjuries ? (
                           <div className="flex items-center justify-center py-6 text-xs text-gray-400 gap-2 font-bold font-mono">
                             <svg className="animate-spin h-4 w-4 text-purple-400" fill="none" viewBox="0 0 24 24">
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                             </svg>
-                            正在讀取球隊主力名單...
+                            {loadingRoster ? '正在讀取球隊主力名單...' : '正在同步即時傷兵數據...'}
                           </div>
                         ) : (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -3163,11 +3268,15 @@ export default function Home() {
                                   className="w-full bg-[#0b0f19] border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-gray-200 focus:outline-none focus:border-purple-500/50"
                                 >
                                   <option value="">-- 選擇主力球員 --</option>
-                                  {homeRoster.map(p => (
-                                    <option key={p.id} value={p.id}>
-                                      {translatePlayerName(p.name)} {p.number !== null ? `#${p.number}` : ''} ({p.position})
-                                    </option>
-                                  ))}
+                                  {homeRoster.map(p => {
+                                    const normP = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
+                                    const injury = injuryReports[normP];
+                                    return (
+                                      <option key={p.id} value={p.id}>
+                                        {translatePlayerName(p.name)} {p.number !== null ? `#${p.number}` : ''} ({p.position}){injury ? ` [傷-${injury.status}]` : ''}
+                                      </option>
+                                    );
+                                  })}
                                 </select>
 
                                 <select
@@ -3205,11 +3314,15 @@ export default function Home() {
                                   className="w-full bg-[#0b0f19] border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-gray-200 focus:outline-none focus:border-purple-500/50"
                                 >
                                   <option value="">-- 選擇主力球員 --</option>
-                                  {awayRoster.map(p => (
-                                    <option key={p.id} value={p.id}>
-                                      {translatePlayerName(p.name)} {p.number !== null ? `#${p.number}` : ''} ({p.position})
-                                    </option>
-                                  ))}
+                                  {awayRoster.map(p => {
+                                    const normP = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
+                                    const injury = injuryReports[normP];
+                                    return (
+                                      <option key={p.id} value={p.id}>
+                                        {translatePlayerName(p.name)} {p.number !== null ? `#${p.number}` : ''} ({p.position}){injury ? ` [傷-${injury.status}]` : ''}
+                                      </option>
+                                    );
+                                  })}
                                 </select>
 
                                 <select
@@ -3237,7 +3350,18 @@ export default function Home() {
 
                         {/* Active boosts display */}
                         <div className="space-y-2.5 pt-2">
-                          <h4 className="text-xs font-black text-gray-400">已啟用的主力加成狀態</h4>
+                          <div className="flex justify-between items-center">
+                            <h4 className="text-xs font-black text-gray-400">已啟用的主力加成狀態</h4>
+                            {gameBoosts.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setActiveBoosts(prev => ({ ...prev, [selectedGameId]: [] }))}
+                                className="text-[10px] text-gray-500 hover:text-red-400 font-bold transition-colors"
+                              >
+                                🧹 一鍵清除
+                              </button>
+                            )}
+                          </div>
                           {gameBoosts.length === 0 ? (
                             <div className="text-center py-4 rounded-xl bg-white/[0.01] border border-white/5 text-[11px] text-gray-600 font-bold">
                               目前未套用任何主力加成，下方數據呈現 AI 預設報告值。
