@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getMetaModelWeights } from '@/lib/prediction/weights';
+import { getMetaModelWeightsAsync } from '@/lib/prediction/weights';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const weights = getMetaModelWeights();
+    const weights = await getMetaModelWeightsAsync();
     return NextResponse.json({ success: true, weights }, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',

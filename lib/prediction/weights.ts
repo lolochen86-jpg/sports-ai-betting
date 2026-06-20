@@ -10,9 +10,13 @@ export const DEFAULT_WEIGHTS: MetaModelWeights = {
   MonteCarlo: 0.30
 };
 
+// In-memory cache for server-side weights (updated after DB reads or saves)
+let _serverWeightsCache: MetaModelWeights | null = null;
+
 /**
- * Synchronously reads meta-model weights from the local JSON file.
- * Fallback to default values if not found or invalid.
+ * Synchronously reads meta-model weights.
+ * - Browser: reads from localStorage
+ * - Server: reads from in-memory cache → local JSON file → defaults
  */
 export function getMetaModelWeights(): MetaModelWeights {
   if (typeof window !== 'undefined') {
@@ -32,6 +36,11 @@ export function getMetaModelWeights(): MetaModelWeights {
     return DEFAULT_WEIGHTS;
   }
 
+  // Server: check in-memory cache first
+  if (_serverWeightsCache) {
+    return _serverWeightsCache;
+  }
+
   try {
     const fs = require('fs');
     const path = require('path');
@@ -44,9 +53,9 @@ export function getMetaModelWeights(): MetaModelWeights {
         typeof weights.EloRating === 'number' &&
         typeof weights.MonteCarlo === 'number'
       ) {
-        // Ensure they sum to approximately 1.0 (100%)
         const sum = weights.SportsAI + weights.EloRating + weights.MonteCarlo;
         if (Math.abs(sum - 1.0) < 0.01) {
+          _serverWeightsCache = weights;
           return weights;
         }
       }
@@ -58,7 +67,47 @@ export function getMetaModelWeights(): MetaModelWeights {
 }
 
 /**
- * Asynchronously saves meta-model weights to both weights.json file and database.
+ * Asynchronously reads weights from the database, falling back to synchronous sources.
+ * Use this in API routes where async is available and fresh DB data is needed.
+ */
+export async function getMetaModelWeightsAsync(): Promise<MetaModelWeights> {
+  if (typeof window !== 'undefined') {
+    return getMetaModelWeights();
+  }
+
+  // Try database first
+  try {
+    const { prisma } = require('@/lib/prisma');
+    const row = await prisma.myStrategyRules.findUnique({
+      where: { key: 'meta_model_weights' }
+    });
+    if (row && row.value) {
+      const weights = JSON.parse(row.value);
+      if (
+        typeof weights.SportsAI === 'number' &&
+        typeof weights.EloRating === 'number' &&
+        typeof weights.MonteCarlo === 'number'
+      ) {
+        const sum = weights.SportsAI + weights.EloRating + weights.MonteCarlo;
+        if (Math.abs(sum - 1.0) < 0.01) {
+          _serverWeightsCache = weights;
+          return weights;
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('[Weights Manager] DB read failed, falling back to file/defaults:', error);
+  }
+
+  // Fallback to synchronous file/defaults
+  return getMetaModelWeights();
+}
+
+/**
+ * Asynchronously saves meta-model weights.
+ * Primary: database (works on Vercel's read-only filesystem).
+ * Secondary: local JSON file (works in local dev).
+ * Returns true if at least one storage succeeds.
  */
 export async function saveMetaModelWeights(weights: MetaModelWeights): Promise<boolean> {
   if (typeof window !== 'undefined') {
@@ -70,19 +119,10 @@ export async function saveMetaModelWeights(weights: MetaModelWeights): Promise<b
     }
   }
 
-  // 1. Write to local file
-  try {
-    const fs = require('fs');
-    const path = require('path');
-    const weightsFilePath = path.join(process.cwd(), 'lib', 'prediction', 'weights.json');
-    fs.writeFileSync(weightsFilePath, JSON.stringify(weights, null, 2), 'utf8');
-    console.log('[Weights Manager] Successfully wrote weights to file:', weights);
-  } catch (error) {
-    console.error('[Weights Manager] Failed to write weights to file:', error);
-    return false;
-  }
+  let dbSaved = false;
+  let fileSaved = false;
 
-  // 2. Write to database (MyStrategyRules)
+  // 1. Write to database FIRST (primary — works on Vercel)
   try {
     const { prisma } = require('@/lib/prisma');
     await prisma.myStrategyRules.upsert({
@@ -97,10 +137,32 @@ export async function saveMetaModelWeights(weights: MetaModelWeights): Promise<b
         description: 'Ensemble MetaModel weights for SportsAI, EloRating, and MonteCarlo'
       }
     });
-    console.log('[Weights Manager] Successfully updated database strategy rules.');
+    dbSaved = true;
+    console.log('[Weights Manager] Successfully saved weights to database:', weights);
   } catch (error) {
-    console.warn('[Weights Manager] Database weights save failed, using local file backup:', error);
+    console.warn('[Weights Manager] Database save failed:', error);
+  }
+
+  // 2. Write to local file (secondary — may fail on Vercel, that's OK)
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const weightsFilePath = path.join(process.cwd(), 'lib', 'prediction', 'weights.json');
+    fs.writeFileSync(weightsFilePath, JSON.stringify(weights, null, 2), 'utf8');
+    fileSaved = true;
+    console.log('[Weights Manager] Successfully wrote weights to file.');
+  } catch (error) {
+    console.warn('[Weights Manager] File write failed (expected on Vercel):', error);
+  }
+
+  // Update in-memory cache regardless
+  _serverWeightsCache = weights;
+
+  if (!dbSaved && !fileSaved) {
+    console.error('[Weights Manager] All save methods failed!');
+    return false;
   }
 
   return true;
 }
+
