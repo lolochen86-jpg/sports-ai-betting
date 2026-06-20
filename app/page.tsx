@@ -721,7 +721,13 @@ export default function Home() {
   // Injury reports state (normalized name -> { status, comment })
   const [injuryReports, setInjuryReports] = useState<Record<string, { status: string; comment: string }>>({});
   const [loadingInjuries, setLoadingInjuries] = useState(false);
+  
+  // Hot players state (normalized name -> { name, reason })
+  const [hotPlayers, setHotPlayers] = useState<Record<string, { name: string; reason: string }>>({});
+  const [loadingHotPlayers, setLoadingHotPlayers] = useState(false);
+
   const [autoInjuriesApplied, setAutoInjuriesApplied] = useState<Record<string, boolean>>({});
+
 
   // Load rosters and sync injuries when selectedGameId changes
   useEffect(() => {
@@ -735,6 +741,7 @@ export default function Home() {
 
     setLoadingRoster(true);
     setLoadingInjuries(true);
+    setLoadingHotPlayers(true);
     setSelectedHomePlayerId('');
     setSelectedAwayPlayerId('');
 
@@ -750,8 +757,10 @@ export default function Home() {
       fetch(`/api/players?league=${game.league}&teamId=${game.homeTeam.id}`).then(res => res.json()),
       fetch(`/api/players?league=${game.league}&teamId=${game.awayTeam.id}`).then(res => res.json()),
       // Fetch injuries for the league
-      fetch(`/api/predictions/injuries?league=${game.league}`).then(res => res.json()).catch(() => ({ success: false, data: [] }))
-    ]).then(([homeRes, awayRes, injuriesRes]) => {
+      fetch(`/api/predictions/injuries?league=${game.league}`).then(res => res.json()).catch(() => ({ success: false, data: [] })),
+      // Fetch hot players for the league
+      fetch(`/api/predictions/hotplayers?league=${game.league}`).then(res => res.json()).catch(() => ({ success: false, data: {} }))
+    ]).then(([homeRes, awayRes, injuriesRes, hotRes]) => {
       let homePlayers: PlayerInfo[] = [];
       let awayPlayers: PlayerInfo[] = [];
 
@@ -776,81 +785,126 @@ export default function Home() {
           });
         });
         setInjuryReports(reportsMap);
+      }
 
-        // Auto-apply injuries if not already applied for this game
-        if (!autoInjuriesApplied[selectedGameId]) {
-          const autoBoosts: any[] = [];
-          
-          // Helper to check if team matches (fuzzy substring check)
-          const isTeamMatch = (espnTeam: string, appTeam: string) => {
-            const normEspn = normalizeText(espnTeam);
-            const normApp = normalizeText(appTeam);
-            return normEspn.includes(normApp) || normApp.includes(normEspn);
-          };
+      // Handle hot player mapping
+      if (hotRes.success && hotRes.data) {
+        setHotPlayers(hotRes.data);
+      }
 
-          // Find ESPN team injury list
-          const homeTeamInjuries = injuriesRes.data.find((t: any) => isTeamMatch(t.team, game.homeTeam.name))?.players || [];
-          const awayTeamInjuries = injuriesRes.data.find((t: any) => isTeamMatch(t.team, game.awayTeam.name))?.players || [];
+      // Auto-apply injuries & hot players if not already applied for this game
+      if (!autoInjuriesApplied[selectedGameId]) {
+        const autoBoosts: any[] = [];
+        
+        // Helper to check if team matches (fuzzy substring check)
+        const isTeamMatch = (espnTeam: string, appTeam: string) => {
+          const normEspn = normalizeText(espnTeam);
+          const normApp = normalizeText(appTeam);
+          return normEspn.includes(normApp) || normApp.includes(normEspn);
+        };
 
-          // Match home players
+        const homeTeamInjuries = (injuriesRes.success && injuriesRes.data) ? injuriesRes.data.find((t: any) => isTeamMatch(t.team, game.homeTeam.name))?.players || [] : [];
+        const awayTeamInjuries = (injuriesRes.success && injuriesRes.data) ? injuriesRes.data.find((t: any) => isTeamMatch(t.team, game.awayTeam.name))?.players || [] : [];
+
+        // Match home players (injuries)
+        homePlayers.forEach(p => {
+          const normPName = normalizeText(p.name);
+          const isInjured = homeTeamInjuries.find((ip: any) => {
+            const normIpName = normalizeText(ip.name);
+            return normPName === normIpName ||
+                   (normPName.length > 5 && normIpName.includes(normPName)) ||
+                   (normIpName.length > 5 && normPName.includes(normIpName));
+          });
+
+          if (isInjured) {
+            autoBoosts.push({
+              playerId: p.id,
+              playerName: translatePlayerName(p.name),
+              teamType: 'home',
+              type: 'injured',
+              jersey: p.number || undefined,
+              position: p.position || undefined
+            });
+          }
+        });
+
+        // Match away players (injuries)
+        awayPlayers.forEach(p => {
+          const normPName = normalizeText(p.name);
+          const isInjured = awayTeamInjuries.find((ip: any) => {
+            const normIpName = normalizeText(ip.name);
+            return normPName === normIpName ||
+                   (normPName.length > 5 && normIpName.includes(normPName)) ||
+                   (normIpName.length > 5 && normPName.includes(normIpName));
+          });
+
+          if (isInjured) {
+            autoBoosts.push({
+              playerId: p.id,
+              playerName: translatePlayerName(p.name),
+              teamType: 'away',
+              type: 'injured',
+              jersey: p.number || undefined,
+              position: p.position || undefined
+            });
+          }
+        });
+
+        // Match home players (hot performance)
+        if (hotRes.success && hotRes.data) {
           homePlayers.forEach(p => {
             const normPName = normalizeText(p.name);
-            const isInjured = homeTeamInjuries.find((ip: any) => {
-              const normIpName = normalizeText(ip.name);
-              return normPName === normIpName ||
-                     (normPName.length > 5 && normIpName.includes(normPName)) ||
-                     (normIpName.length > 5 && normPName.includes(normIpName));
-            });
-
-            if (isInjured) {
-              autoBoosts.push({
-                playerId: p.id,
-                playerName: translatePlayerName(p.name),
-                teamType: 'home',
-                type: 'injured',
-                jersey: p.number || undefined,
-                position: p.position || undefined
-              });
+            const isHot = hotRes.data[normPName];
+            if (isHot) {
+              const alreadyAdded = autoBoosts.some(ab => ab.playerId === p.id);
+              if (!alreadyAdded) {
+                autoBoosts.push({
+                  playerId: p.id,
+                  playerName: translatePlayerName(p.name),
+                  teamType: 'home',
+                  type: 'hot',
+                  jersey: p.number || undefined,
+                  position: p.position || undefined
+                });
+              }
             }
           });
 
-          // Match away players
+          // Match away players (hot performance)
           awayPlayers.forEach(p => {
             const normPName = normalizeText(p.name);
-            const isInjured = awayTeamInjuries.find((ip: any) => {
-              const normIpName = normalizeText(ip.name);
-              return normPName === normIpName ||
-                     (normPName.length > 5 && normIpName.includes(normPName)) ||
-                     (normIpName.length > 5 && normPName.includes(normIpName));
-            });
-
-            if (isInjured) {
-              autoBoosts.push({
-                playerId: p.id,
-                playerName: translatePlayerName(p.name),
-                teamType: 'away',
-                type: 'injured',
-                jersey: p.number || undefined,
-                position: p.position || undefined
-              });
+            const isHot = hotRes.data[normPName];
+            if (isHot) {
+              const alreadyAdded = autoBoosts.some(ab => ab.playerId === p.id);
+              if (!alreadyAdded) {
+                autoBoosts.push({
+                  playerId: p.id,
+                  playerName: translatePlayerName(p.name),
+                  teamType: 'away',
+                  type: 'hot',
+                  jersey: p.number || undefined,
+                  position: p.position || undefined
+                });
+              }
             }
           });
-
-          if (autoBoosts.length > 0) {
-            setActiveBoosts(prev => ({
-              ...prev,
-              [selectedGameId]: [...(prev[selectedGameId] || []), ...autoBoosts]
-            }));
-          }
-
-          setAutoInjuriesApplied(prev => ({ ...prev, [selectedGameId]: true }));
         }
+
+        if (autoBoosts.length > 0) {
+          setActiveBoosts(prev => ({
+            ...prev,
+            [selectedGameId]: [...(prev[selectedGameId] || []), ...autoBoosts]
+          }));
+        }
+
+        setAutoInjuriesApplied(prev => ({ ...prev, [selectedGameId]: true }));
       }
     }).catch(err => {
-      console.error('Failed to load rosters/injuries:', err);
+      console.error('Failed to load rosters/injuries/hot:', err);
     }).finally(() => {
       setLoadingRoster(false);
       setLoadingInjuries(false);
+      setLoadingHotPlayers(false);
     });
   }, [selectedGameId, games]);
 
@@ -3244,13 +3298,13 @@ export default function Home() {
                           </span>
                         </div>
 
-                        {loadingRoster || loadingInjuries ? (
+                        {loadingRoster || loadingInjuries || loadingHotPlayers ? (
                           <div className="flex items-center justify-center py-6 text-xs text-gray-400 gap-2 font-bold font-mono">
                             <svg className="animate-spin h-4 w-4 text-purple-400" fill="none" viewBox="0 0 24 24">
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                             </svg>
-                            {loadingRoster ? '正在讀取球隊主力名單...' : '正在同步即時傷兵數據...'}
+                            {loadingRoster ? '正在讀取球隊主力名單...' : '正在同步即時數據 (傷兵/表現)...'}
                           </div>
                         ) : (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -3271,9 +3325,10 @@ export default function Home() {
                                   {homeRoster.map(p => {
                                     const normP = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
                                     const injury = injuryReports[normP];
+                                    const hot = hotPlayers[normP];
                                     return (
                                       <option key={p.id} value={p.id}>
-                                        {translatePlayerName(p.name)} {p.number !== null ? `#${p.number}` : ''} ({p.position}){injury ? ` [傷-${injury.status}]` : ''}
+                                        {translatePlayerName(p.name)} {p.number !== null ? `#${p.number}` : ''} ({p.position}){injury ? ` [傷-${injury.status}]` : ''}{hot ? ` [火-${hot.reason}]` : ''}
                                       </option>
                                     );
                                   })}
@@ -3317,9 +3372,10 @@ export default function Home() {
                                   {awayRoster.map(p => {
                                     const normP = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
                                     const injury = injuryReports[normP];
+                                    const hot = hotPlayers[normP];
                                     return (
                                       <option key={p.id} value={p.id}>
-                                        {translatePlayerName(p.name)} {p.number !== null ? `#${p.number}` : ''} ({p.position}){injury ? ` [傷-${injury.status}]` : ''}
+                                        {translatePlayerName(p.name)} {p.number !== null ? `#${p.number}` : ''} ({p.position}){injury ? ` [傷-${injury.status}]` : ''}{hot ? ` [火-${hot.reason}]` : ''}
                                       </option>
                                     );
                                   })}
