@@ -1,7 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-import { prisma } from '@/lib/prisma';
-
 export interface MetaModelWeights {
   SportsAI: number;
   EloRating: number;
@@ -14,14 +10,32 @@ export const DEFAULT_WEIGHTS: MetaModelWeights = {
   MonteCarlo: 0.30
 };
 
-const weightsFilePath = path.join(process.cwd(), 'lib', 'prediction', 'weights.json');
-
 /**
-  Synchronously reads meta-model weights from the local JSON file.
-  Fallback to default values if not found or invalid.
+ * Synchronously reads meta-model weights from the local JSON file.
+ * Fallback to default values if not found or invalid.
  */
 export function getMetaModelWeights(): MetaModelWeights {
+  if (typeof window !== 'undefined') {
+    try {
+      const cached = localStorage.getItem('meta_model_weights');
+      if (cached) {
+        const weights = JSON.parse(cached);
+        if (
+          typeof weights.SportsAI === 'number' &&
+          typeof weights.EloRating === 'number' &&
+          typeof weights.MonteCarlo === 'number'
+        ) {
+          return weights;
+        }
+      }
+    } catch { /* ignore */ }
+    return DEFAULT_WEIGHTS;
+  }
+
   try {
+    const fs = require('fs');
+    const path = require('path');
+    const weightsFilePath = path.join(process.cwd(), 'lib', 'prediction', 'weights.json');
     if (fs.existsSync(weightsFilePath)) {
       const data = fs.readFileSync(weightsFilePath, 'utf8');
       const weights = JSON.parse(data);
@@ -44,11 +58,23 @@ export function getMetaModelWeights(): MetaModelWeights {
 }
 
 /**
-  Asynchronously saves meta-model weights to both weights.json file and database.
+ * Asynchronously saves meta-model weights to both weights.json file and database.
  */
 export async function saveMetaModelWeights(weights: MetaModelWeights): Promise<boolean> {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('meta_model_weights', JSON.stringify(weights));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   // 1. Write to local file
   try {
+    const fs = require('fs');
+    const path = require('path');
+    const weightsFilePath = path.join(process.cwd(), 'lib', 'prediction', 'weights.json');
     fs.writeFileSync(weightsFilePath, JSON.stringify(weights, null, 2), 'utf8');
     console.log('[Weights Manager] Successfully wrote weights to file:', weights);
   } catch (error) {
@@ -58,6 +84,7 @@ export async function saveMetaModelWeights(weights: MetaModelWeights): Promise<b
 
   // 2. Write to database (MyStrategyRules)
   try {
+    const { prisma } = require('@/lib/prisma');
     await prisma.myStrategyRules.upsert({
       where: { key: 'meta_model_weights' },
       update: {

@@ -219,6 +219,17 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
     if (hasSynced.current) return;
     hasSynced.current = true;
     
+    // Fetch latest meta-model weights
+    fetch(`/api/predictions/weights?_t=${Date.now()}`)
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && json.weights) {
+          localStorage.setItem('meta_model_weights', JSON.stringify(json.weights));
+          setDataVersion(v => v + 1);
+        }
+      })
+      .catch(() => {});
+
     // 先載入 localStorage 快取 (立即顯示)
     try {
       const cached = localStorage.getItem('backtest_dynamic_games');

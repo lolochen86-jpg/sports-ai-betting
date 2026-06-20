@@ -134,6 +134,16 @@ export default function HistoryPage() {
       }
     } catch { /* ignore */ }
     
+    // Fetch latest meta-model weights for client-side predictions
+    fetch(`/api/predictions/weights?_t=${Date.now()}`)
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && json.weights) {
+          localStorage.setItem('meta_model_weights', JSON.stringify(json.weights));
+        }
+      })
+      .catch(() => { /* silently fail */ });
+
     const lastStaticDate = (realGames as RawGame[]).reduce((max, g) => g.date > max ? g.date : max, '2026-04-01');
     fetch(`/api/backtest/sync?after=${lastStaticDate}&_t=${Date.now()}`)
       .then(res => res.json())
