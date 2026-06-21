@@ -675,6 +675,7 @@ export default function Home() {
     bookmakerCount?: number;
     reason?: string;
     loading?: boolean;
+    source?: string;
   }>>({});
 
   const fetchInternationalOdds = async (game: GameWithTeams) => {
@@ -2577,7 +2578,9 @@ export default function Home() {
                                         <span className="text-lg">🌍</span>
                                         <div>
                                           <h4 className="text-sm font-black text-indigo-400 tracking-wider font-sans">國際盤賠率參考</h4>
-                                          <p className="text-[10px] text-gray-500 font-sans mt-0.5">來源：The Odds API（us / eu / uk 三大市場去水平均）</p>
+                                          <p className="text-[10px] text-gray-500 font-sans mt-0.5">
+                                            來源：{intl?.source || 'The Odds API'}{intl?.source ? '' : '（us / eu / uk 三大市場去水平均）'}
+                                          </p>
                                         </div>
                                       </div>
                                       {tripleConsensus && consensusFavor && (

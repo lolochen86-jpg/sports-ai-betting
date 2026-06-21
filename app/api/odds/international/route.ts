@@ -18,10 +18,54 @@ import {
   getCachedNBAOdds,
   hasOddsApiKey,
 } from '@/lib/odds/theOddsApiClient';
-import { buildInternationalOddsData } from '@/lib/odds/oddsNormalizer';
+import { buildInternationalOddsData, removeVig } from '@/lib/odds/oddsNormalizer';
 import type { GameWithTeams } from '@/types/sports';
 
 export const dynamic = 'force-dynamic';
+
+function tryReadLocalPinnacle(
+  league: string,
+  gameDate: string,
+  homeTeam: string,
+  awayTeam: string
+): any | null {
+  try {
+    const fs = eval('require')('fs');
+    const path = eval('require')('path');
+    const dateStr = gameDate.split('T')[0];
+    const filePath = path.join(process.cwd(), 'data', 'odds', `pinnacle_${league.toLowerCase()}_${dateStr}.json`);
+
+    if (!fs.existsSync(filePath)) {
+      return null;
+    }
+
+    const content = fs.readFileSync(filePath, 'utf8');
+    const games = JSON.parse(content);
+
+    const normalize = (s: string) =>
+      s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    const normHome = normalize(homeTeam);
+    const normAway = normalize(awayTeam);
+
+    for (const pg of games) {
+      const pgHome = normalize(pg.home_team_name || '');
+      const pgAway = normalize(pg.away_team_name || '');
+      const pgHomeAbbr = normalize(pg.home_team_abbr || '');
+      const pgAwayAbbr = normalize(pg.away_team_abbr || '');
+
+      const homeMatches = (pgHome === normHome || pgHome.includes(normHome) || normHome.includes(pgHome) || pgHomeAbbr === normHome);
+      const awayMatches = (pgAway === normAway || pgAway.includes(normAway) || normAway.includes(pgAway) || pgAwayAbbr === normAway);
+
+      if (homeMatches && awayMatches) {
+        return pg;
+      }
+    }
+  } catch (err) {
+    console.error('[Local Pinnacle Fallback] Error reading fallback:', err);
+  }
+  return null;
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -31,12 +75,7 @@ export async function GET(request: Request) {
   const awayTeamName = searchParams.get('awayTeam') ?? '';
   const gameDate = searchParams.get('gameDate') ?? new Date().toISOString();
 
-  // ── 1. API key 未設定 ──────────────────────────────────────────────────────
-  if (!hasOddsApiKey()) {
-    return NextResponse.json({ hasData: false, reason: 'no_key' });
-  }
-
-  // ── 2. 驗證必填參數 ────────────────────────────────────────────────────────
+  // ── 1. 驗證必填參數 ────────────────────────────────────────────────────────
   if (!league || (!homeTeamName && !awayTeamName)) {
     return NextResponse.json(
       {
@@ -46,6 +85,25 @@ export async function GET(request: Request) {
       },
       { status: 400 }
     );
+  }
+
+  // ── 2. API key 未設定：嘗試從本地 Pinnacle 檔案取得 ─────────────────────────
+  if (!hasOddsApiKey()) {
+    const localMatch = tryReadLocalPinnacle(league, gameDate, homeTeamName, awayTeamName);
+    if (localMatch && localMatch.home_odds && localMatch.away_odds) {
+      const { fairHomeProb, fairAwayProb } = removeVig(localMatch.home_odds, localMatch.away_odds);
+      return NextResponse.json({
+        hasData: true,
+        avgAwayOdds: localMatch.away_odds,
+        avgHomeOdds: localMatch.home_odds,
+        fairAwayProb,
+        fairHomeProb,
+        bookmakerCount: 1,
+        eventId: localMatch.game_id,
+        source: 'Pinnacle (Local)'
+      });
+    }
+    return NextResponse.json({ hasData: false, reason: 'no_key' });
   }
 
   try {
@@ -60,6 +118,21 @@ export async function GET(request: Request) {
     }
 
     if (!cached || cached.events.length === 0) {
+      // 嘗試降級至本地 Pinnacle
+      const localMatch = tryReadLocalPinnacle(league, gameDate, homeTeamName, awayTeamName);
+      if (localMatch && localMatch.home_odds && localMatch.away_odds) {
+        const { fairHomeProb, fairAwayProb } = removeVig(localMatch.home_odds, localMatch.away_odds);
+        return NextResponse.json({
+          hasData: true,
+          avgAwayOdds: localMatch.away_odds,
+          avgHomeOdds: localMatch.home_odds,
+          fairAwayProb,
+          fairHomeProb,
+          bookmakerCount: 1,
+          eventId: localMatch.game_id,
+          source: 'Pinnacle (Local)'
+        });
+      }
       return NextResponse.json({ hasData: false, reason: 'no_data' });
     }
 
@@ -87,10 +160,46 @@ export async function GET(request: Request) {
       mockGame as GameWithTeams,
       cached.events
     );
+
+    if (oddsData.hasData) {
+      return NextResponse.json(oddsData);
+    }
+
+    // 如果 API 比對不到，再次嘗試降級至本地 Pinnacle
+    const localMatch = tryReadLocalPinnacle(league, gameDate, homeTeamName, awayTeamName);
+    if (localMatch && localMatch.home_odds && localMatch.away_odds) {
+      const { fairHomeProb, fairAwayProb } = removeVig(localMatch.home_odds, localMatch.away_odds);
+      return NextResponse.json({
+        hasData: true,
+        avgAwayOdds: localMatch.away_odds,
+        avgHomeOdds: localMatch.home_odds,
+        fairAwayProb,
+        fairHomeProb,
+        bookmakerCount: 1,
+        eventId: localMatch.game_id,
+        source: 'Pinnacle (Local)'
+      });
+    }
+
     return NextResponse.json(oddsData);
   } catch (err) {
     console.error('[/api/odds/international] Error:', err);
-    // 降級：不讓錯誤傳播到前端造成頁面崩潰
+    // 降級至本地 Pinnacle
+    const localMatch = tryReadLocalPinnacle(league, gameDate, homeTeamName, awayTeamName);
+    if (localMatch && localMatch.home_odds && localMatch.away_odds) {
+      const { fairHomeProb, fairAwayProb } = removeVig(localMatch.home_odds, localMatch.away_odds);
+      return NextResponse.json({
+        hasData: true,
+        avgAwayOdds: localMatch.away_odds,
+        avgHomeOdds: localMatch.home_odds,
+        fairAwayProb,
+        fairHomeProb,
+        bookmakerCount: 1,
+        eventId: localMatch.game_id,
+        source: 'Pinnacle (Local)'
+      });
+    }
     return NextResponse.json({ hasData: false, reason: 'no_data' });
   }
 }
+
