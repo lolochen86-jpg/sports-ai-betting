@@ -226,6 +226,16 @@
       "wins": 1,
       "losses": 4,
       "voids": 0
+    },
+    {
+      "date": "2026-06-23",
+      "open": 4990.0,
+      "close": 4990.0,
+      "pnl": 0.0,
+      "bets": 5,
+      "wins": 0,
+      "losses": 0,
+      "voids": 5
     }
   ],
   "strategy": "aggressive"
