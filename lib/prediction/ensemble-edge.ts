@@ -21,7 +21,33 @@ export interface TeamEdgeInput {
   // Today's special adjustments (pitcher ERA for MLB or injury impact score for NBA)
   pitcherEra?: number;     // e.g. 3.50 (MLB starting pitcher)
   injuryImpact?: number;    // e.g. 4.5 (NBA key player absence value, higher = worse for team)
+  
+  streak: number;          // e.g. +3 for a 3-game win streak, -4 for a 4-game loss streak
 }
+
+/**
+ * Calculates expected score adjustments and Monte Carlo standard deviation multipliers
+ * based on player/team hot/cold streaks.
+ */
+function calculateFluctuation(streak: number, league: 'NBA' | 'MLB') {
+  const isNBA = league === 'NBA';
+  let scoreAdj = 0;
+  let stdDevMultiplier = 1.0;
+  
+  if (streak >= 2) {
+    // 兩到三場的火熱表現會慢慢降溫 (Cooling down, capped at 3 games streak influence)
+    const cappedStreak = Math.min(streak, 3);
+    scoreAdj = isNBA ? -1.5 * (cappedStreak - 1) : -0.15 * (cappedStreak - 1);
+  } else if (streak <= -4) {
+    // 四到五場極低的手感會慢慢或是回溫或是標發 (Rebound and high volatility)
+    const absStreak = Math.abs(streak);
+    scoreAdj = isNBA ? 0.5 * (absStreak - 3) + 1.5 : 0.05 * (absStreak - 3) + 0.15;
+    stdDevMultiplier = isNBA ? 1.0 + 0.2 * (absStreak - 3) : 1.0 + 0.15 * (absStreak - 3);
+  }
+  
+  return { scoreAdj, stdDevMultiplier };
+}
+
 
 export interface EnsembleInput {
   league: 'NBA' | 'MLB';
@@ -88,8 +114,11 @@ export function calculate_ensemble_edge(input: EnsembleInput): EnsembleEdgeResul
 
   // ─── 2. Run Model 1: Feature-Weighted Model ───
   // Calculate raw expected scores based on decay-adjusted form
-  let fHomeScore = homeAdjScore;
-  let fAwayScore = awayAdjScore;
+  const homeFluct = calculateFluctuation(home.streak, league);
+  const awayFluct = calculateFluctuation(away.streak, league);
+
+  let fHomeScore = homeAdjScore + homeFluct.scoreAdj;
+  let fAwayScore = awayAdjScore + awayFluct.scoreAdj;
 
   // Apply special adjustments (starting pitcher ERA or injury impact)
   if (isNBA) {
@@ -134,10 +163,10 @@ export function calculate_ensemble_edge(input: EnsembleInput): EnsembleEdgeResul
   const eloMarginScale = isNBA ? 2.5 / 100 : 0.5 / 100;
   const eloScoreDiff = eloDiff * eloMarginScale;
   
-  // Distribute Elo score difference around the decay-adjusted baseline total
+  // Distribute Elo score difference around the decay-adjusted baseline total and apply fluctuation
   const baseTotal = homeAdjScore + awayAdjScore;
-  const eloHomeScore = (baseTotal / 2) + (eloScoreDiff / 2);
-  const eloAwayScore = (baseTotal / 2) - (eloScoreDiff / 2);
+  const eloHomeScore = (baseTotal / 2) + (eloScoreDiff / 2) + homeFluct.scoreAdj;
+  const eloAwayScore = (baseTotal / 2) - (eloScoreDiff / 2) + awayFluct.scoreAdj;
 
   const model2: SubModelResult = {
     winner: eloHomeProb >= 0.5 ? 'home' : 'away',
@@ -151,7 +180,9 @@ export function calculate_ensemble_edge(input: EnsembleInput): EnsembleEdgeResul
   // ─── 4. Run Model 3: Monte Carlo Simulator (10,000 runs) ───
   const simulations = 10000;
   // Default standard deviation (standard error of regression residuals)
-  const defaultStdDev = 2.3;
+  const defaultStdDev = isNBA ? 8.2 : 2.3; // Make sure baseline standard deviation matches stats.ts
+  const homeStdDev = defaultStdDev * homeFluct.stdDevMultiplier;
+  const awayStdDev = defaultStdDev * awayFluct.stdDevMultiplier;
   
   let mcHomeWins = 0;
   let mcOverCount = 0;
@@ -164,8 +195,8 @@ export function calculate_ensemble_edge(input: EnsembleInput): EnsembleEdgeResul
 
   for (let i = 0; i < simulations; i++) {
     // Draw random scores from normal distributions
-    const simHome = sampleNormal(mcHomeMean, defaultStdDev);
-    const simAway = sampleNormal(mcAwayMean, defaultStdDev);
+    const simHome = sampleNormal(mcHomeMean, homeStdDev);
+    const simAway = sampleNormal(mcAwayMean, awayStdDev);
     const simTotal = simHome + simAway;
 
     mcTotalHomeScore += simHome;

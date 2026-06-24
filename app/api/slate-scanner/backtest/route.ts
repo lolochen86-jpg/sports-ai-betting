@@ -188,6 +188,7 @@ export async function GET(request: NextRequest) {
               elo: homeElo,
               pitcherEra: game.league === 'MLB' ? pitcherEraHome : undefined,
               injuryImpact: game.league === 'NBA' ? injuryImpactHome : undefined,
+              streak: homeStats.streak,
             };
 
             const awayInput = {
@@ -198,6 +199,7 @@ export async function GET(request: NextRequest) {
               elo: awayElo,
               pitcherEra: game.league === 'MLB' ? pitcherEraAway : undefined,
               injuryImpact: game.league === 'NBA' ? injuryImpactAway : undefined,
+              streak: awayStats.streak,
             };
 
             // Run quant ensemble engine

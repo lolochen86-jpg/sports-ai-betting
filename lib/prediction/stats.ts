@@ -110,8 +110,35 @@ export function calculateStrengthIndex(stats: TeamRecentStats, league: League, i
   if (isHome) {
     index += league === 'NBA' ? 4.0 : 3.0;
   }
+
+  // Apply fluctuation adjustment to strength index (representing todays hand/form cooling/rebound)
+  const fluct = calculateFluctuation(stats.streak, league);
+  index += league === 'MLB' ? fluct.scoreAdj * 4.5 : fluct.scoreAdj * 0.8;
   
   return index;
+}
+
+/**
+ * Calculates expected score adjustments and Monte Carlo standard deviation multipliers
+ * based on player/team hot/cold streaks.
+ */
+export function calculateFluctuation(streak: number, league: League) {
+  const isNBA = league === 'NBA';
+  let scoreAdj = 0;
+  let stdDevMultiplier = 1.0;
+  
+  if (streak >= 2) {
+    // 兩到三場的火熱表現會慢慢降溫 (Cooling down, capped at 3 games streak influence)
+    const cappedStreak = Math.min(streak, 3);
+    scoreAdj = isNBA ? -1.5 * (cappedStreak - 1) : -0.15 * (cappedStreak - 1);
+  } else if (streak <= -4) {
+    // 四到五場極低的手感會慢慢或是回溫或是標發 (Rebound and high volatility)
+    const absStreak = Math.abs(streak);
+    scoreAdj = isNBA ? 0.5 * (absStreak - 3) + 1.5 : 0.05 * (absStreak - 3) + 0.15;
+    stdDevMultiplier = isNBA ? 1.0 + 0.2 * (absStreak - 3) : 1.0 + 0.15 * (absStreak - 3);
+  }
+  
+  return { scoreAdj, stdDevMultiplier };
 }
 
 /**
@@ -147,8 +174,10 @@ export function calculateWinProbability(
 
   // Compute expected scores based on recent scoring averages and team strengths
   const shift = diff * (league === 'NBA' ? 0.08 : 0.04);
-  const homeExp = homeStats.averagePointsScored + shift;
-  const awayExp = awayStats.averagePointsScored - shift;
+  const homeFluct = calculateFluctuation(homeStats.streak, league);
+  const awayFluct = calculateFluctuation(awayStats.streak, league);
+  const homeExp = homeStats.averagePointsScored + shift + homeFluct.scoreAdj;
+  const awayExp = awayStats.averagePointsScored - shift + awayFluct.scoreAdj;
   
   let homeExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, homeExp).toFixed(1));
   let awayExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, awayExp).toFixed(1));
@@ -218,10 +247,12 @@ export function calculateEloProbability(
     finalAwayProb = 1 - minProb;
   }
 
-  // Score prediction using Elo delta
+  // Score prediction using Elo delta and fluctuation
   const shift = diff * (league === 'NBA' ? 0.05 : 0.025);
-  const homeExp = homeStats.averagePointsScored + shift;
-  const awayExp = awayStats.averagePointsScored - shift;
+  const homeFluct = calculateFluctuation(homeStats.streak, league);
+  const awayFluct = calculateFluctuation(awayStats.streak, league);
+  const homeExp = homeStats.averagePointsScored + shift + homeFluct.scoreAdj;
+  const awayExp = awayStats.averagePointsScored - shift + awayFluct.scoreAdj;
 
   let homeExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, homeExp).toFixed(1));
   let awayExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, awayExp).toFixed(1));
@@ -273,9 +304,18 @@ export function calculateMonteCarloProbability(
     return num * std + mean;
   };
   
+  const homeFluct = calculateFluctuation(homeStats.streak, league);
+  const awayFluct = calculateFluctuation(awayStats.streak, league);
+  
+  const homeStdDev = stdDev * homeFluct.stdDevMultiplier;
+  const awayStdDev = stdDev * awayFluct.stdDevMultiplier;
+  
+  const homeMean = homeStats.averagePointsScored + homeFluct.scoreAdj;
+  const awayMean = awayStats.averagePointsScored + awayFluct.scoreAdj;
+  
   for (let i = 0; i < sims; i++) {
-    const homeSimScore = randomNormal(homeStats.averagePointsScored, stdDev) + homeFieldAdv;
-    const awaySimScore = randomNormal(awayStats.averagePointsScored, stdDev);
+    const homeSimScore = randomNormal(homeMean, homeStdDev) + homeFieldAdv;
+    const awaySimScore = randomNormal(awayMean, awayStdDev);
     
     totalHomeScore += homeSimScore;
     totalAwayScore += awaySimScore;
@@ -456,8 +496,10 @@ export function calculateWinProbabilityV2(
     : 0;
 
   const shift = diff * (league === 'NBA' ? 0.08 : 0.04);
-  const homeExp = homeBaseScore + shift + homeMomentumAdj - homeFatiguePenalty + awayPitcherAdj;
-  const awayExp = awayBaseScore - shift + awayMomentumAdj - awayFatiguePenalty + homePitcherAdj;
+  const homeFluct = calculateFluctuation(homeStats.streak, league);
+  const awayFluct = calculateFluctuation(awayStats.streak, league);
+  const homeExp = homeBaseScore + shift + homeMomentumAdj - homeFatiguePenalty + awayPitcherAdj + homeFluct.scoreAdj;
+  const awayExp = awayBaseScore - shift + awayMomentumAdj - awayFatiguePenalty + homePitcherAdj + awayFluct.scoreAdj;
 
   let homeExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, homeExp).toFixed(1));
   let awayExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, awayExp).toFixed(1));
@@ -552,10 +594,12 @@ export function calculateEloProbabilityV2(
   const homeBaseScore = homeStats.homeAvgScored ?? homeStats.averagePointsScored;
   const awayBaseScore = awayStats.awayAvgScored ?? awayStats.averagePointsScored;
 
-  // Score prediction using Elo delta
+  // Score prediction using Elo delta and fluctuation
   const shift = diff * (league === 'NBA' ? 0.05 : 0.025);
-  let homeExp = homeBaseScore + shift;
-  let awayExp = awayBaseScore - shift;
+  const homeFluct = calculateFluctuation(homeStats.streak, league);
+  const awayFluct = calculateFluctuation(awayStats.streak, league);
+  let homeExp = homeBaseScore + shift + homeFluct.scoreAdj;
+  let awayExp = awayBaseScore - shift + awayFluct.scoreAdj;
 
   // Apply fatigue penalty to Elo expected score
   if (extras?.homeFatigue?.fatigueLevel === 'heavy') homeExp -= (league === 'NBA' ? 3.0 : 0.6);
@@ -614,6 +658,13 @@ export function calculateMonteCarloProbabilityV2(
   let awayStdDev = league === 'MLB' ? 2.3 : 8.2;
   const homeFieldAdv = league === 'NBA' ? 2.5 : 0.35;
 
+  const homeFluct = calculateFluctuation(homeStats.streak, league);
+  const awayFluct = calculateFluctuation(awayStats.streak, league);
+
+  // Apply fluctuation standard deviation multipliers
+  homeStdDev *= homeFluct.stdDevMultiplier;
+  awayStdDev *= awayFluct.stdDevMultiplier;
+
   // Fatigue increases variance (standard deviation)
   if (extras?.homeFatigue?.fatigueLevel === 'heavy') homeStdDev *= 1.25;
   else if (extras?.homeFatigue?.fatigueLevel === 'mild') homeStdDev *= 1.1;
@@ -632,6 +683,10 @@ export function calculateMonteCarloProbabilityV2(
   // Base mean scoring is home/away splits
   let homeMean = homeStats.homeAvgScored ?? homeStats.averagePointsScored;
   let awayMean = awayStats.awayAvgScored ?? awayStats.averagePointsScored;
+
+  // Apply fluctuation adjustment to mean scores
+  homeMean += homeFluct.scoreAdj;
+  awayMean += awayFluct.scoreAdj;
 
   // Adjust mean based on H2H history
   if (extras?.h2h && extras.h2h.totalGames >= 3) {

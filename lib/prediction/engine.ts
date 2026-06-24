@@ -417,6 +417,18 @@ export async function generatePrediction(
     sportsReasoning.push(`${sportsLoserName} 近期客場/客戰表現起伏較大，主力陣容在連續作戰下面臨體能考驗。`);
   }
 
+  // Fluctuation adjustment reasoning for V1
+  [
+    { name: homeName, stats: homeRecent },
+    { name: awayName, stats: awayRecent }
+  ].forEach(t => {
+    if (t.stats.streak >= 2 && t.stats.streak <= 3) {
+      sportsReasoning.push(`【波動冷卻】考慮到 ${t.name} 連勝手感（${t.stats.streak} 連勝），模型已適度下調其今日得分期望，預防過熱回歸。`);
+    } else if (t.stats.streak <= -4) {
+      sportsReasoning.push(`【低谷反彈/標發】${t.name} 經歷 ${Math.abs(t.stats.streak)} 連敗，模型研判手感隨時有回溫爆發（標發）機會，已啟動正向回彈加權並放寬 Monte Carlo 隨機標準差。`);
+    }
+  });
+
   const sportsProbs = league === 'MLB'
     ? calculateMlbTotalScoreProbs(sportsResult.homeExpectedScore + sportsResult.awayExpectedScore)
     : undefined;
@@ -727,6 +739,22 @@ export async function generatePredictionV2(
     sportsReasoning.push(
       `【得分動量】${homeName} 得分趨勢為 ${homeHot}（斜率 ${homeRecent.scoringMomentum}）；${awayName} 得分趨勢為 ${awayHot}（斜率 ${awayRecent.scoringMomentum}）。`
     );
+  }
+
+  // Fluctuation Adjustment (冷熱手感波動修正)
+  const fluctReasoning: string[] = [];
+  [
+    { name: homeName, stats: homeRecent },
+    { name: awayName, stats: awayRecent }
+  ].forEach(t => {
+    if (t.stats.streak >= 2 && t.stats.streak <= 3) {
+      fluctReasoning.push(`${t.name} 近期處於 ${t.stats.streak} 連勝強勢期，預測模型已導入冷卻降溫修正，預防手感過熱回歸。`);
+    } else if (t.stats.streak <= -4) {
+      fluctReasoning.push(`${t.name} 處於 ${Math.abs(t.stats.streak)} 連敗低谷，模型已啟動極限手感反彈修正並提高 Monte Carlo 爆發（標發）波動係數，防範低估。`);
+    }
+  });
+  if (fluctReasoning.length > 0) {
+    sportsReasoning.push(`【手感波動】${fluctReasoning.join(' ')}`);
   }
 
   // C. H2H historical advantage

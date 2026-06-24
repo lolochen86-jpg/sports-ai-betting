@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
         elo: Number(body.home.elo),
         pitcherEra: body.home.pitcherEra !== undefined ? Number(body.home.pitcherEra) : undefined,
         injuryImpact: body.home.injuryImpact !== undefined ? Number(body.home.injuryImpact) : undefined,
+        streak: body.home.streak !== undefined ? Number(body.home.streak) : 0,
       },
       away: {
         avgScore5: Number(body.away.avgScore5),
@@ -37,6 +38,7 @@ export async function POST(request: NextRequest) {
         elo: Number(body.away.elo),
         pitcherEra: body.away.pitcherEra !== undefined ? Number(body.away.pitcherEra) : undefined,
         injuryImpact: body.away.injuryImpact !== undefined ? Number(body.away.injuryImpact) : undefined,
+        streak: body.away.streak !== undefined ? Number(body.away.streak) : 0,
       },
       bookmakerSpread: Number(body.bookmakerSpread),
       bookmakerTotal: Number(body.bookmakerTotal),
