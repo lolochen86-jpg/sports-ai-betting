@@ -5,14 +5,14 @@
     "sport": "PARLAY",
     "parlay_odds": 4.219,
     "bet_amount": 140,
-    "result": "VOID",
-    "pnl": 0.0,
+    "result": "LOSS",
+    "pnl": -140,
     "leg_results": [
       {
         "game_id": "823614",
         "expected": "NYM",
-        "winner": null,
-        "result": "VOID"
+        "winner": "CHC",
+        "result": "LOSS"
       }
     ],
     "legs": [
@@ -159,14 +159,14 @@
     "sport": "PARLAY",
     "parlay_odds": 9.695,
     "bet_amount": 80,
-    "result": "VOID",
-    "pnl": 0.0,
+    "result": "LOSS",
+    "pnl": -80,
     "leg_results": [
       {
         "game_id": "823614",
         "expected": "NYM",
-        "winner": null,
-        "result": "VOID"
+        "winner": "CHC",
+        "result": "LOSS"
       }
     ],
     "legs": [
@@ -380,14 +380,14 @@
     "sport": "PARLAY",
     "parlay_odds": 56.072,
     "bet_amount": 10.0,
-    "result": "VOID",
-    "pnl": 0.0,
+    "result": "LOSS",
+    "pnl": -10.0,
     "leg_results": [
       {
         "game_id": "823614",
         "expected": "NYM",
-        "winner": null,
-        "result": "VOID"
+        "winner": "CHC",
+        "result": "LOSS"
       }
     ],
     "legs": [
