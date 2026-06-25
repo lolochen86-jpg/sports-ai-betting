@@ -1,0 +1,47 @@
+{
+  "intercept": 0.14763285949375138,
+  "coefficients": {
+    "home_win_pct": 0.1877366294989994,
+    "away_win_pct": -0.16239352491240455,
+    "home_l10_win_pct": -0.041566131084330285,
+    "away_l10_win_pct": 0.03390579294437152,
+    "home_rs_avg": 0.02934453041328961,
+    "away_rs_avg": -0.09761181015755795,
+    "home_ra_avg": -0.04954548934252658,
+    "away_ra_avg": 0.03032971353387432,
+    "is_home_advantage": 0.0
+  },
+  "scaler_mean": {
+    "home_win_pct": 0.49984849072470644,
+    "away_win_pct": 0.5009495463920385,
+    "home_l10_win_pct": 0.49533208855694844,
+    "away_l10_win_pct": 0.5052814083755669,
+    "home_rs_avg": 4.374233128834356,
+    "away_rs_avg": 4.38893038143505,
+    "home_ra_avg": 4.392264603894372,
+    "away_ra_avg": 4.36313683648973,
+    "is_home_advantage": 1.0
+  },
+  "scaler_std": {
+    "home_win_pct": 0.08803034487035698,
+    "away_win_pct": 0.08743671022014352,
+    "home_l10_win_pct": 0.16905769591418143,
+    "away_l10_win_pct": 0.17136689273881792,
+    "home_rs_avg": 1.1208386383416777,
+    "away_rs_avg": 1.1054667391397355,
+    "home_ra_avg": 1.0832086920605826,
+    "away_ra_avg": 1.1345663196759808,
+    "is_home_advantage": 1.0
+  },
+  "accuracy": 0.5533049040511727,
+  "roc_auc": 0.5769993420812165,
+  "train_samples": 3749,
+  "test_samples": 938,
+  "seasons": [
+    "2024",
+    "2025"
+  ],
+  "trained_at": "2026-06-25T17:17:25.557383Z",
+  "sport": "MLB",
+  "version": "2.0.0-real-data"
+}
