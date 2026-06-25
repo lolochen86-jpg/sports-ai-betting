@@ -43,7 +43,7 @@ export default function RootLayout({
             font-family: var(--font-outfit), sans-serif !important;
           }
           h1, h2, h3, h4, h5, h6 {
-            font-weight: 950 !important; /* Extra thick headers */
+            font-weight: 900 !important; /* Extra thick headers */
           }
           /* Bold mapping shifts to enforce maximum punchiness */
           .font-normal {
@@ -59,10 +59,10 @@ export default function RootLayout({
             font-weight: 900 !important;
           }
           .font-extrabold {
-            font-weight: 950 !important;
+            font-weight: 900 !important;
           }
           .font-black {
-            font-weight: 950 !important;
+            font-weight: 900 !important;
           }
         `}</style>
       </head>

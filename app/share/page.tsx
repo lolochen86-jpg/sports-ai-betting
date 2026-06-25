@@ -144,6 +144,11 @@ function getTeamGradient(code: string): [string, string] {
   return [`hsl(${hue1}, 75%, 45%)`, `hsl(${hue2}, 70%, 40%)`];
 }
 
+function getDisplayConfidence(confidence: number) {
+  if (confidence === undefined || confidence === null) return 0;
+  return confidence > 1 ? Math.round(confidence) : Math.round(confidence * 100);
+}
+
 export default function SharePage() {
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     // Initialize with local date in YYYY-MM-DD
@@ -153,7 +158,7 @@ export default function SharePage() {
     return localTime.toISOString().split('T')[0];
   });
   const [activeLeague, setActiveLeague] = useState<League | 'ALL'>('ALL');
-  const [mode, setMode] = useState<'prediction' | 'completed'>('prediction');
+  const [mode, setMode] = useState<'prediction' | 'meta' | 'completed'>('prediction');
   
   const [games, setGames] = useState<GameWithTeams[]>([]);
   const [predictions, setPredictions] = useState<Record<string, any>>({});
@@ -331,9 +336,15 @@ export default function SharePage() {
       ctx.fillText('智能大數據分析平台', 50, 87);
 
       // Mode Badge Indicator (Right)
-      const isPredMode = mode === 'prediction';
-      const modeText = isPredMode ? '🤖 AI 預測得分字卡' : '🏆 完賽最終得分字卡';
-      const badgeColor = isPredMode ? '#8b5cf6' : '#10b981';
+      let modeText = '🏆 完賽最終得分字卡';
+      let badgeColor = '#10b981';
+      if (mode === 'prediction') {
+        modeText = '🤖 SportsAI 預測得分字卡';
+        badgeColor = '#8b5cf6';
+      } else if (mode === 'meta') {
+        modeText = '👑 Meta 元模型預測字卡';
+        badgeColor = '#d97706';
+      }
 
       ctx.textAlign = 'right';
       // Draw Mode Badge
@@ -488,6 +499,11 @@ export default function SharePage() {
         let homeScoreDisp = '--';
 
         if (mode === 'prediction') {
+          if (pred && pred.models && pred.models.SportsAI) {
+            awayScoreDisp = Number(pred.models.SportsAI.awayExpectedScore).toFixed(1);
+            homeScoreDisp = Number(pred.models.SportsAI.homeExpectedScore).toFixed(1);
+          }
+        } else if (mode === 'meta') {
           if (pred && pred.models && pred.models.MetaModel) {
             awayScoreDisp = Number(pred.models.MetaModel.awayExpectedScore).toFixed(1);
             homeScoreDisp = Number(pred.models.MetaModel.homeExpectedScore).toFixed(1);
@@ -525,14 +541,37 @@ export default function SharePage() {
 
         if (mode === 'prediction') {
           if (pred) {
-            const winnerCn = pred.winner === 'home' 
+            const sportsAIPred = pred.models?.SportsAI;
+            const predWinner = sportsAIPred?.winner || pred.winner;
+            const predConfidence = sportsAIPred?.confidence || pred.confidence;
+            
+            const winnerCn = predWinner === 'home' 
               ? getTeamNameCn(game.homeTeam.code, game.league)
               : getTeamNameCn(game.awayTeam.code, game.league);
-            const conf = Math.round(pred.confidence * 100);
+            const conf = getDisplayConfidence(predConfidence);
 
             ctx.fillStyle = 'rgba(167, 139, 250, 0.9)'; // Purple-300
             ctx.font = '800 12px Outfit, sans-serif';
-            ctx.fillText(`★ AI 預估: ${winnerCn}勝 (${conf}% 信心)`, cardX + 267.5, cardY + 152);
+            ctx.fillText(`★ SportsAI 預估: ${winnerCn}勝 (${conf}% 信心)`, cardX + 267.5, cardY + 152);
+          } else {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.font = 'bold 12px Outfit, sans-serif';
+            ctx.fillText('暫無預測計算數據', cardX + 267.5, cardY + 152);
+          }
+        } else if (mode === 'meta') {
+          if (pred) {
+            const metaPred = pred.models?.MetaModel;
+            const predWinner = metaPred?.winner || pred.winner;
+            const predConfidence = metaPred?.confidence || pred.confidence;
+
+            const winnerCn = predWinner === 'home' 
+              ? getTeamNameCn(game.homeTeam.code, game.league)
+              : getTeamNameCn(game.awayTeam.code, game.league);
+            const conf = getDisplayConfidence(predConfidence);
+
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.9)'; // Amber-400
+            ctx.font = '800 12px Outfit, sans-serif';
+            ctx.fillText(`★ Meta 預估: ${winnerCn}勝 (${conf}% 信心)`, cardX + 267.5, cardY + 152);
           } else {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
             ctx.font = 'bold 12px Outfit, sans-serif';
@@ -548,7 +587,8 @@ export default function SharePage() {
             let accuracyStr = '';
             if (pred) {
               const actualWinner = game.homeScore > game.awayScore ? 'home' : 'away';
-              const predCorrect = pred.winner === actualWinner;
+              const metaPred = pred.models?.MetaModel;
+              const predCorrect = (metaPred?.winner || pred.winner) === actualWinner;
               accuracyStr = predCorrect ? ' | 🎯 預測精準命中' : ' | ❌ 預測偏差';
             }
 
@@ -726,12 +766,18 @@ export default function SharePage() {
             <label className="text-xs font-black text-purple-300 uppercase tracking-widest">
               📊 字卡展示模式
             </label>
-            <div className="grid grid-cols-2 p-1 bg-white/5 rounded-xl border border-white/10 w-full">
+            <div className="grid grid-cols-3 p-1 bg-white/5 rounded-xl border border-white/10 w-full">
               <button
                 onClick={() => setMode('prediction')}
                 className={`py-2 rounded-lg text-xs font-black transition-all ${mode === 'prediction' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
               >
-                🤖 AI 預測得分
+                🤖 SportsAI 預測
+              </button>
+              <button
+                onClick={() => setMode('meta')}
+                className={`py-2 rounded-lg text-xs font-black transition-all ${mode === 'meta' ? 'bg-amber-600 text-white shadow-md shadow-amber-500/20' : 'text-gray-400 hover:text-white'}`}
+              >
+                👑 Meta 元模型
               </button>
               <button
                 onClick={() => setMode('completed')}
@@ -793,6 +839,11 @@ export default function SharePage() {
                 let homeScoreDisp = '--';
 
                 if (mode === 'prediction') {
+                  if (pred && pred.models && pred.models.SportsAI) {
+                    awayScoreDisp = Number(pred.models.SportsAI.awayExpectedScore).toFixed(1);
+                    homeScoreDisp = Number(pred.models.SportsAI.homeExpectedScore).toFixed(1);
+                  }
+                } else if (mode === 'meta') {
                   if (pred && pred.models && pred.models.MetaModel) {
                     awayScoreDisp = Number(pred.models.MetaModel.awayExpectedScore).toFixed(1);
                     homeScoreDisp = Number(pred.models.MetaModel.homeExpectedScore).toFixed(1);
@@ -877,7 +928,15 @@ export default function SharePage() {
                       {mode === 'prediction' ? (
                         pred ? (
                           <div className="text-[11px] font-bold text-purple-300 bg-purple-500/10 py-1.5 px-3 rounded-lg border border-purple-500/10 inline-block">
-                            ★ AI 預估: {pred.winner === 'home' ? getTeamNameCn(game.homeTeam.code, game.league) : getTeamNameCn(game.awayTeam.code, game.league)}勝 ({Math.round(pred.confidence * 100)}% 信心)
+                            ★ SportsAI 預估: {(pred.models?.SportsAI?.winner || pred.winner) === 'home' ? getTeamNameCn(game.homeTeam.code, game.league) : getTeamNameCn(game.awayTeam.code, game.league)}勝 ({getDisplayConfidence(pred.models?.SportsAI?.confidence || pred.confidence)}% 信心)
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-500">暫無預測數據</span>
+                        )
+                      ) : mode === 'meta' ? (
+                        pred ? (
+                          <div className="text-[11px] font-bold text-amber-300 bg-amber-500/10 py-1.5 px-3 rounded-lg border border-amber-500/10 inline-block">
+                            ★ Meta 預估: {(pred.models?.MetaModel?.winner || pred.winner) === 'home' ? getTeamNameCn(game.homeTeam.code, game.league) : getTeamNameCn(game.awayTeam.code, game.league)}勝 ({getDisplayConfidence(pred.models?.MetaModel?.confidence || pred.confidence)}% 信心)
                           </div>
                         ) : (
                           <span className="text-xs text-gray-500">暫無預測數據</span>
@@ -888,7 +947,7 @@ export default function SharePage() {
                             實際勝隊: {game.homeScore > game.awayScore ? getTeamNameCn(game.homeTeam.code, game.league) : getTeamNameCn(game.awayTeam.code, game.league)}
                             {pred && (
                               <span className="ml-1 opacity-80 border-l border-emerald-500/25 pl-1.5">
-                                {pred.winner === (game.homeScore > game.awayScore ? 'home' : 'away') ? '🎯 預測命中' : '❌ 預測未命中'}
+                                {(pred.models?.MetaModel?.winner || pred.winner) === (game.homeScore > game.awayScore ? 'home' : 'away') ? '🎯 預測命中' : '❌ 預測未命中'}
                               </span>
                             )}
                           </div>
