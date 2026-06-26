@@ -598,7 +598,7 @@ export async function generatePrediction(
   return {
     winner: sportsWinner,
     confidence: sportsConf,
-    modelVersion: 'SportsAI-v4.2',
+    modelVersion: league === 'MLB' ? 'SportsAI-MLB-ML-v1.0' : 'SportsAI-v4.2',
     reasoning: sportsReasoning,
     keyPlayer,
     weatherFactor,
@@ -606,10 +606,10 @@ export async function generatePrediction(
     activeModel: 'MetaModel',
     models: {
       SportsAI: {
-        name: 'SportsAI 特徵加權權重模型 (v4.2)',
+        name: league === 'MLB' ? 'SportsAI MLB 機器學習模型 (v1.0)' : 'SportsAI 特徵加權權重模型 (v4.2)',
         winner: sportsWinner,
         confidence: sportsConf,
-        modelVersion: 'SportsAI-v4.2',
+        modelVersion: league === 'MLB' ? 'SportsAI-MLB-ML-v1.0' : 'SportsAI-v4.2',
         reasoning: sportsReasoning,
         homeExpectedScore: sportsResult.homeExpectedScore,
         awayExpectedScore: sportsResult.awayExpectedScore,

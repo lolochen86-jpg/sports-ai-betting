@@ -444,7 +444,7 @@ function generateDynamicPrediction(game: GameWithTeams): PredictionDetails {
   
   const winner: 'home' | 'away' = hash % 2 === 0 ? 'home' : 'away';
   const confidence = Number((55 + (hash % 25) + (hash % 10) / 10).toFixed(1));
-  const modelVersion = game.league === 'NBA' ? 'SportsAI-NBA-v4.1' : 'BaseBall-AI-v2.5';
+  const modelVersion = game.league === 'NBA' ? 'SportsAI-NBA-v4.1' : 'SportsAI-MLB-ML-v1.0';
   
   const winnerName = winner === 'home' ? homeName : awayName;
   const loserName = winner === 'home' ? awayName : homeName;
@@ -515,7 +515,7 @@ function generateDynamicPrediction(game: GameWithTeams): PredictionDetails {
     activeModel: 'MetaModel',
     models: {
       SportsAI: {
-        name: 'SportsAI 特徵加權權重模型 (v4.2) [模擬]',
+        name: game.league === 'MLB' ? 'SportsAI MLB 機器學習模型 (v1.0) [模擬]' : 'SportsAI 特徵加權權重模型 (v4.2) [模擬]',
         winner,
         confidence,
         modelVersion,
