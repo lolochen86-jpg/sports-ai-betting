@@ -67,6 +67,43 @@ function tryReadLocalPinnacle(
   return null;
 }
 
+function buildLocalPinnacleFallbackResponse(
+  localMatch: any,
+  homeTeamName: string,
+  awayTeamName: string
+) {
+  const { fairHomeProb, fairAwayProb } = removeVig(localMatch.home_odds, localMatch.away_odds);
+  
+  const mockBookmakers = [
+    {
+      key: 'pinnacle',
+      title: 'Pinnacle',
+      last_update: localMatch.updated_at || new Date().toISOString(),
+      markets: [
+        {
+          key: 'h2h',
+          outcomes: [
+            { name: homeTeamName, price: localMatch.home_odds },
+            { name: awayTeamName, price: localMatch.away_odds }
+          ]
+        }
+      ]
+    }
+  ];
+
+  return {
+    hasData: true,
+    avgAwayOdds: localMatch.away_odds,
+    avgHomeOdds: localMatch.home_odds,
+    fairAwayProb,
+    fairHomeProb,
+    bookmakerCount: 1,
+    eventId: localMatch.game_id,
+    source: 'Pinnacle (Local)',
+    bookmakers: mockBookmakers
+  };
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const league = (searchParams.get('league') ?? '').toUpperCase() as 'MLB' | 'NBA';
@@ -91,17 +128,7 @@ export async function GET(request: Request) {
   if (!hasOddsApiKey()) {
     const localMatch = tryReadLocalPinnacle(league, gameDate, homeTeamName, awayTeamName);
     if (localMatch && localMatch.home_odds && localMatch.away_odds) {
-      const { fairHomeProb, fairAwayProb } = removeVig(localMatch.home_odds, localMatch.away_odds);
-      return NextResponse.json({
-        hasData: true,
-        avgAwayOdds: localMatch.away_odds,
-        avgHomeOdds: localMatch.home_odds,
-        fairAwayProb,
-        fairHomeProb,
-        bookmakerCount: 1,
-        eventId: localMatch.game_id,
-        source: 'Pinnacle (Local)'
-      });
+      return NextResponse.json(buildLocalPinnacleFallbackResponse(localMatch, homeTeamName, awayTeamName));
     }
     return NextResponse.json({ hasData: false, reason: 'no_key' });
   }
@@ -121,17 +148,7 @@ export async function GET(request: Request) {
       // 嘗試降級至本地 Pinnacle
       const localMatch = tryReadLocalPinnacle(league, gameDate, homeTeamName, awayTeamName);
       if (localMatch && localMatch.home_odds && localMatch.away_odds) {
-        const { fairHomeProb, fairAwayProb } = removeVig(localMatch.home_odds, localMatch.away_odds);
-        return NextResponse.json({
-          hasData: true,
-          avgAwayOdds: localMatch.away_odds,
-          avgHomeOdds: localMatch.home_odds,
-          fairAwayProb,
-          fairHomeProb,
-          bookmakerCount: 1,
-          eventId: localMatch.game_id,
-          source: 'Pinnacle (Local)'
-        });
+        return NextResponse.json(buildLocalPinnacleFallbackResponse(localMatch, homeTeamName, awayTeamName));
       }
       return NextResponse.json({ hasData: false, reason: 'no_data' });
     }
@@ -168,17 +185,7 @@ export async function GET(request: Request) {
     // 如果 API 比對不到，再次嘗試降級至本地 Pinnacle
     const localMatch = tryReadLocalPinnacle(league, gameDate, homeTeamName, awayTeamName);
     if (localMatch && localMatch.home_odds && localMatch.away_odds) {
-      const { fairHomeProb, fairAwayProb } = removeVig(localMatch.home_odds, localMatch.away_odds);
-      return NextResponse.json({
-        hasData: true,
-        avgAwayOdds: localMatch.away_odds,
-        avgHomeOdds: localMatch.home_odds,
-        fairAwayProb,
-        fairHomeProb,
-        bookmakerCount: 1,
-        eventId: localMatch.game_id,
-        source: 'Pinnacle (Local)'
-      });
+      return NextResponse.json(buildLocalPinnacleFallbackResponse(localMatch, homeTeamName, awayTeamName));
     }
 
     return NextResponse.json(oddsData);
@@ -187,17 +194,7 @@ export async function GET(request: Request) {
     // 降級至本地 Pinnacle
     const localMatch = tryReadLocalPinnacle(league, gameDate, homeTeamName, awayTeamName);
     if (localMatch && localMatch.home_odds && localMatch.away_odds) {
-      const { fairHomeProb, fairAwayProb } = removeVig(localMatch.home_odds, localMatch.away_odds);
-      return NextResponse.json({
-        hasData: true,
-        avgAwayOdds: localMatch.away_odds,
-        avgHomeOdds: localMatch.home_odds,
-        fairAwayProb,
-        fairHomeProb,
-        bookmakerCount: 1,
-        eventId: localMatch.game_id,
-        source: 'Pinnacle (Local)'
-      });
+      return NextResponse.json(buildLocalPinnacleFallbackResponse(localMatch, homeTeamName, awayTeamName));
     }
     return NextResponse.json({ hasData: false, reason: 'no_data' });
   }

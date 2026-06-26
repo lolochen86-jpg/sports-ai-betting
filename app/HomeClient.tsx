@@ -29,7 +29,8 @@ import {
   BETTING_SETTINGS_KEY,
   type BettingSettings,
 } from '@/lib/betting/bettingSettings';
-
+import OddsCard from '@/components/OddsCard';
+import type { Bookmaker } from '@/lib/odds/types';
 
 // SVG Icons
 const BallIcon = ({ type, className = "w-6 h-6" }: { type: 'NBA' | 'MLB', className?: string }) => {
@@ -676,6 +677,7 @@ export default function HomeClient() {
     reason?: string;
     loading?: boolean;
     source?: string;
+    bookmakers?: Bookmaker[];
   }>>({});
 
   const fetchInternationalOdds = async (game: GameWithTeams) => {
@@ -2563,89 +2565,20 @@ export default function HomeClient() {
                                         <span>尚未同步國際盤數據，或找不到對應賽事。</span>
                                       </div>
                                     ) : (
-                                      <div className="space-y-4">
-                                        {/* Odds row */}
-                                        <div className="grid grid-cols-2 gap-4">
-                                          <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3">
-                                            <span className="text-[10px] text-gray-500 font-bold block mb-1">客隊平均賠率 (Away)</span>
-                                            <span className="text-lg font-black text-white font-mono">{intl.avgAwayOdds?.toFixed(3)}</span>
-                                            <span className="text-[10px] text-indigo-300 font-mono block mt-0.5">
-                                              公平勝率：{((intl.fairAwayProb ?? 0) * 100).toFixed(1)}%
-                                            </span>
-                                          </div>
-                                          <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3">
-                                            <span className="text-[10px] text-gray-500 font-bold block mb-1">主隊平均賠率 (Home)</span>
-                                            <span className="text-lg font-black text-white font-mono">{intl.avgHomeOdds?.toFixed(3)}</span>
-                                            <span className="text-[10px] text-indigo-300 font-mono block mt-0.5">
-                                              公平勝率：{((intl.fairHomeProb ?? 0) * 100).toFixed(1)}%
-                                            </span>
-                                          </div>
-                                        </div>
-
-                                        {/* AI vs Market comparison */}
-                                        {activePred && (
-                                          <div className="space-y-2">
-                                            {(() => {
-                                              const aiHomeProb = (activePred.winner === 'home' ? activePred.confidence : (100 - activePred.confidence)) / 100;
-                                              const aiAwayProb = (activePred.winner === 'away' ? activePred.confidence : (100 - activePred.confidence)) / 100;
-                                              const mktHomeProb = intl.fairHomeProb ?? 0;
-                                              const mktAwayProb = intl.fairAwayProb ?? 0;
-                                              const homeGap = Number(((aiHomeProb - mktHomeProb) * 100).toFixed(1));
-                                              const awayGap = Number(((aiAwayProb - mktAwayProb) * 100).toFixed(1));
-                                              const bigGap = Math.abs(homeGap) > 10 || Math.abs(awayGap) > 10;
-                                              return (
-                                                <div className={`rounded-xl p-3 border text-xs font-sans ${
-                                                  bigGap
-                                                    ? 'bg-yellow-500/5 border-yellow-500/25'
-                                                    : 'bg-white/[0.02] border-white/5'
-                                                }`}>
-                                                  <div className="flex items-center justify-between mb-2">
-                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">AI vs 國際盤公平勝率比較</span>
-                                                    {bigGap && (
-                                                      <span className="text-[10px] font-black text-yellow-400 flex items-center gap-1">
-                                                        ⚠️ 差距超過 10%
-                                                      </span>
-                                                    )}
-                                                  </div>
-                                                  <div className="grid grid-cols-2 gap-3">
-                                                    <div>
-                                                      <span className="text-[9px] text-gray-500 block mb-1 font-bold">客隊 ({game.awayTeam.code})</span>
-                                                      <div className="flex items-center gap-2">
-                                                        <span className="text-white font-mono font-bold">{(aiAwayProb * 100).toFixed(1)}%</span>
-                                                        <span className="text-gray-500">vs</span>
-                                                        <span className="text-indigo-300 font-mono">{(mktAwayProb * 100).toFixed(1)}%</span>
-                                                        <span className={`text-[10px] font-black font-mono ml-auto ${
-                                                          awayGap > 0 ? 'text-emerald-400' : awayGap < 0 ? 'text-red-400' : 'text-gray-500'
-                                                        }`}>
-                                                          {awayGap > 0 ? '+' : ''}{awayGap}%
-                                                        </span>
-                                                      </div>
-                                                    </div>
-                                                    <div>
-                                                      <span className="text-[9px] text-gray-500 block mb-1 font-bold">主隊 ({game.homeTeam.code})</span>
-                                                      <div className="flex items-center gap-2">
-                                                        <span className="text-white font-mono font-bold">{(aiHomeProb * 100).toFixed(1)}%</span>
-                                                        <span className="text-gray-500">vs</span>
-                                                        <span className="text-indigo-300 font-mono">{(mktHomeProb * 100).toFixed(1)}%</span>
-                                                        <span className={`text-[10px] font-black font-mono ml-auto ${
-                                                          homeGap > 0 ? 'text-emerald-400' : homeGap < 0 ? 'text-red-400' : 'text-gray-500'
-                                                        }`}>
-                                                          {homeGap > 0 ? '+' : ''}{homeGap}%
-                                                        </span>
-                                                      </div>
-                                                    </div>
-                                                  </div>
-                                                </div>
-                                              );
-                                            })()}
-                                          </div>
-                                        )}
-
-                                        {/* Footer: bookmaker count */}
-                                        <div className="flex items-center justify-between text-[10px] text-gray-600 font-mono">
-                                          <span>參與計算博彩商：{intl.bookmakerCount} 家</span>
-                                          <span className="text-indigo-500">Powered by The Odds API</span>
-                                        </div>
+                                      <div className="mt-2">
+                                        <OddsCard
+                                          homeTeam={game.homeTeam.name}
+                                          awayTeam={game.awayTeam.name}
+                                          commenceTime={game.gameDate}
+                                          bookmakers={intl.bookmakers || []}
+                                          aiHomeWinProb={
+                                            activePred
+                                              ? activePred.winner === 'home'
+                                                ? activePred.confidence
+                                                : 100 - activePred.confidence
+                                              : undefined
+                                          }
+                                        />
                                       </div>
                                     )}
                                   </div>

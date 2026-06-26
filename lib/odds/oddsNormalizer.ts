@@ -11,6 +11,7 @@
 
 import type { OddsApiEvent, OddsBookmaker } from './theOddsApiClient';
 import type { GameWithTeams } from '@/types/sports';
+import type { Bookmaker } from './types';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -28,6 +29,8 @@ export interface InternationalOddsData {
   bookmakerCount: number;
   /** 原始賽事 ID */
   eventId: string;
+  /** 詳細博彩商賠率數據 */
+  bookmakers?: Bookmaker[];
 }
 
 export interface InternationalOddsEmpty {
@@ -195,6 +198,7 @@ export function buildInternationalOddsData(
     fairHomeProb,
     bookmakerCount,
     eventId: event.id,
+    bookmakers: event.bookmakers as any,
   };
 }
 
