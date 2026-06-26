@@ -184,39 +184,48 @@ export default function SmartParlayCard({
 
               {/* Legs */}
               <div className="space-y-2">
-                {parlay.legs.map((leg, legIdx) => (
-                  <div
-                    key={leg.gameId}
-                    className="flex items-center justify-between bg-black/20 rounded-xl px-3 py-2.5"
-                  >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <span className="text-[10px] font-mono text-gray-600 shrink-0">
-                        L{legIdx + 1}
-                      </span>
-                      <div className="flex flex-col min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-black text-white truncate">
-                            {leg.pickTeamName}
+                {parlay.legs.map((leg, legIdx) => {
+                  const legNames = ['第一場', '第二場', '第三場'];
+                  return (
+                    <div
+                      key={leg.gameId}
+                      className="flex items-center justify-between bg-black/20 rounded-xl px-3 py-2.5"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <span className="text-[10px] font-sans font-black text-gray-500 shrink-0 bg-white/5 px-1.5 py-0.5 rounded">
+                          {legNames[legIdx] || `第 ${legIdx + 1} 場`}
+                        </span>
+                        <div className="flex flex-col min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-black text-white truncate">
+                              {leg.pickTeamName}
+                            </span>
+                            <span className={`text-[9px] font-black px-1 rounded ${
+                              leg.pick === 'home' 
+                                ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' 
+                                : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                            }`}>
+                              {leg.pick === 'home' ? '主勝' : '客勝'}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-gray-500 font-mono truncate mt-0.5">
+                            {leg.awayTeam.nameCn || leg.awayTeam.code} @ {leg.homeTeam.nameCn || leg.homeTeam.code}
                           </span>
-                          <span className="text-[9px] text-gray-500 font-mono">勝</span>
                         </div>
-                        <span className="text-[10px] text-gray-500 font-mono truncate">
-                          {leg.awayTeam.nameCn || leg.awayTeam.code} @ {leg.homeTeam.nameCn || leg.homeTeam.code}
-                        </span>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
-                      <div className="flex flex-col items-end gap-0.5">
-                        <ConsensusStars count={leg.consensusCount} />
-                        <span className="text-[9px] font-mono text-gray-500">
-                          {leg.avgConfidence.toFixed(1)}%
-                        </span>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="flex flex-col items-end gap-0.5">
+                          <ConsensusStars count={leg.consensusCount} />
+                          <span className="text-[9px] font-mono text-gray-500">
+                            {leg.avgConfidence.toFixed(1)}%
+                          </span>
+                        </div>
+                        <ModelDots models={leg.models} pick={leg.pick} />
                       </div>
-                      <ModelDots models={leg.models} pick={leg.pick} />
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Parlay Footer */}
