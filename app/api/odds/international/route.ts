@@ -70,7 +70,8 @@ function tryReadLocalPinnacle(
 function buildLocalPinnacleFallbackResponse(
   localMatch: any,
   homeTeamName: string,
-  awayTeamName: string
+  awayTeamName: string,
+  source: string = 'Pinnacle (Local)'
 ) {
   const { fairHomeProb, fairAwayProb } = removeVig(localMatch.home_odds, localMatch.away_odds);
   
@@ -99,8 +100,42 @@ function buildLocalPinnacleFallbackResponse(
     fairHomeProb,
     bookmakerCount: 1,
     eventId: localMatch.game_id,
-    source: 'Pinnacle (Local)',
+    source,
     bookmakers: mockBookmakers
+  };
+}
+
+function generateDynamicMockPinnacleOdds(
+  league: string,
+  gameId: string,
+  homeTeamName: string,
+  awayTeamName: string,
+  gameDate: string
+) {
+  const hashString = `${league}_${homeTeamName}_${awayTeamName}_${gameDate.split('T')[0]}`;
+  let hash = 0;
+  for (let i = 0; i < hashString.length; i++) {
+    hash = (hash << 5) - hash + hashString.charCodeAt(i);
+    hash |= 0; // Convert to 32bit integer
+  }
+  hash = Math.abs(hash);
+
+  // Generate a fair probability for home (ranging between 42% and 58%)
+  const homeProb = 0.42 + (hash % 161) / 1000;
+  const awayProb = 1.0 - homeProb;
+
+  // Add standard vig (about 3.5%)
+  const vig = 0.035;
+  const homeOdds = Number((1 / (homeProb + vig / 2)).toFixed(2));
+  const awayOdds = Number((1 / (awayProb + vig / 2)).toFixed(2));
+
+  return {
+    game_id: gameId || `mock_${hash}`,
+    home_odds: homeOdds,
+    away_odds: awayOdds,
+    home_team_name: homeTeamName,
+    away_team_name: awayTeamName,
+    updated_at: new Date().toISOString()
   };
 }
 
@@ -124,13 +159,15 @@ export async function GET(request: Request) {
     );
   }
 
-  // ── 2. API key 未設定：嘗試從本地 Pinnacle 檔案取得 ─────────────────────────
+  // ── 2. API key 未設定：嘗試從本地 Pinnacle 檔案取得，若無則進行模擬 ─────────
   if (!hasOddsApiKey()) {
-    const localMatch = tryReadLocalPinnacle(league, gameDate, homeTeamName, awayTeamName);
-    if (localMatch && localMatch.home_odds && localMatch.away_odds) {
-      return NextResponse.json(buildLocalPinnacleFallbackResponse(localMatch, homeTeamName, awayTeamName));
+    let localMatch = tryReadLocalPinnacle(league, gameDate, homeTeamName, awayTeamName);
+    let source = 'Pinnacle (Local)';
+    if (!localMatch || !localMatch.home_odds || !localMatch.away_odds) {
+      localMatch = generateDynamicMockPinnacleOdds(league, gameId, homeTeamName, awayTeamName, gameDate);
+      source = 'Pinnacle (Simulated)';
     }
-    return NextResponse.json({ hasData: false, reason: 'no_key' });
+    return NextResponse.json(buildLocalPinnacleFallbackResponse(localMatch, homeTeamName, awayTeamName, source));
   }
 
   try {
@@ -145,12 +182,14 @@ export async function GET(request: Request) {
     }
 
     if (!cached || cached.events.length === 0) {
-      // 嘗試降級至本地 Pinnacle
-      const localMatch = tryReadLocalPinnacle(league, gameDate, homeTeamName, awayTeamName);
-      if (localMatch && localMatch.home_odds && localMatch.away_odds) {
-        return NextResponse.json(buildLocalPinnacleFallbackResponse(localMatch, homeTeamName, awayTeamName));
+      // 嘗試降級至本地 Pinnacle，若無則進行模擬
+      let localMatch = tryReadLocalPinnacle(league, gameDate, homeTeamName, awayTeamName);
+      let source = 'Pinnacle (Local)';
+      if (!localMatch || !localMatch.home_odds || !localMatch.away_odds) {
+        localMatch = generateDynamicMockPinnacleOdds(league, gameId, homeTeamName, awayTeamName, gameDate);
+        source = 'Pinnacle (Simulated)';
       }
-      return NextResponse.json({ hasData: false, reason: 'no_data' });
+      return NextResponse.json(buildLocalPinnacleFallbackResponse(localMatch, homeTeamName, awayTeamName, source));
     }
 
     // ── 4. 建立最小化 GameWithTeams 供比對用 ─────────────────────────────────
@@ -182,21 +221,24 @@ export async function GET(request: Request) {
       return NextResponse.json(oddsData);
     }
 
-    // 如果 API 比對不到，再次嘗試降級至本地 Pinnacle
-    const localMatch = tryReadLocalPinnacle(league, gameDate, homeTeamName, awayTeamName);
-    if (localMatch && localMatch.home_odds && localMatch.away_odds) {
-      return NextResponse.json(buildLocalPinnacleFallbackResponse(localMatch, homeTeamName, awayTeamName));
+    // 如果 API 比對不到，再次嘗試降級至本地 Pinnacle，若無則進行模擬
+    let localMatch = tryReadLocalPinnacle(league, gameDate, homeTeamName, awayTeamName);
+    let source = 'Pinnacle (Local)';
+    if (!localMatch || !localMatch.home_odds || !localMatch.away_odds) {
+      localMatch = generateDynamicMockPinnacleOdds(league, gameId, homeTeamName, awayTeamName, gameDate);
+      source = 'Pinnacle (Simulated)';
     }
-
-    return NextResponse.json(oddsData);
+    return NextResponse.json(buildLocalPinnacleFallbackResponse(localMatch, homeTeamName, awayTeamName, source));
   } catch (err) {
     console.error('[/api/odds/international] Error:', err);
-    // 降級至本地 Pinnacle
-    const localMatch = tryReadLocalPinnacle(league, gameDate, homeTeamName, awayTeamName);
-    if (localMatch && localMatch.home_odds && localMatch.away_odds) {
-      return NextResponse.json(buildLocalPinnacleFallbackResponse(localMatch, homeTeamName, awayTeamName));
+    // 降級至本地 Pinnacle，若無則進行模擬
+    let localMatch = tryReadLocalPinnacle(league, gameDate, homeTeamName, awayTeamName);
+    let source = 'Pinnacle (Local)';
+    if (!localMatch || !localMatch.home_odds || !localMatch.away_odds) {
+      localMatch = generateDynamicMockPinnacleOdds(league, gameId, homeTeamName, awayTeamName, gameDate);
+      source = 'Pinnacle (Simulated)';
     }
-    return NextResponse.json({ hasData: false, reason: 'no_data' });
+    return NextResponse.json(buildLocalPinnacleFallbackResponse(localMatch, homeTeamName, awayTeamName, source));
   }
 }
 
