@@ -36,6 +36,7 @@ export interface ModelPrediction {
   reasoning: string[];
   homeExpectedScore: number;
   awayExpectedScore: number;
+  predictedTotal: number;
   ouLine: number;
   ouPick: 'Over' | 'Under';
   mlbTotalScoreProbs?: { runs: number; probability: number }[];
@@ -613,6 +614,7 @@ export async function generatePrediction(
         reasoning: sportsReasoning,
         homeExpectedScore: sportsResult.homeExpectedScore,
         awayExpectedScore: sportsResult.awayExpectedScore,
+        predictedTotal: Math.round(sportsResult.homeExpectedScore + sportsResult.awayExpectedScore),
         ouLine: sportsResult.ouLine,
         ouPick: sportsResult.ouPick,
         mlbTotalScoreProbs: sportsProbs,
@@ -626,6 +628,7 @@ export async function generatePrediction(
         reasoning: eloReasoning,
         homeExpectedScore: eloResult.homeExpectedScore,
         awayExpectedScore: eloResult.awayExpectedScore,
+        predictedTotal: Math.round(eloResult.homeExpectedScore + eloResult.awayExpectedScore),
         ouLine: eloResult.ouLine,
         ouPick: eloResult.ouPick,
         mlbTotalScoreProbs: eloProbs,
@@ -639,6 +642,7 @@ export async function generatePrediction(
         reasoning: mcReasoning,
         homeExpectedScore: mcResult.homeExpectedScore,
         awayExpectedScore: mcResult.awayExpectedScore,
+        predictedTotal: Math.round(mcResult.homeExpectedScore + mcResult.awayExpectedScore),
         ouLine: mcResult.ouLine,
         ouPick: mcResult.ouPick,
         mlbTotalScoreProbs: mcProbs,
@@ -652,6 +656,7 @@ export async function generatePrediction(
         reasoning: metaReasoning,
         homeExpectedScore: metaHomeExpectedScore,
         awayExpectedScore: metaAwayExpectedScore,
+        predictedTotal: Math.round(metaHomeExpectedScore + metaAwayExpectedScore),
         ouLine: metaOuLine,
         ouPick: metaOuPick,
         mlbTotalScoreProbs: metaProbs,
@@ -1000,6 +1005,7 @@ export async function generatePredictionV2(
         reasoning: sportsReasoning,
         homeExpectedScore: sportsResult.homeExpectedScore,
         awayExpectedScore: sportsResult.awayExpectedScore,
+        predictedTotal: Math.round(sportsResult.homeExpectedScore + sportsResult.awayExpectedScore),
         ouLine: sportsResult.ouLine,
         ouPick: sportsResult.ouPick,
         mlbTotalScoreProbs: sportsProbs,
@@ -1013,6 +1019,7 @@ export async function generatePredictionV2(
         reasoning: eloReasoning,
         homeExpectedScore: eloResult.homeExpectedScore,
         awayExpectedScore: eloResult.awayExpectedScore,
+        predictedTotal: Math.round(eloResult.homeExpectedScore + eloResult.awayExpectedScore),
         ouLine: eloResult.ouLine,
         ouPick: eloResult.ouPick,
         mlbTotalScoreProbs: eloProbs,
@@ -1026,6 +1033,7 @@ export async function generatePredictionV2(
         reasoning: mcReasoning,
         homeExpectedScore: mcResult.homeExpectedScore,
         awayExpectedScore: mcResult.awayExpectedScore,
+        predictedTotal: Math.round(mcResult.homeExpectedScore + mcResult.awayExpectedScore),
         ouLine: mcResult.ouLine,
         ouPick: mcResult.ouPick,
         mlbTotalScoreProbs: mcProbs,
@@ -1039,6 +1047,7 @@ export async function generatePredictionV2(
         reasoning: metaReasoning,
         homeExpectedScore: metaHomeExpectedScore,
         awayExpectedScore: metaAwayExpectedScore,
+        predictedTotal: Math.round(metaHomeExpectedScore + metaAwayExpectedScore),
         ouLine: metaOuLine,
         ouPick: metaOuPick,
         mlbTotalScoreProbs: metaProbs,

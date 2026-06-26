@@ -486,10 +486,35 @@ export default function HistoryPage() {
                                             </span>
                                           </div>
                                         </div>
+
+                                        <div className="flex justify-between items-center text-[11px] border-t border-white/5 pt-1 mt-1">
+                                          <span className="text-gray-400 font-bold">預測總分:</span>
+                                          <div className="flex items-center gap-1">
+                                            <span className="text-gray-300 font-mono font-bold text-[10px]">
+                                              {m.data.predictedTotal}分 (±1)
+                                            </span>
+                                            <span className={`text-[8px] font-mono px-1 rounded ${m.data.totalScoreCorrect ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                                              {m.data.totalScoreCorrect ? '✓命中' : '✗未中'}
+                                            </span>
+                                          </div>
+                                        </div>
                                       </div>
                                     );
                                   })}
                                 </div>
+
+                                {aiPred.errorAnalysis && (
+                                  <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-3 space-y-2 mt-4 font-sans">
+                                    <div className="flex items-center gap-1.5 text-red-400 text-xs font-black">
+                                      <span>⚠️ AI 誤差深度診斷原因 (偏差 {aiPred.errorAnalysis.scoreDiff} 分)：</span>
+                                    </div>
+                                    <ul className="list-disc list-inside space-y-1 text-[11px] text-gray-400 font-semibold leading-relaxed">
+                                      {aiPred.errorAnalysis.reasons.map((r: string, rIdx: number) => (
+                                        <li key={rIdx}>{r}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               <div className="text-center text-gray-500 text-xs font-sans font-bold py-4">

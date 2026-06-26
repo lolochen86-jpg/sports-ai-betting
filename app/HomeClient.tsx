@@ -30,6 +30,7 @@ import {
   type BettingSettings,
 } from '@/lib/betting/bettingSettings';
 import OddsCard from '@/components/OddsCard';
+import SmartParlayCard from '@/components/SmartParlayCard';
 import type { Bookmaker } from '@/lib/odds/types';
 
 // SVG Icons
@@ -158,6 +159,47 @@ const getLogoGradient = (code: string) => {
     TEX: 'from-blue-800 to-red-700',
   };
   return gradients[code] || 'from-slate-700 to-slate-900';
+};
+
+const getScoreErrorReasons = (game: any, activePred: any) => {
+  const actualTotal = (game.homeScore ?? 0) + (game.awayScore ?? 0);
+  const predictedTotal = Math.round(activePred.homeExpectedScore + activePred.awayExpectedScore);
+  const scoreDiff = Math.abs(actualTotal - predictedTotal);
+  if (scoreDiff < 3) return [];
+
+  const reasons: string[] = [];
+  const isMLB = game.league === 'MLB';
+
+  if (isMLB) {
+    if (actualTotal >= 12) {
+      reasons.push("本場出現高比分大亂鬥，雙方投手群未能有效壓制對手打線。");
+    } else if (actualTotal <= 4) {
+      reasons.push("本場為典型低比分投手戰，雙方打線受制於雙方先發/牛棚投手強勢壓制。");
+    }
+  } else {
+    // NBA
+    if (actualTotal >= 235) {
+      reasons.push("本場出現極高比分對決，雙方攻守節奏極快，防守強度不足。");
+    } else if (actualTotal <= 195) {
+      reasons.push("本場出現極低比分防守戰，雙方投籃命中率均顯著低於常態水準。");
+    }
+  }
+
+  // Offense burst or cold
+  const actualWinner = (game.homeScore ?? 0) > (game.awayScore ?? 0) ? 'home' : 'away';
+
+  // Winner mismatch
+  if (activePred.winner !== actualWinner) {
+    const predWinnerName = activePred.winner === 'home' ? (game.homeTeam.nameCn || game.homeTeam.name) : (game.awayTeam.nameCn || game.awayTeam.name);
+    const actualWinnerName = actualWinner === 'home' ? (game.homeTeam.nameCn || game.homeTeam.name) : (game.awayTeam.nameCn || game.awayTeam.name);
+    reasons.push(`AI 預測的勝方 ${predWinnerName} 意外敗給了 ${actualWinnerName}，致使賽事進程及分數流向大幅偏離預期。`);
+  }
+
+  if (reasons.length === 0) {
+    reasons.push("臨場戰術調度、防守對位、主力起伏或加時賽/延長局等隨機因子影響，致使實際總比分偏離模型預期。");
+  }
+
+  return reasons;
 };
 
 const formatGameTime = (isoString: string) => {
@@ -594,6 +636,29 @@ export default function HomeClient() {
   const [predictions, setPredictions] = useState<Record<string, PredictionDetails>>({});
   const [selectedModelTab, setSelectedModelTab] = useState<'SportsAI' | 'EloRating' | 'MonteCarlo' | 'MetaModel'>('MetaModel');
   const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
+  const [smartParlayData, setSmartParlayData] = useState<any>(null);
+  const [smartParlayLoading, setSmartParlayLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchSmartParlays() {
+      setSmartParlayLoading(true);
+      try {
+        const res = await fetch(`/api/predictions/smart-parlays?date=${selectedDate}&league=${activeLeague}`);
+        const data = await res.json();
+        if (data.success) {
+          setSmartParlayData(data.data);
+        } else {
+          setSmartParlayData(null);
+        }
+      } catch (err) {
+        console.error('Failed to fetch smart parlays:', err);
+        setSmartParlayData(null);
+      } finally {
+        setSmartParlayLoading(false);
+      }
+    }
+    fetchSmartParlays();
+  }, [selectedDate, activeLeague]);
   
   const [userPredictions, setUserPredictions] = useState<Record<string, { winner: 'home' | 'away'; ou: 'Over' | 'Under' }>>({});
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -1713,6 +1778,16 @@ export default function HomeClient() {
               </div>
             ) : (
               <div className="flex flex-col gap-6">
+                {smartParlayData && smartParlayData.parlays && smartParlayData.parlays.length > 0 && (
+                  <SmartParlayCard
+                    parlays={smartParlayData.parlays}
+                    totalGames={smartParlayData.totalGames}
+                    totalTeamsCovered={smartParlayData.totalTeamsCovered}
+                    totalTeams={smartParlayData.totalTeams}
+                    uncoveredTeams={smartParlayData.uncoveredTeams}
+                    loading={smartParlayLoading}
+                  />
+                )}
                 {games.map((game) => {
                   const isUnlocked = predictionsUnlocked[game.id];
                   const isExpanded = selectedGameId === game.id;
@@ -1971,21 +2046,21 @@ export default function HomeClient() {
                                 </div>
                                 <div>
                                   <span className="block text-[10px] font-mono text-gray-500 uppercase font-bold">
-                                    {game.league === 'MLB' ? '總得分機率前三名' : '大小分建議'}
+                                    預測總得分 (精準 ±1 分)
                                   </span>
-                                  {game.league === 'MLB' && activePred.mlbTotalScoreProbs ? (
-                                    <div className="flex flex-col gap-1 mt-1 font-mono">
+                                  <span className="text-sm font-black text-purple-400 font-mono mt-0.5 block">
+                                    預估: {Math.round(activePred.homeExpectedScore + activePred.awayExpectedScore)} 分 ({Math.round(activePred.homeExpectedScore + activePred.awayExpectedScore) - 1} ~ {Math.round(activePred.homeExpectedScore + activePred.awayExpectedScore) + 1} 分)
+                                  </span>
+                                  {game.league === 'MLB' && activePred.mlbTotalScoreProbs && (
+                                    <div className="flex flex-col gap-1 mt-2 font-mono">
+                                      <span className="text-[9px] text-gray-500 block">Poisson 機率分佈:</span>
                                       {activePred.mlbTotalScoreProbs.map((p, idx) => (
-                                        <div key={idx} className="flex items-center justify-between bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded text-[11px] font-black text-purple-300">
+                                        <div key={idx} className="flex items-center justify-between bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded text-[10px] font-black text-purple-300">
                                           <span>🎯 {p.runs} 分</span>
                                           <span className="text-emerald-400 font-bold">{p.probability}%</span>
                                         </div>
                                       ))}
                                     </div>
-                                  ) : (
-                                    <span className="text-base font-black text-purple-400 font-mono mt-0.5 block">
-                                      {activePred.ouPick === 'Over' ? '大分' : '小分'} (O/U {activePred.ouLine})
-                                    </span>
                                   )}
                                 </div>
                               </div>
@@ -2005,6 +2080,59 @@ export default function HomeClient() {
                                   </span>
                                 </div>
                               )}
+
+                              {/* 完賽比分精準度回顧與偏差分析 */}
+                              {((game.homeScore !== null && game.homeScore !== undefined) && (game.awayScore !== null && game.awayScore !== undefined)) && (() => {
+                                const actualTotal = (game.homeScore ?? 0) + (game.awayScore ?? 0);
+                                const predictedTotal = Math.round(activePred.homeExpectedScore + activePred.awayExpectedScore);
+                                const scoreDiff = Math.abs(actualTotal - predictedTotal);
+                                const isHit = scoreDiff <= 1;
+                                
+                                return (
+                                  <div className="mt-4 pt-4 border-t border-white/5 space-y-3 font-sans">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs text-gray-400 font-bold">實際總得分：</span>
+                                      <span className="text-sm font-black font-mono text-white">
+                                        {actualTotal} 分
+                                      </span>
+                                    </div>
+                                    
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs text-gray-400 font-bold">總得分預測結果：</span>
+                                      {isHit ? (
+                                        <span className="text-xs font-black px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                          🎯 精準命中 (誤差 {scoreDiff} 分)
+                                        </span>
+                                      ) : (
+                                        <span className={`text-xs font-black px-2 py-0.5 rounded ${
+                                          scoreDiff >= 3 
+                                            ? 'bg-red-500/10 text-red-400 border border-red-500/20' 
+                                            : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                                        }`}>
+                                          {scoreDiff >= 3 ? '⚠️ 偏差較大' : '📊 接近命中'} (誤差 {scoreDiff} 分)
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {/* 誤差大於等於 3 分自動原因分析 */}
+                                    {scoreDiff >= 3 && (() => {
+                                      const reasons = getScoreErrorReasons(game, activePred);
+                                      return (
+                                        <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-3 space-y-2 mt-2">
+                                          <div className="flex items-center gap-1.5 text-red-400 text-xs font-bold">
+                                            <span>⚠️ AI 誤差深度診斷原因：</span>
+                                          </div>
+                                          <ul className="list-disc list-inside space-y-1 text-[11px] text-gray-400 font-semibold leading-relaxed">
+                                            {reasons.map((r, rIdx) => (
+                                              <li key={rIdx}>{r}</li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      );
+                                    })()}
+                                  </div>
+                                );
+                              })()}
 
                               <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-gray-500 font-bold">
                                 <span>精準度演算模型:</span>
