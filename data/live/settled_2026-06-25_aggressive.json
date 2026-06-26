@@ -5,14 +5,14 @@
     "sport": "PARLAY",
     "parlay_odds": 4.549,
     "bet_amount": 80,
-    "result": "VOID",
-    "pnl": 0.0,
+    "result": "LOSS",
+    "pnl": -80,
     "leg_results": [
       {
         "game_id": "822961",
         "expected": "KC",
-        "winner": null,
-        "result": "VOID"
+        "winner": "TB",
+        "result": "LOSS"
       }
     ],
     "legs": [
@@ -159,14 +159,14 @@
     "sport": "PARLAY",
     "parlay_odds": 8.066,
     "bet_amount": 10.0,
-    "result": "VOID",
-    "pnl": 0.0,
+    "result": "LOSS",
+    "pnl": -10.0,
     "leg_results": [
       {
         "game_id": "822961",
         "expected": "KC",
-        "winner": null,
-        "result": "VOID"
+        "winner": "TB",
+        "result": "LOSS"
       }
     ],
     "legs": [
