@@ -692,6 +692,45 @@ export default function HomeClient() {
     });
   };
 
+  const [syncingOdds, setSyncingOdds] = useState(false);
+
+  const syncTaiwanOdds = async () => {
+    setSyncingOdds(true);
+    try {
+      const res = await fetch(`/api/odds/taiwan-lottery?date=${selectedDate}&league=${activeLeague}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        const scraped = json.data;
+        let syncCount = 0;
+        setManualOdds(prev => {
+          const next = { ...prev };
+          (games || []).forEach(game => {
+            const key = `${game.awayTeam.code}_${game.homeTeam.code}`;
+            const odds = scraped[key];
+            if (odds) {
+              next[game.id] = {
+                away: odds.awayOdds ? odds.awayOdds.toString() : (prev[game.id]?.away || ''),
+                home: odds.homeOdds ? odds.homeOdds.toString() : (prev[game.id]?.home || ''),
+                legLimit: prev[game.id]?.legLimit || 1
+              };
+              syncCount++;
+            }
+          });
+          localStorage.setItem('taiwan_odds_manual', JSON.stringify(next));
+          return next;
+        });
+        setToastMsg(`成功自動同步 ${syncCount} 場運彩賠率！`);
+      } else {
+        setToastMsg(`同步失敗：${json.error || '未找到當日運彩盤賠率'}`);
+      }
+    } catch (err) {
+      console.error(err);
+      setToastMsg('連線異常，同步失敗');
+    } finally {
+      setSyncingOdds(false);
+    }
+  };
+
   // ─── Betting Settings State ───────────────────────────────────────────────
   const [bettingSettings, setBettingSettings] = useState<BettingSettings>(DEFAULT_BETTING_SETTINGS);
   const [showSettingsPanel, setShowSettingsPanel] = useState(false);
@@ -2255,6 +2294,17 @@ export default function HomeClient() {
                                         <option value={3} className="bg-zinc-900 text-white">3 (至少 3 關)</option>
                                       </select>
                                     </div>
+
+                                     {/* Auto-Sync Taiwan Odds Button */}
+                                     <button
+                                       type="button"
+                                       onClick={syncTaiwanOdds}
+                                       disabled={syncingOdds}
+                                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500 hover:text-black disabled:opacity-50 disabled:hover:bg-amber-500/10 disabled:hover:text-amber-400 transition-all duration-300 shadow-sm"
+                                     >
+                                       <span>⚡</span>
+                                       <span>{syncingOdds ? '同步中...' : '自動同步運彩賠率'}</span>
+                                     </button>
 
                                     {/* Betting Settings Trigger */}
                                     <button
