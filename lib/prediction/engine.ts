@@ -379,7 +379,7 @@ export async function generatePrediction(
   ]);
   
   // ─── 2. Run MODEL 1: SportsAI 特徵加權權重模型 (v4.2) ───
-  const sportsResult = calculateWinProbability(homeRecent, awayRecent, game.id, league);
+  const sportsResult = calculateWinProbability(homeRecent, awayRecent, game.id, league, game.homeTeam.record, game.awayTeam.record);
   const sportsWinner = sportsResult.homeProbability >= sportsResult.awayProbability ? 'home' : 'away';
   const sportsConf = sportsWinner === 'home' ? sportsResult.homeProbability : sportsResult.awayProbability;
   
@@ -709,7 +709,9 @@ export async function generatePredictionV2(
       homeFatigue,
       awayFatigue,
       homePitcher: pitchers.home,
-      awayPitcher: pitchers.away
+      awayPitcher: pitchers.away,
+      homeRecord: game.homeTeam.record,
+      awayRecord: game.awayTeam.record
     }
   );
   const sportsWinner = sportsResult.homeProbability >= sportsResult.awayProbability ? 'home' : 'away';

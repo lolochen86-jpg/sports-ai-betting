@@ -126,6 +126,7 @@ async function fetchMLBRecentStats(teamId: string, excludeGameId?: string, targe
     let wins10 = 0;
     let losses10 = 0;
     let totalScored10 = 0;
+    let totalConceded10 = 0;
 
     for (const g of last10) {
       const isHome = String(g.teams?.home?.team?.id) === teamId;
@@ -134,6 +135,7 @@ async function fetchMLBRecentStats(teamId: string, excludeGameId?: string, targe
       const teamScore = isHome ? homeScore : awayScore;
       const opponentScore = isHome ? awayScore : homeScore;
       totalScored10 += teamScore;
+      totalConceded10 += opponentScore;
       if (teamScore > opponentScore) wins10++;
       else losses10++;
     }
@@ -154,6 +156,7 @@ async function fetchMLBRecentStats(teamId: string, excludeGameId?: string, targe
       wins10,
       losses10,
       avgScore10: last10.length > 0 ? Number((totalScored10 / last10.length).toFixed(1)) : undefined,
+      avgConceded10: last10.length > 0 ? Number((totalConceded10 / last10.length).toFixed(1)) : undefined,
       recentForm: results.map(r => r ? 'W' : 'L'),
     };
   } catch (err) {

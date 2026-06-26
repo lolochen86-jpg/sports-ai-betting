@@ -142,7 +142,7 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
     const awayRecord = `${25 + (getHash(g.awayCode + dateStr) % 15)}-${15 + (getHash(g.awayCode + dateStr + 'L') % 15)}`;
     
     // Calculate Predictions V1
-    const sportsResult = calculateWinProbability(homeStats, awayStats, g.id, g.league);
+    const sportsResult = calculateWinProbability(homeStats, awayStats, g.id, g.league, homeRecord, awayRecord);
     const eloResult = calculateEloProbability(homeRecord, awayRecord, homeStats, awayStats, g.id, g.league);
     const mcResult = calculateMonteCarloProbability(homeStats, awayStats, g.id, g.league);
     
@@ -247,7 +247,9 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
       homeFatigue,
       awayFatigue,
       homePitcher: pitchers.home,
-      awayPitcher: pitchers.away
+      awayPitcher: pitchers.away,
+      homeRecord: homeRecord,
+      awayRecord: awayRecord
     });
     const eloResultV2 = calculateEloProbabilityV2(homeRecord, awayRecord, splitsHomeStats, splitsAwayStats, g.id, g.league, {
       h2h: h2hRecord,

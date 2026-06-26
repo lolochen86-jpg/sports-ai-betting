@@ -19,6 +19,7 @@ export interface TeamRecentStats {
   wins10?: number;
   losses10?: number;
   avgScore10?: number;
+  avgConceded10?: number;
   recentForm?: string[];
 }
 
@@ -50,6 +51,98 @@ export interface PredictionDetailStats {
   awayExpectedScore: number;
   ouLine: number;
   ouPick: 'Over' | 'Under';
+}
+
+/**
+ * Dynamic model loader to dynamically load the public/models/mlb_model.json weights.
+ * Evaluates require('fs') to remain browser-safe during Next.js builds.
+ */
+function getMLBModel() {
+  try {
+    const fs = eval('require')('fs');
+    const path = eval('require')('path');
+    const modelPath = path.join(process.cwd(), 'public', 'models', 'mlb_model.json');
+    if (fs.existsSync(modelPath)) {
+      const data = fs.readFileSync(modelPath, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    // Keep warning quiet in production unless necessary
+  }
+  return null;
+}
+
+/**
+ * Predicts the MLB win probability using the Logistic Regression model.
+ */
+export function predictMLBWinProbabilityWithModel(
+  homeStats: TeamRecentStats,
+  awayStats: TeamRecentStats,
+  homeRecordStr?: string,
+  awayRecordStr?: string
+): { homeProbability: number; awayProbability: number } | null {
+  const model = getMLBModel();
+  if (!model) return null;
+
+  try {
+    const parseRec = (rec?: string) => {
+      if (!rec) return { wins: 0, losses: 0 };
+      const parts = rec.split('-');
+      return { wins: parseInt(parts[0], 10) || 0, losses: parseInt(parts[1], 10) || 0 };
+    };
+
+    const homeRec = parseRec(homeRecordStr);
+    const awayRec = parseRec(awayRecordStr);
+
+    const homeTotal = homeRec.wins + homeRec.losses;
+    const awayTotal = awayRec.wins + awayRec.losses;
+
+    const home_win_pct = homeTotal > 0 ? homeRec.wins / homeTotal : 0.5;
+    const away_win_pct = awayTotal > 0 ? awayRec.wins / awayTotal : 0.5;
+
+    const home_l10_win_pct = (homeStats.wins10 ?? 5) / 10;
+    const away_l10_win_pct = (awayStats.wins10 ?? 5) / 10;
+
+    const home_rs_avg = homeStats.avgScore10 ?? homeStats.averagePointsScored;
+    const away_rs_avg = awayStats.avgScore10 ?? awayStats.averagePointsScored;
+
+    const home_ra_avg = homeStats.avgConceded10 ?? homeStats.averagePointsConceded;
+    const away_ra_avg = awayStats.avgConceded10 ?? awayStats.averagePointsConceded;
+
+    const is_home_advantage = 1.0;
+
+    const featuresInput: Record<string, number> = {
+      home_win_pct,
+      away_win_pct,
+      home_l10_win_pct,
+      away_l10_win_pct,
+      home_rs_avg,
+      away_rs_avg,
+      home_ra_avg,
+      away_ra_avg,
+      is_home_advantage,
+    };
+
+    let logit = model.intercept;
+    for (const key of Object.keys(model.coefficients)) {
+      const x = featuresInput[key] ?? 0;
+      const mean = model.scaler_mean[key] ?? 0;
+      const std = model.scaler_std[key] ?? 1.0;
+      const xScaled = (x - mean) / (std === 0 ? 1.0 : std);
+      logit += model.coefficients[key] * xScaled;
+    }
+
+    const homeProbability = 1 / (1 + Math.exp(-logit));
+    const awayProbability = 1 - homeProbability;
+
+    return {
+      homeProbability: Number((homeProbability * 100).toFixed(1)),
+      awayProbability: Number((awayProbability * 100).toFixed(1)),
+    };
+  } catch (error) {
+    console.error('[MLB Model Prediction] Error predicting win probability:', error);
+    return null;
+  }
 }
 
 /**
@@ -149,30 +242,55 @@ export function calculateWinProbability(
   homeStats: TeamRecentStats,
   awayStats: TeamRecentStats,
   gameId: string,
-  league: League
+  league: League,
+  homeRecordStr?: string,
+  awayRecordStr?: string
 ): PredictionDetailStats {
-  const homeStrength = calculateStrengthIndex(homeStats, league, true);
-  const awayStrength = calculateStrengthIndex(awayStats, league, false);
-  
-  const diff = homeStrength - awayStrength;
-  const scaleFactor = league === 'MLB' ? 18.0 : 15.0;
-  const homeProb = 1 / (1 + Math.exp(-diff / scaleFactor));
-  
-  let finalHomeProb = homeProb;
-  let finalAwayProb = 1 - homeProb;
-  
-  const maxProb = league === 'MLB' ? 0.74 : 0.85;
-  const minProb = league === 'MLB' ? 0.26 : 0.15;
-  
-  if (finalHomeProb > maxProb) {
-    finalHomeProb = maxProb;
-    finalAwayProb = 1 - maxProb;
-  } else if (finalHomeProb < minProb) {
-    finalHomeProb = minProb;
-    finalAwayProb = 1 - minProb;
+  let finalHomeProb = 0.5;
+  let finalAwayProb = 0.5;
+
+  let modelUsed = false;
+  if (league === 'MLB') {
+    const modelResult = predictMLBWinProbabilityWithModel(
+      homeStats,
+      awayStats,
+      homeRecordStr,
+      awayRecordStr
+    );
+    if (modelResult) {
+      finalHomeProb = modelResult.homeProbability / 100;
+      finalAwayProb = modelResult.awayProbability / 100;
+      modelUsed = true;
+    }
+  }
+
+  if (!modelUsed) {
+    const homeStrength = calculateStrengthIndex(homeStats, league, true);
+    const awayStrength = calculateStrengthIndex(awayStats, league, false);
+    
+    const diff = homeStrength - awayStrength;
+    const scaleFactor = league === 'MLB' ? 18.0 : 15.0;
+    const homeProb = 1 / (1 + Math.exp(-diff / scaleFactor));
+    
+    finalHomeProb = homeProb;
+    finalAwayProb = 1 - homeProb;
+    
+    const maxProb = league === 'MLB' ? 0.74 : 0.85;
+    const minProb = league === 'MLB' ? 0.26 : 0.15;
+    
+    if (finalHomeProb > maxProb) {
+      finalHomeProb = maxProb;
+      finalAwayProb = 1 - maxProb;
+    } else if (finalHomeProb < minProb) {
+      finalHomeProb = minProb;
+      finalAwayProb = 1 - minProb;
+    }
   }
 
   // Compute expected scores based on recent scoring averages and team strengths
+  const homeStrength = calculateStrengthIndex(homeStats, league, true);
+  const awayStrength = calculateStrengthIndex(awayStats, league, false);
+  const diff = homeStrength - awayStrength;
   const shift = diff * (league === 'NBA' ? 0.08 : 0.04);
   const homeFluct = calculateFluctuation(homeStats.streak, league);
   const awayFluct = calculateFluctuation(awayStats.streak, league);
@@ -445,33 +563,55 @@ export function calculateWinProbabilityV2(
     awayFatigue?: FatigueInfo;
     homePitcher?: PitcherInfo | null;
     awayPitcher?: PitcherInfo | null;
+    homeRecord?: string;
+    awayRecord?: string;
   }
 ): PredictionDetailStats {
-  const homeStrength = calculateStrengthIndexV2(homeStats, league, true, {
-    h2h: extras?.h2h,
-    isTeamA: true,
-    fatigue: extras?.homeFatigue,
-    opponentPitcher: extras?.awayPitcher, // Away pitcher affects home team's scoring
-  });
-  const awayStrength = calculateStrengthIndexV2(awayStats, league, false, {
-    h2h: extras?.h2h,
-    isTeamA: false,
-    fatigue: extras?.awayFatigue,
-    opponentPitcher: extras?.homePitcher, // Home pitcher affects away team's scoring
-  });
+  let finalHomeProb = 0.5;
+  let finalAwayProb = 0.5;
 
-  const diff = homeStrength - awayStrength;
-  const scaleFactor = league === 'MLB' ? 18.0 : 15.0;
-  const homeProb = 1 / (1 + Math.exp(-diff / scaleFactor));
+  let modelUsed = false;
+  if (league === 'MLB') {
+    const modelResult = predictMLBWinProbabilityWithModel(
+      homeStats,
+      awayStats,
+      extras?.homeRecord,
+      extras?.awayRecord
+    );
+    if (modelResult) {
+      finalHomeProb = modelResult.homeProbability / 100;
+      finalAwayProb = modelResult.awayProbability / 100;
+      modelUsed = true;
+    }
+  }
 
-  let finalHomeProb = homeProb;
-  let finalAwayProb = 1 - homeProb;
+  if (!modelUsed) {
+    const homeStrength = calculateStrengthIndexV2(homeStats, league, true, {
+      h2h: extras?.h2h,
+      isTeamA: true,
+      fatigue: extras?.homeFatigue,
+      opponentPitcher: extras?.awayPitcher, // Away pitcher affects home team's scoring
+    });
+    const awayStrength = calculateStrengthIndexV2(awayStats, league, false, {
+      h2h: extras?.h2h,
+      isTeamA: false,
+      fatigue: extras?.awayFatigue,
+      opponentPitcher: extras?.homePitcher, // Home pitcher affects away team's scoring
+    });
 
-  const maxProb = league === 'MLB' ? 0.74 : 0.85;
-  const minProb = league === 'MLB' ? 0.26 : 0.15;
+    const diff = homeStrength - awayStrength;
+    const scaleFactor = league === 'MLB' ? 18.0 : 15.0;
+    const homeProb = 1 / (1 + Math.exp(-diff / scaleFactor));
 
-  if (finalHomeProb > maxProb) { finalHomeProb = maxProb; finalAwayProb = 1 - maxProb; }
-  else if (finalHomeProb < minProb) { finalHomeProb = minProb; finalAwayProb = 1 - minProb; }
+    finalHomeProb = homeProb;
+    finalAwayProb = 1 - homeProb;
+
+    const maxProb = league === 'MLB' ? 0.74 : 0.85;
+    const minProb = league === 'MLB' ? 0.26 : 0.15;
+
+    if (finalHomeProb > maxProb) { finalHomeProb = maxProb; finalAwayProb = 1 - maxProb; }
+    else if (finalHomeProb < minProb) { finalHomeProb = minProb; finalAwayProb = 1 - minProb; }
+  }
 
   // Use home/away split averages for score baseline when available
   const homeBaseScore = homeStats.homeAvgScored ?? homeStats.averagePointsScored;
@@ -495,6 +635,19 @@ export function calculateWinProbabilityV2(
     ? (extras.awayPitcher.advantageFactor - 1.0) * -1.5  // Good away pitcher reduces home score
     : 0;
 
+  const homeStrength = calculateStrengthIndexV2(homeStats, league, true, {
+    h2h: extras?.h2h,
+    isTeamA: true,
+    fatigue: extras?.homeFatigue,
+    opponentPitcher: extras?.awayPitcher,
+  });
+  const awayStrength = calculateStrengthIndexV2(awayStats, league, false, {
+    h2h: extras?.h2h,
+    isTeamA: false,
+    fatigue: extras?.awayFatigue,
+    opponentPitcher: extras?.homePitcher,
+  });
+  const diff = homeStrength - awayStrength;
   const shift = diff * (league === 'NBA' ? 0.08 : 0.04);
   const homeFluct = calculateFluctuation(homeStats.streak, league);
   const awayFluct = calculateFluctuation(awayStats.streak, league);
