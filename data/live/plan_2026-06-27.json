@@ -1,0 +1,20 @@
+{
+  "date": "2026-06-27",
+  "bankroll": 3293.0,
+  "total_bet": 0,
+  "required_5_leg_note": "skipped; only 1 unique candidate games (<2)",
+  "required_5_leg_candidates": [
+    {
+      "sport": "MLB",
+      "game_id": "824581",
+      "matchup": "KC@CWS",
+      "bet_label": "皇家 勝",
+      "odds": 2.142,
+      "edge": -0.0263372755540231,
+      "true_prob": 0.4213161540488649
+    }
+  ],
+  "single_picks": [],
+  "parlays": [],
+  "dry_run": false
+}
