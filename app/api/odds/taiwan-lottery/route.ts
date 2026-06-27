@@ -4,7 +4,7 @@ import { findTeamCodeByName } from '@/lib/sports-api/team-translations';
 export const dynamic = 'force-dynamic';
 
 async function fetchAndParseLeagueOdds(dateStr: string, league: 'MLB' | 'NBA') {
-  const allianceid = league === 'MLB' ? 2 : 3;
+  const allianceid = league === 'MLB' ? 1 : 3;
   const url = `https://www.playsport.cc/predictgame.php?action=scale&allianceid=${allianceid}&gamedate=${dateStr}`;
   
   try {
