@@ -127,6 +127,7 @@ async function fetchMLBRecentStats(teamId: string, excludeGameId?: string, targe
     let losses10 = 0;
     let totalScored10 = 0;
     let totalConceded10 = 0;
+    const recentGameScores: number[] = [];
 
     for (const g of last10) {
       const isHome = String(g.teams?.home?.team?.id) === teamId;
@@ -136,6 +137,7 @@ async function fetchMLBRecentStats(teamId: string, excludeGameId?: string, targe
       const opponentScore = isHome ? awayScore : homeScore;
       totalScored10 += teamScore;
       totalConceded10 += opponentScore;
+      recentGameScores.push(teamScore);
       if (teamScore > opponentScore) wins10++;
       else losses10++;
     }
@@ -158,6 +160,7 @@ async function fetchMLBRecentStats(teamId: string, excludeGameId?: string, targe
       avgScore10: last10.length > 0 ? Number((totalScored10 / last10.length).toFixed(1)) : undefined,
       avgConceded10: last10.length > 0 ? Number((totalConceded10 / last10.length).toFixed(1)) : undefined,
       recentForm: results.map(r => r ? 'W' : 'L'),
+      recentGameScores,
     };
   } catch (err) {
     console.warn(`Failed to fetch MLB live stats for team ${teamId}, using fallback:`, err);
@@ -266,6 +269,7 @@ async function fetchNBARecentStats(teamId: string, excludeGameId?: string, targe
     let wins10 = 0;
     let losses10 = 0;
     let totalScored10 = 0;
+    const recentGameScores: number[] = [];
 
     for (const e of last10) {
       const comp = e.competitions?.[0];
@@ -276,6 +280,7 @@ async function fetchNBARecentStats(teamId: string, excludeGameId?: string, targe
       const opponentScore = opponent?.score?.value ? Number(opponent.score.value) : 0;
       
       totalScored10 += teamScore;
+      recentGameScores.push(teamScore);
       const isWin = competitor?.winner === true || teamScore > opponentScore;
       if (isWin) wins10++;
       else losses10++;
@@ -298,6 +303,7 @@ async function fetchNBARecentStats(teamId: string, excludeGameId?: string, targe
       losses10,
       avgScore10: last10.length > 0 ? Number((totalScored10 / last10.length).toFixed(1)) : undefined,
       recentForm: results.map(r => r ? 'W' : 'L'),
+      recentGameScores,
     };
   } catch (err) {
     console.warn(`Failed to fetch NBA live stats for team ${teamId}, using fallback:`, err);

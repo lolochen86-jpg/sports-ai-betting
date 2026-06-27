@@ -138,6 +138,7 @@ interface PredictionDetails {
     home: { name: string; era: number; advantageFactor: number } | null;
     away: { name: string; era: number; advantageFactor: number } | null;
   } | null;
+  annotations?: string[];
 }
 
 // ─── Helpers ───
@@ -2125,7 +2126,7 @@ export default function HomeClient() {
                                 const actualTotal = (game.homeScore ?? 0) + (game.awayScore ?? 0);
                                 const predictedTotal = Math.round(activePred.homeExpectedScore + activePred.awayExpectedScore);
                                 const scoreDiff = Math.abs(actualTotal - predictedTotal);
-                                const isHit = scoreDiff <= 1;
+                                const isHit = scoreDiff <= 1.5;
                                 
                                 return (
                                   <div className="mt-4 pt-4 border-t border-white/5 space-y-3 font-sans">
@@ -2178,6 +2179,34 @@ export default function HomeClient() {
                                 <span className="text-gray-300 font-bold font-mono">{activePred.modelVersion}</span>
                               </div>
                             </div>
+
+                            {/* 特殊標註區塊 */}
+                            {pred?.annotations && pred.annotations.length > 0 && (
+                              <div className="md:col-span-12 mt-2">
+                                <div className="flex flex-wrap gap-2">
+                                  {pred.annotations.map((annotation: string, aIdx: number) => {
+                                    const isHot = annotation.includes('🔥');
+                                    const isCold = annotation.includes('🧊');
+                                    const isAce = annotation.includes('👑');
+                                    const bgClass = isHot
+                                      ? 'bg-red-500/10 border-red-500/20 text-red-400'
+                                      : isCold
+                                        ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                                        : isAce
+                                          ? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                                          : 'bg-white/5 border-white/10 text-gray-300';
+                                    return (
+                                      <span
+                                        key={aIdx}
+                                        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border ${bgClass} backdrop-blur-sm`}
+                                      >
+                                        {annotation}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
 
                             {/* Analysis Factors list */}
                             <div className="md:col-span-7 flex flex-col justify-between gap-4">

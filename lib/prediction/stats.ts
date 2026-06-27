@@ -21,6 +21,7 @@ export interface TeamRecentStats {
   avgScore10?: number;
   avgConceded10?: number;
   recentForm?: string[];
+  recentGameScores?: number[];  // 近10場每場個別得分 [最近→最遠]
 }
 
 export interface H2HRecord {
