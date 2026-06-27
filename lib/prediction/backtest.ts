@@ -288,19 +288,19 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
     const metaOuCorrectV2 = (metaOuPickV2 === 'Over' && actualTotal > metaTV2) || (metaOuPickV2 === 'Under' && actualTotal < metaTV2);
 
     const sportsTotal = Math.round(sportsResult.homeExpectedScore + sportsResult.awayExpectedScore);
-    const sportsTotalCorrect = Math.abs(actualTotal - sportsTotal) <= 1;
+    const sportsTotalCorrect = Math.abs(actualTotal - sportsTotal) <= 1.5;
 
     const eloTotal = Math.round(eloResult.homeExpectedScore + eloResult.awayExpectedScore);
-    const eloTotalCorrect = Math.abs(actualTotal - eloTotal) <= 1;
+    const eloTotalCorrect = Math.abs(actualTotal - eloTotal) <= 1.5;
 
     const mcTotal = Math.round(mcResult.homeExpectedScore + mcResult.awayExpectedScore);
-    const mcTotalCorrect = Math.abs(actualTotal - mcTotal) <= 1;
+    const mcTotalCorrect = Math.abs(actualTotal - mcTotal) <= 1.5;
 
     const metaTotal = Math.round(metaHomeExpected + metaAwayExpected);
-    const metaTotalCorrect = Math.abs(actualTotal - metaTotal) <= 1;
+    const metaTotalCorrect = Math.abs(actualTotal - metaTotal) <= 1.5;
 
     const metaTotalV2 = Math.round(metaHomeExpectedV2 + metaAwayExpectedV2);
-    const metaTotalCorrectV2 = Math.abs(actualTotal - metaTotalV2) <= 1;
+    const metaTotalCorrectV2 = Math.abs(actualTotal - metaTotalV2) <= 1.5;
 
     const homeTeamCn = getTeamNameCn(g.homeCode, g.league);
     const awayTeamCn = getTeamNameCn(g.awayCode, g.league);

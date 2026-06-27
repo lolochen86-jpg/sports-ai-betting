@@ -5,6 +5,7 @@ import { extractRecentStats, fetchStartingPitcher } from '@/lib/prediction/featu
 import { prisma } from '@/lib/prisma';
 import { dbFallback } from '@/lib/betting/db-fallback';
 import { calculate_ensemble_edge, generate_insight_report } from '@/lib/prediction/ensemble-edge';
+import { generateGameAnnotations } from '@/lib/prediction/annotations';
 import { TaiwanOdds } from '@/types/betting';
 import { GameWithTeams } from '@/types/sports';
 
@@ -243,12 +244,36 @@ export async function GET(request: NextRequest) {
             const atsBetHome = edgeResult.ensembleSpread < bookmakerSpread;
             const atsHit = atsBetHome ? (actualSpread < bookmakerSpread) : (actualSpread > bookmakerSpread);
 
-            // O/U evaluation
+            // O/U evaluation: ±1.5 tolerance (predicted total vs actual total)
+            const totalDiff = Math.abs(edgeResult.ensembleTotal - actualTotal);
+            const ouHit = totalDiff <= 1.5;
+
+            // O/U vs Bookmaker line direction comparison (secondary metric)
             const ouBetOver = edgeResult.ensembleTotal > bookmakerTotal;
-            const ouHit = ouBetOver ? (actualTotal > bookmakerTotal) : (actualTotal < bookmakerTotal);
+            const ouVsBookmakerHit = ouBetOver ? (actualTotal > bookmakerTotal) : (actualTotal < bookmakerTotal);
 
             const spreadError = Math.abs(edgeResult.ensembleSpread - actualSpread);
             const totalError = Math.abs(edgeResult.ensembleTotal - actualTotal);
+
+            // Generate special annotations
+            const annotations = generateGameAnnotations(
+              {
+                teamName: game.homeTeam.nameCn || game.homeTeam.name,
+                recentGameScores: homeStats.recentGameScores,
+                pitcherName: game.league === 'MLB' ? pitcherNameHome : undefined,
+                pitcherEra: game.league === 'MLB' ? pitcherEraHome : undefined,
+                league: game.league,
+                side: 'home',
+              },
+              {
+                teamName: game.awayTeam.nameCn || game.awayTeam.name,
+                recentGameScores: awayStats.recentGameScores,
+                pitcherName: game.league === 'MLB' ? pitcherNameAway : undefined,
+                pitcherEra: game.league === 'MLB' ? pitcherEraAway : undefined,
+                league: game.league,
+                side: 'away',
+              }
+            );
 
             return {
               id: String(game.id),
@@ -281,7 +306,8 @@ export async function GET(request: NextRequest) {
                 pitcherEraAway: game.league === 'MLB' ? pitcherEraAway : undefined,
                 injuryImpactHome,
                 injuryImpactAway,
-                insightReport
+                insightReport,
+                annotations
               },
               actual: {
                 homeScore: hScore,
@@ -294,6 +320,7 @@ export async function GET(request: NextRequest) {
                 winnerHit,
                 atsHit,
                 ouHit,
+                ouVsBookmakerHit,
                 spreadError,
                 totalError
               }
@@ -313,6 +340,7 @@ export async function GET(request: NextRequest) {
     let winnerHits = 0;
     let atsHits = 0;
     let ouHits = 0;
+    let ouVsBookmakerHits = 0;
     let sumSpreadError = 0;
     let sumTotalError = 0;
 
@@ -320,6 +348,7 @@ export async function GET(request: NextRequest) {
       if (res.result.winnerHit) winnerHits++;
       if (res.result.atsHit) atsHits++;
       if (res.result.ouHit) ouHits++;
+      if (res.result.ouVsBookmakerHit) ouVsBookmakerHits++;
       sumSpreadError += res.result.spreadError;
       sumTotalError += res.result.totalError;
     }
@@ -332,6 +361,8 @@ export async function GET(request: NextRequest) {
       atsPct: totalGames > 0 ? Number(((atsHits / totalGames) * 100).toFixed(1)) : 0,
       ouHits,
       ouPct: totalGames > 0 ? Number(((ouHits / totalGames) * 100).toFixed(1)) : 0,
+      ouVsBookmakerHits,
+      ouVsBookmakerPct: totalGames > 0 ? Number(((ouVsBookmakerHits / totalGames) * 100).toFixed(1)) : 0,
       avgSpreadError: totalGames > 0 ? Number((sumSpreadError / totalGames).toFixed(2)) : 0,
       avgTotalError: totalGames > 0 ? Number((sumTotalError / totalGames).toFixed(2)) : 0,
       dateRange: { start: startDateStr, end: endDateStr }

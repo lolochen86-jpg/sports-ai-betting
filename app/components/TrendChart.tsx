@@ -423,7 +423,7 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
               onClick={() => { setChartType('totalScore'); setHoverIndex(null); setSelectedIndex(null); }}
               className={`px-4 py-2 rounded-lg font-black text-xs transition-all ${chartType === 'totalScore' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
             >
-              📊 總得分精準度
+              📊 總得分精準度 (±1.5分)
             </button>
           </div>
 
@@ -1074,6 +1074,22 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                                 </span>
                                 <span className={`text-[8.5px] font-mono px-1 rounded-sm ${ouAccBadge}`}>
                                   {m.data.ouCorrect ? '命中' : '未中'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex justify-between items-center">
+                              <span className="text-gray-400 font-bold">📊 總得分預估:</span>
+                              <div className="flex items-center gap-1.5 font-bold">
+                                <span className="text-indigo-300 font-mono">
+                                  {m.data.predictedTotal} 分
+                                </span>
+                                <span className={`text-[8.5px] font-mono px-1 rounded-sm ${
+                                  m.data.totalScoreCorrect
+                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                    : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                                }`}>
+                                  {m.data.totalScoreCorrect ? '命中 (±1.5)' : '偏差'}
                                 </span>
                               </div>
                             </div>

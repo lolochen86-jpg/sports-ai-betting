@@ -5,6 +5,7 @@ import { extractRecentStats, fetchStartingPitcher } from '@/lib/prediction/featu
 import { prisma } from '@/lib/prisma';
 import { dbFallback } from '@/lib/betting/db-fallback';
 import { calculate_ensemble_edge, generate_insight_report } from '@/lib/prediction/ensemble-edge';
+import { generateGameAnnotations } from '@/lib/prediction/annotations';
 import { TaiwanOdds } from '@/types/betting';
 import { GameWithTeams } from '@/types/sports';
 
@@ -192,6 +193,26 @@ export async function GET(request: NextRequest) {
               edgeResult.models.monteCarloModel.winProbability) / 3).toFixed(4)
           );
 
+          // Generate special annotations
+          const annotations = generateGameAnnotations(
+            {
+              teamName: game.homeTeam.nameCn || game.homeTeam.name,
+              recentGameScores: homeStats.recentGameScores,
+              pitcherName: game.league === 'MLB' ? pitcherNameHome : undefined,
+              pitcherEra: game.league === 'MLB' ? pitcherEraHome : undefined,
+              league: game.league,
+              side: 'home',
+            },
+            {
+              teamName: game.awayTeam.nameCn || game.awayTeam.name,
+              recentGameScores: awayStats.recentGameScores,
+              pitcherName: game.league === 'MLB' ? pitcherNameAway : undefined,
+              pitcherEra: game.league === 'MLB' ? pitcherEraAway : undefined,
+              league: game.league,
+              side: 'away',
+            }
+          );
+
           return {
             id: String(game.id),
             league: game.league,
@@ -223,7 +244,8 @@ export async function GET(request: NextRequest) {
               pitcherEraAway: game.league === 'MLB' ? pitcherEraAway : undefined,
               injuryImpactHome,
               injuryImpactAway,
-              insightReport
+              insightReport,
+              annotations
             }
           };
         } catch (gameErr) {
