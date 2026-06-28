@@ -1,0 +1,33 @@
+[
+  {
+    "game_pk": 823771,
+    "game_date": "2026-06-29",
+    "game_time_utc": "2026-06-29T23:40:00Z",
+    "home_team": "MIL",
+    "away_team": "CIN",
+    "home_team_id": 158,
+    "away_team_id": 113,
+    "venue": "American Family Field",
+    "home_starter_name": "Robert Gasser",
+    "away_starter_name": "Nick Lodolo",
+    "home_starter_era": 4.5,
+    "away_starter_era": 5.59,
+    "home_starter_fip": 5.133333333333333,
+    "away_starter_fip": 5.371428571428572,
+    "home_starter_whip": 1.27,
+    "away_starter_whip": 1.52,
+    "home_starter_k9": 9.3,
+    "away_starter_k9": 7.33,
+    "home_starter_gs": 6,
+    "away_starter_gs": 9,
+    "home_team_wrc_plus": 101.4,
+    "away_team_wrc_plus": 97.2,
+    "home_team_ops": 0.73,
+    "away_team_ops": 0.7,
+    "home_runs_per_game": 5.1875,
+    "away_runs_per_game": 4.271604938271605,
+    "home_bullpen_era_3d": 9.0,
+    "away_bullpen_era_3d": 2.7,
+    "park_factor": 100
+  }
+]
