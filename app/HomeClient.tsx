@@ -2182,25 +2182,58 @@ export default function HomeClient() {
 
                             {/* 特殊標註區塊 */}
                             {pred?.annotations && pred.annotations.length > 0 && (
-                              <div className="md:col-span-12 mt-2">
+                              <div className="md:col-span-12 mt-3">
+                                <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest font-black block mb-2">
+                                  ⚡ 賽事前瞻數據警示 (數據指標)
+                                </span>
                                 <div className="flex flex-wrap gap-2">
                                   {pred.annotations.map((annotation: string, aIdx: number) => {
                                     const isHot = annotation.includes('🔥');
                                     const isCold = annotation.includes('🧊');
                                     const isAce = annotation.includes('👑');
-                                    const bgClass = isHot
-                                      ? 'bg-red-500/10 border-red-500/20 text-red-400'
-                                      : isCold
-                                        ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
-                                        : isAce
-                                          ? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
-                                          : 'bg-white/5 border-white/10 text-gray-300';
+                                    const isStreak = annotation.includes('🚀') || annotation.includes('📉');
+                                    const isDefense = annotation.includes('🛡️');
+                                    const isWarning = annotation.includes('⚠️');
+
+                                    let icon = "📢";
+                                    let badgeStyle = "bg-white/5 border-white/10 text-gray-300";
+                                    let pulseClass = "";
+
+                                    if (isHot) {
+                                      icon = "🔥";
+                                      badgeStyle = "bg-red-500/10 border-red-500/30 text-red-400 shadow-sm shadow-red-500/5";
+                                      pulseClass = "animate-pulse";
+                                    } else if (isCold) {
+                                      icon = "🧊";
+                                      badgeStyle = "bg-cyan-500/10 border-cyan-500/30 text-cyan-300 shadow-sm shadow-cyan-500/5";
+                                    } else if (isAce) {
+                                      icon = "👑";
+                                      badgeStyle = "bg-gradient-to-r from-amber-500/15 to-orange-500/15 border-amber-500/40 text-amber-300 shadow-md shadow-amber-500/10";
+                                      pulseClass = "animate-pulse";
+                                    } else if (isStreak) {
+                                      const isWin = annotation.includes('🚀');
+                                      icon = isWin ? "🚀" : "📉";
+                                      badgeStyle = isWin 
+                                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-sm shadow-emerald-500/5" 
+                                        : "bg-rose-500/10 border-rose-500/30 text-rose-400 shadow-sm shadow-rose-500/5";
+                                    } else if (isDefense) {
+                                      icon = "🛡️";
+                                      badgeStyle = "bg-indigo-500/10 border-indigo-500/30 text-indigo-300 shadow-sm shadow-indigo-500/5";
+                                    } else if (isWarning) {
+                                      icon = "⚠️";
+                                      badgeStyle = "bg-yellow-500/10 border-yellow-500/30 text-yellow-400 shadow-sm shadow-yellow-500/5";
+                                    }
+
+                                    // Remove the emoji prefix from display text
+                                    const cleanText = annotation.replace(/^[^\s]+/, '').trim();
+
                                     return (
                                       <span
                                         key={aIdx}
-                                        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border ${bgClass} backdrop-blur-sm`}
+                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black border transition-all duration-300 hover:scale-[1.02] ${badgeStyle} ${pulseClass} backdrop-blur-md cursor-default`}
                                       >
-                                        {annotation}
+                                        <span className="text-sm shrink-0 leading-none">{icon}</span>
+                                        <span className="font-sans tracking-wide leading-none">{cleanText}</span>
                                       </span>
                                     );
                                   })}

@@ -210,37 +210,34 @@ export default function BacktestPage() {
                   <span className="text-xl">🎲</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white font-sans">大小分預測判定標準</h3>
+                  <h3 className="text-lg font-black text-white font-sans">大小分與總得分判定標準</h3>
                   <span className="text-[10px] font-mono font-bold bg-cyan-500/10 text-cyan-300 px-1.5 py-0.5 rounded border border-cyan-500/20 uppercase tracking-widest mt-1 inline-block">
-                    Over/Under Prediction
+                    Total Score & O/U Rules
                   </span>
                 </div>
               </div>
               
               <div className="space-y-3 font-sans text-xs md:text-sm text-gray-300 leading-relaxed font-semibold">
                 <p>
-                  大小分預測採用**「預測機率第一名的分數 - 0.5分猜大小分」**的確定性精準對位標準，其判定機制如下：
+                  總得分與大小分預測採用雙重對位標準進行評估：
                 </p>
                 <ul className="list-disc pl-5 space-y-2">
                   <li>
-                    <span className="text-cyan-400 font-bold">機率第一名分數 (T)</span>：對於特定模型，系統計算其概率分佈中機率最高的總得分整數值 <code>{"T"}</code>（對於 MLB 棒球，為經 Poisson 分佈運算出的最大機率得分；對於 NBA 籃球，為預估分數之四捨五入整數）。
+                    <span className="text-cyan-400 font-bold">總得分精準度 (±1.5分容差)</span>：比對完賽實際總得分。若「模型預測總得分」與「實際總得分」的絕對誤差值 <code>{"≤ 1.5"}</code> 分（例如預測 8.5 分，實際 7 分或 10 分），即計為 **「預測命中」**，用以測試模型極限數值精度。
                   </li>
                   <li>
-                    <span className="text-cyan-400 font-bold">大小盤分界線 (L)</span>：自動設定為 <code>{"L = T - 0.5"}</code> 分。
+                    <span className="text-cyan-400 font-bold">運彩大小分盤口方向對比</span>：將預測總分與台灣運彩開出的盤口分界線（O/U Line）做比較。若預測總分高於盤口則預測「大分」，低於則預測「小分」。若實際結果方向相符，則判定為 **「盤口預測命中」**。
                   </li>
                   <li>
-                    <span className="text-cyan-400 font-bold">預測方向</span>：由於機率第一名的得分 <code>{"T"}</code> 必定大於 <code>{"L"}</code>（<code>{"T > T - 0.5"}</code>），因此模型在該基準線下，一律預測「**大分 (Over)**」。
-                  </li>
-                  <li>
-                    <span className="text-cyan-400 font-bold">完賽判定</span>：比對完賽實際雙方總得分 <code>{"S"}</code>。若實際總得分 <code>{"S ≥ T"}</code>（即高於分界線 <code>{"L"}</code>），則判定「**預測命中**」；若實際總得分 <code>{"S < T"}</code>（即 <code>{"S ≤ T - 1"}</code>），則判定「**預測失準**」。
+                    <span className="text-cyan-400 font-bold">雙維度評估</span>：折線圖支援切換這兩種走勢，幫助您全面審視量化模型的長短期預測能力。
                   </li>
                 </ul>
               </div>
             </div>
 
             <div className="mt-6 pt-4 border-t border-white/5 text-[11px] font-mono text-gray-500 font-bold flex justify-between">
-              <span>評估對象: 機率最大得分 (Poisson Mode)</span>
-              <span className="text-cyan-400">大分恆定預測比對法</span>
+              <span>評估對象: 預測總分與運彩盤口界線</span>
+              <span className="text-cyan-400">±1.5分精密容差 & 盤口方向比對</span>
             </div>
           </div>
 

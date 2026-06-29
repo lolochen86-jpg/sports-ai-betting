@@ -269,6 +269,7 @@ async function fetchNBARecentStats(teamId: string, excludeGameId?: string, targe
     let wins10 = 0;
     let losses10 = 0;
     let totalScored10 = 0;
+    let totalConceded10 = 0;
     const recentGameScores: number[] = [];
 
     for (const e of last10) {
@@ -280,6 +281,7 @@ async function fetchNBARecentStats(teamId: string, excludeGameId?: string, targe
       const opponentScore = opponent?.score?.value ? Number(opponent.score.value) : 0;
       
       totalScored10 += teamScore;
+      totalConceded10 += opponentScore;
       recentGameScores.push(teamScore);
       const isWin = competitor?.winner === true || teamScore > opponentScore;
       if (isWin) wins10++;
@@ -302,6 +304,7 @@ async function fetchNBARecentStats(teamId: string, excludeGameId?: string, targe
       wins10,
       losses10,
       avgScore10: last10.length > 0 ? Number((totalScored10 / last10.length).toFixed(1)) : undefined,
+      avgConceded10: last10.length > 0 ? Number((totalConceded10 / last10.length).toFixed(1)) : undefined,
       recentForm: results.map(r => r ? 'W' : 'L'),
       recentGameScores,
     };
