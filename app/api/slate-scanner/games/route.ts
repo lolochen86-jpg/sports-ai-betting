@@ -202,6 +202,8 @@ export async function GET(request: NextRequest) {
               pitcherEra: game.league === 'MLB' ? pitcherEraHome : undefined,
               league: game.league,
               side: 'home',
+              streak: homeStats.streak,
+              avgConceded10: homeStats.avgConceded10,
             },
             {
               teamName: game.awayTeam.nameCn || game.awayTeam.name,
@@ -210,6 +212,8 @@ export async function GET(request: NextRequest) {
               pitcherEra: game.league === 'MLB' ? pitcherEraAway : undefined,
               league: game.league,
               side: 'away',
+              streak: awayStats.streak,
+              avgConceded10: awayStats.avgConceded10,
             }
           );
 
