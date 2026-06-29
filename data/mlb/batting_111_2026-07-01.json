@@ -1,0 +1,14 @@
+{
+  "team_id": 111,
+  "season": 2026,
+  "avg": 0.243,
+  "obp": 0.312,
+  "slg": 0.385,
+  "ops": 0.697,
+  "strikeout_pct": 0.21906627489389488,
+  "walk_pct": 0.07868103166829905,
+  "hr_per_game": 0.8658536585365854,
+  "runs_per_game": 4.0,
+  "as_of_date": "2026-07-01",
+  "wrc_plus_approx": 96.8
+}
