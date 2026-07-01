@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface SmartParlayLeg {
   gameId: string;
@@ -36,24 +36,27 @@ interface SmartParlayCardProps {
   loading?: boolean;
 }
 
-const gradeStyles: Record<string, { bg: string; border: string; text: string; label: string }> = {
+const gradeStyles: Record<string, { bg: string; border: string; text: string; label: string; glow: string }> = {
   S: {
     bg: 'bg-gradient-to-r from-amber-500/10 to-orange-500/10',
     border: 'border-amber-500/30',
     text: 'text-amber-400',
     label: '🏆 至尊共識',
+    glow: 'shadow-amber-500/5',
   },
   A: {
     bg: 'bg-gradient-to-r from-emerald-500/10 to-teal-500/10',
     border: 'border-emerald-500/30',
     text: 'text-emerald-400',
     label: '⭐ 強勢推薦',
+    glow: 'shadow-emerald-500/5',
   },
   B: {
     bg: 'bg-gradient-to-r from-blue-500/10 to-indigo-500/10',
     border: 'border-blue-500/30',
     text: 'text-blue-400',
     label: '📊 數據支撐',
+    glow: 'shadow-blue-500/5',
   },
 };
 
@@ -71,16 +74,16 @@ const ModelDots = ({ models, pick }: { models: SmartParlayLeg['models']; pick: '
   const modelNames = ['SportsAI', 'EloRating', 'MonteCarlo', 'MetaModel'] as const;
   const shortNames = ['SA', 'Elo', 'MC', 'Meta'];
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1">
       {modelNames.map((m, i) => {
         const agrees = models[m] === pick;
         return (
           <span
             key={m}
-            className={`text-[9px] font-mono font-bold px-1 py-0.5 rounded ${
+            className={`text-[8.5px] font-mono font-bold px-1 py-0.5 rounded-sm ${
               agrees
                 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                : 'bg-red-500/10 text-red-400/60 border border-red-500/15'
+                : 'bg-red-500/10 text-red-400/50 border border-red-500/10'
             }`}
             title={`${m}: ${models[m] === 'home' ? '主隊' : '客隊'}`}
           >
@@ -100,6 +103,29 @@ export default function SmartParlayCard({
   uncoveredTeams,
   loading = false,
 }: SmartParlayCardProps) {
+  // Global stake state in NTD
+  const [stake, setStake] = useState<string>('1000');
+  // Local odds override state: { [parlayId]: [oddsLeg1, oddsLeg2, oddsLeg3] }
+  const [customOdds, setCustomOdds] = useState<Record<number, string[]>>({});
+
+  // Initialize odds state when parlays change
+  useEffect(() => {
+    if (parlays && parlays.length > 0) {
+      const initialOdds: Record<number, string[]> = {};
+      parlays.forEach(p => {
+        initialOdds[p.id] = p.legs.map(() => '1.75');
+      });
+      setCustomOdds(initialOdds);
+    }
+  }, [parlays]);
+
+  const handleOddsChange = (parlayId: number, legIdx: number, val: string) => {
+    setCustomOdds(prev => ({
+      ...prev,
+      [parlayId]: (prev[parlayId] || ['1.75', '1.75', '1.75']).map((o, idx) => idx === legIdx ? val : o)
+    }));
+  };
+
   if (loading) {
     return (
       <div className="glass-panel rounded-3xl border border-purple-500/20 p-6 animate-pulse">
@@ -136,7 +162,7 @@ export default function SmartParlayCard({
       <div className="absolute top-[-60px] right-[-60px] w-[180px] h-[180px] bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-white/5 pb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-amber-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
             <span className="text-lg">⚡</span>
@@ -148,10 +174,21 @@ export default function SmartParlayCard({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="px-2.5 py-1 rounded-xl bg-purple-500/10 text-purple-400 text-[10px] font-black tracking-wider border border-purple-500/20">
-            覆蓋 {totalTeamsCovered}/{totalTeams} 隊
-          </span>
+
+        {/* Interactive Stake Panel */}
+        <div className="flex items-center gap-3 self-start md:self-auto bg-white/5 border border-white/10 rounded-2xl px-3 py-1.5 shadow-inner">
+          <span className="text-xs text-gray-400 font-bold font-sans">投注預估本金：</span>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-gray-500 font-bold">$</span>
+            <input
+              type="number"
+              value={stake}
+              onChange={(e) => setStake(e.target.value)}
+              placeholder="1000"
+              className="bg-transparent text-xs font-black text-white w-20 focus:outline-none border-b border-white/10 focus:border-purple-500 text-center font-mono"
+            />
+            <span className="text-xs text-gray-500 font-bold">NTD</span>
+          </div>
         </div>
       </div>
 
@@ -159,26 +196,37 @@ export default function SmartParlayCard({
       <div className="space-y-4">
         {parlays.map((parlay) => {
           const style = gradeStyles[parlay.grade] || gradeStyles.B;
+          const oddsArray = customOdds[parlay.id] || ['1.75', '1.75', '1.75'];
+          
+          // Calculate overall parlay stats
+          const multiplier = oddsArray.reduce((acc, curr) => acc * (parseFloat(curr) || 1.0), 1.0);
+          const stakeVal = parseFloat(stake) || 0;
+          const estPayout = stakeVal * multiplier;
+          
+          // EV calculation: (combinedProb * multiplier - 1) * 100
+          const ev = (parlay.combinedProb * multiplier - 1.0) * 100.0;
+          const isEvPositive = ev > 0;
+
           return (
             <div
               key={parlay.id}
-              className={`rounded-2xl border p-4 ${style.bg} ${style.border} transition-all hover:scale-[1.01]`}
+              className={`rounded-2xl border p-4 ${style.bg} ${style.border} ${style.glow} shadow-sm transition-all hover:scale-[1.01] flex flex-col gap-3`}
             >
               {/* Parlay Header */}
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className={`text-xs font-black ${style.text}`}>{style.label}</span>
                   <span className="text-[10px] font-mono text-gray-500">
                     組合 #{parlay.id}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono text-gray-400">
-                    過關機率
-                  </span>
-                  <span className={`text-sm font-black font-mono ${style.text}`}>
-                    {(parlay.combinedProb * 100).toFixed(1)}%
-                  </span>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] font-mono text-gray-500">AI 勝率</span>
+                    <span className={`text-xs font-black font-mono ${style.text}`}>
+                      {(parlay.combinedProb * 100).toFixed(1)}%
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -186,13 +234,14 @@ export default function SmartParlayCard({
               <div className="space-y-2">
                 {parlay.legs.map((leg, legIdx) => {
                   const legNames = ['第一場', '第二場', '第三場'];
+                  const currentLegOdds = oddsArray[legIdx] || '1.75';
                   return (
                     <div
                       key={leg.gameId}
-                      className="flex items-center justify-between bg-black/20 rounded-xl px-3 py-2.5"
+                      className="flex items-center justify-between bg-black/35 rounded-xl px-3 py-2 border border-white/5"
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <span className="text-[10px] font-sans font-black text-gray-500 shrink-0 bg-white/5 px-1.5 py-0.5 rounded">
+                        <span className="text-[9px] font-sans font-black text-gray-400 shrink-0 bg-white/5 px-1.5 py-0.5 rounded">
                           {legNames[legIdx] || `第 ${legIdx + 1} 場`}
                         </span>
                         <div className="flex flex-col min-w-0">
@@ -200,7 +249,7 @@ export default function SmartParlayCard({
                             <span className="text-xs font-black text-white truncate">
                               {leg.pickTeamName}
                             </span>
-                            <span className={`text-[9px] font-black px-1 rounded ${
+                            <span className={`text-[8.5px] font-black px-1 rounded-sm ${
                               leg.pick === 'home' 
                                 ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' 
                                 : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
@@ -208,30 +257,72 @@ export default function SmartParlayCard({
                               {leg.pick === 'home' ? '主勝' : '客勝'}
                             </span>
                           </div>
-                          <span className="text-[10px] text-gray-500 font-mono truncate mt-0.5">
+                          <span className="text-[9px] text-gray-500 font-mono truncate mt-0.5">
                             {leg.awayTeam.nameCn || leg.awayTeam.code} @ {leg.homeTeam.nameCn || leg.homeTeam.code}
                           </span>
                         </div>
                       </div>
 
+                      {/* Leg Right: Model details & odds input */}
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="flex flex-col items-end gap-0.5">
                           <ConsensusStars count={leg.consensusCount} />
-                          <span className="text-[9px] font-mono text-gray-500">
-                            {leg.avgConfidence.toFixed(1)}%
+                          <span className="text-[8.5px] font-mono text-gray-500">
+                            {leg.avgConfidence.toFixed(0)}% 信心
                           </span>
                         </div>
                         <ModelDots models={leg.models} pick={leg.pick} />
+
+                        {/* Interactive Odds Input */}
+                        <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg px-1.5 py-0.5 shrink-0">
+                          <span className="text-[9px] text-gray-500 font-mono">賠率</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={currentLegOdds}
+                            onChange={(e) => handleOddsChange(parlay.id, legIdx, e.target.value)}
+                            className="bg-transparent text-[10px] font-black text-center text-white w-10 focus:outline-none font-mono"
+                          />
+                        </div>
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Parlay Footer */}
-              <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-[10px] font-mono text-gray-600">
-                <span>涵蓋隊伍: {parlay.coverageTeams.join(', ')}</span>
-                <span>預估總得分: {parlay.legs.map(l => l.predictedTotal).join(' / ')}</span>
+              {/* Dynamic Return Calculation Panel */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-black/20 rounded-xl p-3 border border-white/5 text-xs">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-gray-500 text-[10px] font-bold">總賠率</span>
+                  <span className="text-sm font-black text-white font-mono">{multiplier.toFixed(2)} 倍</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-gray-500 text-[10px] font-bold">預估獎金</span>
+                  <span className="text-sm font-black text-emerald-400 font-mono">
+                    ${Math.round(estPayout).toLocaleString()} 元
+                  </span>
+                </div>
+                <div className="flex flex-col gap-0.5 col-span-2">
+                  <span className="text-gray-500 text-[10px] font-bold">AI 期望值 (EV ROI)</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-sm font-black font-mono ${isEvPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {isEvPositive ? '+' : ''}{ev.toFixed(1)}%
+                    </span>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                      isEvPositive 
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                        : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                    }`}>
+                      {isEvPositive ? '推薦投注' : '不符期望'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Parlay Footer info */}
+              <div className="flex items-center justify-between text-[9px] font-mono text-gray-500 border-t border-white/5 pt-2">
+                <span>過關隊伍: {parlay.coverageTeams.join(', ')}</span>
+                <span>預估得分: {parlay.legs.map(l => l.predictedTotal).join(' / ')}</span>
               </div>
             </div>
           );
@@ -247,7 +338,7 @@ export default function SmartParlayCard({
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-4 text-[10px] text-gray-600 font-mono">
-        <span>⚡ AI 多模型共識引擎 v1.0</span>
+        <span>⚡ AI 多模型共識引擎 v1.1</span>
         <span>共 {parlays.length} 組三關推薦</span>
       </div>
     </div>

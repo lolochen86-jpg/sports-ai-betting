@@ -2558,12 +2558,41 @@ export default function HomeClient() {
                                               </div>
                                             </div>
 
+                                            {/* EV ROI Visual Meter */}
+                                            <div className="bg-white/5 rounded-xl p-2.5 font-sans space-y-1.5">
+                                              <div className="flex justify-between text-[9px] text-gray-500 font-bold">
+                                                <span>EV ROI 價值分佈</span>
+                                                <span className={evRoi >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                                                  {(evRoi * 100).toFixed(1)}%
+                                                </span>
+                                              </div>
+                                              <div className="h-1.5 bg-white/10 rounded-full relative overflow-hidden">
+                                                {evRoi >= 0 ? (
+                                                  <div 
+                                                    className="absolute left-1/2 h-full bg-emerald-500 rounded-r-full transition-all duration-500"
+                                                    style={{ width: `${Math.min(50, (evRoi * 100) / 30 * 50)}%` }}
+                                                  />
+                                                ) : (
+                                                  <div 
+                                                    className="absolute right-1/2 h-full bg-red-500 rounded-l-full transition-all duration-500"
+                                                    style={{ width: `${Math.min(50, Math.abs(evRoi * 100) / 30 * 50)}%` }}
+                                                  />
+                                                )}
+                                                <div className="absolute left-1/2 top-0 w-0.5 h-full bg-white/40" />
+                                              </div>
+                                              <div className="flex justify-between text-[8px] text-gray-600 font-mono">
+                                                <span>-30% ROI</span>
+                                                <span>0%</span>
+                                                <span>+30% ROI</span>
+                                              </div>
+                                            </div>
+
                                             <div className="flex items-center justify-between text-xs py-1">
                                               <span className="text-gray-400 font-sans font-bold">下注價值評級：</span>
                                               <div className="flex items-center gap-2">
                                                 <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-wide ${
-                                                  grade === 'A' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-md shadow-amber-500/20' :
-                                                  grade === 'B' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
+                                                  grade === 'A' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-md shadow-amber-500/20 animate-pulse' :
+                                                  grade === 'B' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20 animate-pulse' :
                                                   grade === 'C' ? 'bg-yellow-500/5 text-yellow-300 border border-yellow-500/10' :
                                                   'bg-red-500/5 text-gray-500 border border-red-500/10'
                                                 }`}>
@@ -2573,11 +2602,29 @@ export default function HomeClient() {
                                               </div>
                                             </div>
 
-                                            <div className="flex items-center justify-between text-xs py-1 border-t border-white/[0.03] pt-2">
-                                              <span className="text-gray-400 font-sans font-bold">建議下注金額 (1/4 Kelly)：</span>
-                                              <span className="text-amber-400 font-mono font-black text-sm">
-                                                {suggestedBet > 0 ? `$${suggestedBet.toLocaleString()} NTD` : '$0 NTD (不建議)'}
-                                              </span>
+                                            <div className="flex flex-col gap-1.5 border-t border-white/[0.03] pt-2">
+                                              <div className="flex items-center justify-between text-xs">
+                                                <span className="text-gray-400 font-sans font-bold">建議下注金額 (1/4 Kelly)：</span>
+                                                <span className="text-amber-400 font-mono font-black text-sm">
+                                                  {suggestedBet > 0 ? `$${suggestedBet.toLocaleString()} NTD` : '$0 NTD (不建議)'}
+                                                </span>
+                                              </div>
+                                              {suggestedBet > 0 && (
+                                                <div className="bg-white/5 rounded-lg p-2 space-y-1">
+                                                  <div className="flex justify-between text-[9px] text-gray-500 font-bold">
+                                                    <span>本金分配比例</span>
+                                                    <span className="text-amber-400 font-mono">
+                                                      {((suggestedBet / bettingSettings.bankroll) * 100).toFixed(1)}% 的總本金
+                                                    </span>
+                                                  </div>
+                                                  <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                                                    <div 
+                                                      className="bg-amber-400 h-full rounded-full transition-all duration-500"
+                                                      style={{ width: `${Math.min(100, (suggestedBet / bettingSettings.bankroll) * 100 * 10)}%` }}
+                                                    />
+                                                  </div>
+                                                </div>
+                                              )}
                                             </div>
 
                                             <button
@@ -2684,12 +2731,41 @@ export default function HomeClient() {
                                               </div>
                                             </div>
 
+                                            {/* EV ROI Visual Meter */}
+                                            <div className="bg-white/5 rounded-xl p-2.5 font-sans space-y-1.5">
+                                              <div className="flex justify-between text-[9px] text-gray-500 font-bold">
+                                                <span>EV ROI 價值分佈</span>
+                                                <span className={evRoi >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                                                  {(evRoi * 100).toFixed(1)}%
+                                                </span>
+                                              </div>
+                                              <div className="h-1.5 bg-white/10 rounded-full relative overflow-hidden">
+                                                {evRoi >= 0 ? (
+                                                  <div 
+                                                    className="absolute left-1/2 h-full bg-emerald-500 rounded-r-full transition-all duration-500"
+                                                    style={{ width: `${Math.min(50, (evRoi * 100) / 30 * 50)}%` }}
+                                                  />
+                                                ) : (
+                                                  <div 
+                                                    className="absolute right-1/2 h-full bg-red-500 rounded-l-full transition-all duration-500"
+                                                    style={{ width: `${Math.min(50, Math.abs(evRoi * 100) / 30 * 50)}%` }}
+                                                  />
+                                                )}
+                                                <div className="absolute left-1/2 top-0 w-0.5 h-full bg-white/40" />
+                                              </div>
+                                              <div className="flex justify-between text-[8px] text-gray-600 font-mono">
+                                                <span>-30% ROI</span>
+                                                <span>0%</span>
+                                                <span>+30% ROI</span>
+                                              </div>
+                                            </div>
+
                                             <div className="flex items-center justify-between text-xs py-1">
                                               <span className="text-gray-400 font-sans font-bold">下注價值評級：</span>
                                               <div className="flex items-center gap-2">
                                                 <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-wide ${
-                                                  grade === 'A' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-md shadow-amber-500/20' :
-                                                  grade === 'B' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
+                                                  grade === 'A' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow-md shadow-amber-500/20 animate-pulse' :
+                                                  grade === 'B' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20 animate-pulse' :
                                                   grade === 'C' ? 'bg-yellow-500/5 text-yellow-300 border border-yellow-500/10' :
                                                   'bg-red-500/5 text-gray-500 border border-red-500/10'
                                                 }`}>
@@ -2699,11 +2775,29 @@ export default function HomeClient() {
                                               </div>
                                             </div>
 
-                                            <div className="flex items-center justify-between text-xs py-1 border-t border-white/[0.03] pt-2">
-                                              <span className="text-gray-400 font-sans font-bold">建議下注金額 (1/4 Kelly)：</span>
-                                              <span className="text-amber-400 font-mono font-black text-sm">
-                                                {suggestedBet > 0 ? `$${suggestedBet.toLocaleString()} NTD` : '$0 NTD (不建議)'}
-                                              </span>
+                                            <div className="flex flex-col gap-1.5 border-t border-white/[0.03] pt-2">
+                                              <div className="flex items-center justify-between text-xs">
+                                                <span className="text-gray-400 font-sans font-bold">建議下注金額 (1/4 Kelly)：</span>
+                                                <span className="text-amber-400 font-mono font-black text-sm">
+                                                  {suggestedBet > 0 ? `$${suggestedBet.toLocaleString()} NTD` : '$0 NTD (不建議)'}
+                                                </span>
+                                              </div>
+                                              {suggestedBet > 0 && (
+                                                <div className="bg-white/5 rounded-lg p-2 space-y-1">
+                                                  <div className="flex justify-between text-[9px] text-gray-500 font-bold">
+                                                    <span>本金分配比例</span>
+                                                    <span className="text-amber-400 font-mono">
+                                                      {((suggestedBet / bettingSettings.bankroll) * 100).toFixed(1)}% 的總本金
+                                                    </span>
+                                                  </div>
+                                                  <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                                                    <div 
+                                                      className="bg-amber-400 h-full rounded-full transition-all duration-500"
+                                                      style={{ width: `${Math.min(100, (suggestedBet / bettingSettings.bankroll) * 100 * 10)}%` }}
+                                                    />
+                                                  </div>
+                                                </div>
+                                              )}
                                             </div>
 
                                             <button
