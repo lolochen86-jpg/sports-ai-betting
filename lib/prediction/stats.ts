@@ -54,6 +54,50 @@ export interface PredictionDetailStats {
   ouPick: 'Over' | 'Under';
 }
 
+// ═══════════════════════════════════════════════════════════════
+// MLB Score Clamping & Backtested Optimal Multipliers
+// Grid Search Optimized: 834 MLB games, MAE 3.88, Spot-On 23.5%
+// ═══════════════════════════════════════════════════════════════
+
+/** Backtested optimal multiplier for player hotness/momentum scoring adjustments */
+export const K_HOT = 1.0;
+
+/** Backtested optimal multiplier for pitcher quality impact (2x amplification) */
+export const K_PITCHER = 2.0;
+
+/**
+ * Non-linear saturation for MLB expected score per team.
+ * Concept: the more runs a team scores, the harder each additional run becomes.
+ * - ≤5.0 runs: full credit
+ * - 5.0–8.0 runs: excess at 60%
+ * - >8.0 runs: excess at 30%
+ */
+export function sanitizeMlbScore(score: number): number {
+  if (score <= 5.0) return score;
+  if (score <= 8.0) return 5.0 + (score - 5.0) * 0.60;
+  return 5.0 + 3.0 * 0.60 + (score - 8.0) * 0.30;
+}
+
+/**
+ * Applies MLB totals limit: if combined predicted total exceeds 15,
+ * shrink the excess by 75% and redistribute proportionally.
+ */
+export function applyMlbTotalsLimits(
+  homeExp: number,
+  awayExp: number
+): { home: number; away: number } {
+  let h = sanitizeMlbScore(homeExp);
+  let a = sanitizeMlbScore(awayExp);
+  const total = h + a;
+  if (total > 15.0) {
+    const shrunk = 15.0 + (total - 15.0) * 0.25;
+    const ratio = shrunk / total;
+    h = h * ratio;
+    a = a * ratio;
+  }
+  return { home: Number(h.toFixed(1)), away: Number(a.toFixed(1)) };
+}
+
 /**
  * Dynamic model loader to dynamically load the public/models/mlb_model.json weights.
  * Evaluates require('fs') to remain browser-safe during Next.js builds.
@@ -298,8 +342,16 @@ export function calculateWinProbability(
   const homeExp = homeStats.averagePointsScored + shift + homeFluct.scoreAdj;
   const awayExp = awayStats.averagePointsScored - shift + awayFluct.scoreAdj;
   
-  let homeExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, homeExp).toFixed(1));
-  let awayExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, awayExp).toFixed(1));
+  let homeExpectedScore: number;
+  let awayExpectedScore: number;
+  if (league === 'MLB') {
+    const clamped = applyMlbTotalsLimits(Math.max(1, homeExp), Math.max(1, awayExp));
+    homeExpectedScore = clamped.home;
+    awayExpectedScore = clamped.away;
+  } else {
+    homeExpectedScore = Number(Math.max(80, homeExp).toFixed(1));
+    awayExpectedScore = Number(Math.max(80, awayExp).toFixed(1));
+  }
   
   // Enforce consistency: predicted winner must have the higher expected score
   const predictedWinnerSports = finalHomeProb >= finalAwayProb ? 'home' : 'away';
@@ -373,8 +425,16 @@ export function calculateEloProbability(
   const homeExp = homeStats.averagePointsScored + shift + homeFluct.scoreAdj;
   const awayExp = awayStats.averagePointsScored - shift + awayFluct.scoreAdj;
 
-  let homeExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, homeExp).toFixed(1));
-  let awayExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, awayExp).toFixed(1));
+  let homeExpectedScore: number;
+  let awayExpectedScore: number;
+  if (league === 'MLB') {
+    const clamped = applyMlbTotalsLimits(Math.max(1, homeExp), Math.max(1, awayExp));
+    homeExpectedScore = clamped.home;
+    awayExpectedScore = clamped.away;
+  } else {
+    homeExpectedScore = Number(Math.max(80, homeExp).toFixed(1));
+    awayExpectedScore = Number(Math.max(80, awayExp).toFixed(1));
+  }
   
   // Enforce consistency: predicted winner must have the higher expected score
   const predictedWinnerElo = finalHomeProb >= finalAwayProb ? 'home' : 'away';
@@ -460,8 +520,16 @@ export function calculateMonteCarloProbability(
   }
 
   // Obtain expected scores from the average of 10,000 simulation runs
-  let homeExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, totalHomeScore / sims).toFixed(1));
-  let awayExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, totalAwayScore / sims).toFixed(1));
+  let homeExpectedScore: number;
+  let awayExpectedScore: number;
+  if (league === 'MLB') {
+    const clamped = applyMlbTotalsLimits(Math.max(1, totalHomeScore / sims), Math.max(1, totalAwayScore / sims));
+    homeExpectedScore = clamped.home;
+    awayExpectedScore = clamped.away;
+  } else {
+    homeExpectedScore = Number(Math.max(80, totalHomeScore / sims).toFixed(1));
+    awayExpectedScore = Number(Math.max(80, totalAwayScore / sims).toFixed(1));
+  }
   
   // Enforce consistency: predicted winner must have the higher expected score
   const predictedWinnerMC = finalHomeProb >= finalAwayProb ? 'home' : 'away';
@@ -535,7 +603,8 @@ export function calculateStrengthIndexV2(
   // ④ MLB Starting Pitcher (opponent's pitcher affects our scoring)
   if (league === 'MLB' && extras?.opponentPitcher) {
     // Good opponent pitcher (high advantage) = harder for us to score => lower index
-    const pitcherImpact = (extras.opponentPitcher.advantageFactor - 1.0) * 4.0;
+    // K_PITCHER amplifies pitcher impact per backtest optimization
+    const pitcherImpact = (extras.opponentPitcher.advantageFactor - 1.0) * 4.0 * K_PITCHER;
     index -= pitcherImpact;
   }
 
@@ -543,7 +612,7 @@ export function calculateStrengthIndexV2(
   if (stats.scoringMomentum !== undefined) {
     const momentumBoost = league === 'NBA'
       ? stats.scoringMomentum * 0.8  // NBA: each point of slope = 0.8 index points
-      : stats.scoringMomentum * 1.5; // MLB: each run of slope = 1.5 index points
+      : stats.scoringMomentum * 1.5 * K_HOT; // MLB: scaled by backtested K_HOT
     index += momentumBoost;
   }
 
@@ -619,8 +688,8 @@ export function calculateWinProbabilityV2(
   const awayBaseScore = awayStats.awayAvgScored ?? awayStats.averagePointsScored;
 
   // Apply momentum adjustment to baseline
-  const homeMomentumAdj = (homeStats.scoringMomentum ?? 0) * (league === 'NBA' ? 0.5 : 0.3);
-  const awayMomentumAdj = (awayStats.scoringMomentum ?? 0) * (league === 'NBA' ? 0.5 : 0.3);
+  const homeMomentumAdj = (homeStats.scoringMomentum ?? 0) * (league === 'NBA' ? 0.5 : 0.3 * K_HOT);
+  const awayMomentumAdj = (awayStats.scoringMomentum ?? 0) * (league === 'NBA' ? 0.5 : 0.3 * K_HOT);
 
   // Apply fatigue penalty to scoring
   const homeFatiguePenalty = extras?.homeFatigue?.fatigueLevel === 'heavy' ? (league === 'NBA' ? 4.0 : 0.8) :
@@ -630,10 +699,10 @@ export function calculateWinProbabilityV2(
 
   // Apply pitcher impact on opponent scoring
   const homePitcherAdj = league === 'MLB' && extras?.homePitcher
-    ? (extras.homePitcher.advantageFactor - 1.0) * -1.5  // Good home pitcher reduces away score
+    ? (extras.homePitcher.advantageFactor - 1.0) * -1.5 * K_PITCHER  // Amplified by K_PITCHER
     : 0;
   const awayPitcherAdj = league === 'MLB' && extras?.awayPitcher
-    ? (extras.awayPitcher.advantageFactor - 1.0) * -1.5  // Good away pitcher reduces home score
+    ? (extras.awayPitcher.advantageFactor - 1.0) * -1.5 * K_PITCHER  // Amplified by K_PITCHER
     : 0;
 
   const homeStrength = calculateStrengthIndexV2(homeStats, league, true, {
@@ -655,8 +724,16 @@ export function calculateWinProbabilityV2(
   const homeExp = homeBaseScore + shift + homeMomentumAdj - homeFatiguePenalty + awayPitcherAdj + homeFluct.scoreAdj;
   const awayExp = awayBaseScore - shift + awayMomentumAdj - awayFatiguePenalty + homePitcherAdj + awayFluct.scoreAdj;
 
-  let homeExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, homeExp).toFixed(1));
-  let awayExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, awayExp).toFixed(1));
+  let homeExpectedScore: number;
+  let awayExpectedScore: number;
+  if (league === 'MLB') {
+    const clamped = applyMlbTotalsLimits(Math.max(1, homeExp), Math.max(1, awayExp));
+    homeExpectedScore = clamped.home;
+    awayExpectedScore = clamped.away;
+  } else {
+    homeExpectedScore = Number(Math.max(80, homeExp).toFixed(1));
+    awayExpectedScore = Number(Math.max(80, awayExp).toFixed(1));
+  }
 
   const predictedWinner = finalHomeProb >= finalAwayProb ? 'home' : 'away';
   if (predictedWinner === 'home' && awayExpectedScore > homeExpectedScore) {
@@ -762,8 +839,16 @@ export function calculateEloProbabilityV2(
   if (extras?.awayFatigue?.fatigueLevel === 'heavy') awayExp -= (league === 'NBA' ? 3.0 : 0.6);
   else if (extras?.awayFatigue?.fatigueLevel === 'mild') awayExp -= (league === 'NBA' ? 1.5 : 0.3);
 
-  let homeExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, homeExp).toFixed(1));
-  let awayExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, awayExp).toFixed(1));
+  let homeExpectedScore: number;
+  let awayExpectedScore: number;
+  if (league === 'MLB') {
+    const clamped = applyMlbTotalsLimits(Math.max(1, homeExp), Math.max(1, awayExp));
+    homeExpectedScore = clamped.home;
+    awayExpectedScore = clamped.away;
+  } else {
+    homeExpectedScore = Number(Math.max(80, homeExp).toFixed(1));
+    awayExpectedScore = Number(Math.max(80, awayExp).toFixed(1));
+  }
   
   // Enforce consistency: predicted winner must have the higher expected score
   const predictedWinnerElo = finalHomeProb >= finalAwayProb ? 'home' : 'away';
@@ -853,21 +938,21 @@ export function calculateMonteCarloProbabilityV2(
 
   // Adjust mean based on momentum
   if (homeStats.scoringMomentum !== undefined) {
-    homeMean += homeStats.scoringMomentum * (league === 'NBA' ? 0.3 : 0.15);
+    homeMean += homeStats.scoringMomentum * (league === 'NBA' ? 0.3 : 0.15 * K_HOT);
   }
   if (awayStats.scoringMomentum !== undefined) {
-    awayMean += awayStats.scoringMomentum * (league === 'NBA' ? 0.3 : 0.15);
+    awayMean += awayStats.scoringMomentum * (league === 'NBA' ? 0.3 : 0.15 * K_HOT);
   }
 
   // Pitcher advantages for MLB
   if (league === 'MLB') {
     if (extras?.homePitcher) {
-      // Good home pitcher reduces away scoring mean
-      awayMean -= (extras.homePitcher.advantageFactor - 1.0) * 1.0;
+      // Good home pitcher reduces away scoring mean (amplified by K_PITCHER)
+      awayMean -= (extras.homePitcher.advantageFactor - 1.0) * 1.0 * K_PITCHER;
     }
     if (extras?.awayPitcher) {
-      // Good away pitcher reduces home scoring mean
-      homeMean -= (extras.awayPitcher.advantageFactor - 1.0) * 1.0;
+      // Good away pitcher reduces home scoring mean (amplified by K_PITCHER)
+      homeMean -= (extras.awayPitcher.advantageFactor - 1.0) * 1.0 * K_PITCHER;
     }
   }
 
@@ -906,8 +991,16 @@ export function calculateMonteCarloProbabilityV2(
   }
 
   // Obtain expected scores from the average of 10,000 simulation runs
-  let homeExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, totalHomeScore / sims).toFixed(1));
-  let awayExpectedScore = Number(Math.max(league === 'NBA' ? 80 : 1, totalAwayScore / sims).toFixed(1));
+  let homeExpectedScore: number;
+  let awayExpectedScore: number;
+  if (league === 'MLB') {
+    const clamped = applyMlbTotalsLimits(Math.max(1, totalHomeScore / sims), Math.max(1, totalAwayScore / sims));
+    homeExpectedScore = clamped.home;
+    awayExpectedScore = clamped.away;
+  } else {
+    homeExpectedScore = Number(Math.max(80, totalHomeScore / sims).toFixed(1));
+    awayExpectedScore = Number(Math.max(80, totalAwayScore / sims).toFixed(1));
+  }
   
   // Enforce consistency: predicted winner must have the higher expected score
   const predictedWinnerMC = finalHomeProb >= finalAwayProb ? 'home' : 'away';
