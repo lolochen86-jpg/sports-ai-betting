@@ -122,6 +122,7 @@ export default function HistoryPage() {
   const [teamFilter, setTeamFilter] = useState<string>('ALL');
   const [expandedGameId, setExpandedGameId] = useState<string | null>(null);
   const [dynamicGames, setDynGames] = useState<RawGame[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
 
   // 載入 localStorage 中的動態快取 + 背景同步
   useEffect(() => {
@@ -164,6 +165,7 @@ export default function HistoryPage() {
         }
       })
       .catch(() => { /* silently fail */ });
+    setIsMounted(true);
   }, []);
 
   // Get all games (static + dynamic) and sort by date descending
@@ -226,6 +228,46 @@ export default function HistoryPage() {
     const details = getBacktestGamesForDate(game.date, game.league);
     return details.find(d => d.id === game.id);
   };
+
+  // Compute Overall Model Accuracy Summary for Completed Games
+  const statsSummary = useMemo(() => {
+    if (!isMounted) {
+      return {
+        winRate: '0.0',
+        ouRate: '0.0',
+        totalScoreRate: '0.0',
+        totalGames: 0
+      };
+    }
+
+    let winCorrect = 0;
+    let winTotal = 0;
+    let ouCorrect = 0;
+    let ouTotal = 0;
+    let totalScoreCorrect = 0;
+
+    // Evaluate up to recent 80 filtered completed games to prevent lagging
+    const evaluationGames = filteredGames.slice(0, 80);
+
+    evaluationGames.forEach((game) => {
+      const details = getBacktestGamesForDate(game.date, game.league);
+      const pred = details.find(d => d.id === game.id);
+      if (pred && pred.MetaModel) {
+        winTotal++;
+        if (pred.MetaModel.winnerCorrect) winCorrect++;
+        if (pred.MetaModel.ouCorrect) ouCorrect++;
+        ouTotal++;
+        if (pred.MetaModel.totalScoreCorrect) totalScoreCorrect++;
+      }
+    });
+
+    return {
+      winRate: winTotal > 0 ? (winCorrect / winTotal * 100).toFixed(1) : '0.0',
+      ouRate: ouTotal > 0 ? (ouCorrect / ouTotal * 100).toFixed(1) : '0.0',
+      totalScoreRate: winTotal > 0 ? (totalScoreCorrect / winTotal * 100).toFixed(1) : '0.0',
+      totalGames: winTotal
+    };
+  }, [filteredGames, isMounted]);
 
   return (
     <div className="flex-1 w-full min-h-screen bg-[#030712] cyber-grid relative pb-20">
@@ -341,6 +383,47 @@ export default function HistoryPage() {
         </div>
       </header>
 
+      {/* 2.5 AI Predictions Accuracy Dashboard */}
+      <section className="max-w-5xl mx-auto px-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white/[0.02] border border-white/5 rounded-3xl p-5 backdrop-blur-md">
+          {/* Card 1: Winner Accuracy */}
+          <div className="glass-panel rounded-2xl p-4 border border-white/5 relative overflow-hidden flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-gray-400 font-sans tracking-wider uppercase">勝負預測命中率</span>
+              <span className="text-lg">🎯</span>
+            </div>
+            <div className="mt-3 flex items-baseline gap-1">
+              <span className="text-3xl font-black font-mono text-purple-400">{statsSummary.winRate}%</span>
+            </div>
+            <span className="text-[9px] text-gray-500 font-mono font-bold mt-1">基於 Meta 元模型最近 {statsSummary.totalGames} 場對位</span>
+          </div>
+
+          {/* Card 2: Over/Under Accuracy */}
+          <div className="glass-panel rounded-2xl p-4 border border-white/5 relative overflow-hidden flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-gray-400 font-sans tracking-wider uppercase">大小分盤口勝率 (對比運彩)</span>
+              <span className="text-lg">🎲</span>
+            </div>
+            <div className="mt-3 flex items-baseline gap-1">
+              <span className="text-3xl font-black font-mono text-cyan-400">{statsSummary.ouRate}%</span>
+            </div>
+            <span className="text-[9px] text-gray-500 font-mono font-bold mt-1">大小分方向與運彩開盤相符之機率</span>
+          </div>
+
+          {/* Card 3: Total Score Accuracy */}
+          <div className="glass-panel rounded-2xl p-4 border border-white/5 relative overflow-hidden flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-gray-400 font-sans tracking-wider uppercase">總得分神準率 (±1.5)</span>
+              <span className="text-lg">📊</span>
+            </div>
+            <div className="mt-3 flex items-baseline gap-1">
+              <span className="text-3xl font-black font-mono text-emerald-400">{statsSummary.totalScoreRate}%</span>
+            </div>
+            <span className="text-[9px] text-gray-500 font-mono font-bold mt-1">預估總得分與完賽總分誤差 ≤ 1.5 分</span>
+          </div>
+        </div>
+      </section>
+
       {/* 3. Games List */}
       <main className="max-w-5xl mx-auto px-6 py-4">
         {groupedByDate.length === 0 ? (
@@ -423,15 +506,28 @@ export default function HistoryPage() {
                               </div>
                             </div>
 
-                            {/* Status Badge */}
-                            <div className="shrink-0 flex flex-col items-end gap-0.5 ml-2">
-                              <span className="px-2 py-0.5 rounded bg-gray-500/20 text-gray-300 text-[9px] font-black">
-                                終場
-                              </span>
-                              <span className="text-[9px] font-mono text-gray-500 font-bold">
-                                總分 {game.homeScore + game.awayScore}
-                              </span>
-                            </div>
+                             {/* Status Badge */}
+                             <div className="shrink-0 flex flex-col items-end gap-0.5 ml-2">
+                               <span className="px-2 py-0.5 rounded bg-gray-500/20 text-gray-300 text-[9px] font-black">
+                                 終場
+                               </span>
+                               <span className="text-[9px] font-mono text-gray-500 font-bold">
+                                 總分 {game.homeScore + game.awayScore}
+                               </span>
+                               {isMounted && (() => {
+                                 const details = getBacktestGamesForDate(game.date, game.league);
+                                 const pred = details.find(d => d.id === game.id);
+                                 if (pred && pred.MetaModel && pred.MetaModel.totalScoreCorrect) {
+                                   const diff = Math.abs((game.homeScore + game.awayScore) - pred.MetaModel.predictedTotal);
+                                   return (
+                                     <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[8px] font-black border border-emerald-500/30 animate-pulse mt-0.5">
+                                       🎯 總分神準 (差 {diff.toFixed(1)}分)
+                                     </span>
+                                   );
+                                 }
+                                 return null;
+                               })()}
+                             </div>
 
                             {/* Expand Arrow */}
                             <svg className={`w-4 h-4 text-gray-500 group-hover:text-purple-400 transition-all shrink-0 ${isExpanded ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
@@ -491,7 +587,7 @@ export default function HistoryPage() {
                                           <span className="text-gray-400 font-bold">預測總分:</span>
                                           <div className="flex items-center gap-1">
                                             <span className="text-gray-300 font-mono font-bold text-[10px]">
-                                              {m.data.predictedTotal}分 (±1)
+                                              {m.data.predictedTotal}分 (±1.5)
                                             </span>
                                             <span className={`text-[8px] font-mono px-1 rounded ${m.data.totalScoreCorrect ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
                                               {m.data.totalScoreCorrect ? '✓命中' : '✗未中'}

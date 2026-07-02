@@ -640,24 +640,25 @@ export default function HomeClient() {
   const [smartParlayData, setSmartParlayData] = useState<any>(null);
   const [smartParlayLoading, setSmartParlayLoading] = useState(false);
 
-  useEffect(() => {
-    async function fetchSmartParlays() {
-      setSmartParlayLoading(true);
-      try {
-        const res = await fetch(`/api/predictions/smart-parlays?date=${selectedDate}&league=${activeLeague}`);
-        const data = await res.json();
-        if (data.success) {
-          setSmartParlayData(data.data);
-        } else {
-          setSmartParlayData(null);
-        }
-      } catch (err) {
-        console.error('Failed to fetch smart parlays:', err);
+  const fetchSmartParlays = async () => {
+    setSmartParlayLoading(true);
+    try {
+      const res = await fetch(`/api/predictions/smart-parlays?date=${selectedDate}&league=${activeLeague}`);
+      const data = await res.json();
+      if (data.success) {
+        setSmartParlayData(data.data);
+      } else {
         setSmartParlayData(null);
-      } finally {
-        setSmartParlayLoading(false);
       }
+    } catch (err) {
+      console.error('Failed to fetch smart parlays:', err);
+      setSmartParlayData(null);
+    } finally {
+      setSmartParlayLoading(false);
     }
+  };
+
+  useEffect(() => {
     fetchSmartParlays();
   }, [selectedDate, activeLeague]);
   
@@ -698,7 +699,7 @@ export default function HomeClient() {
   const syncTaiwanOdds = async () => {
     setSyncingOdds(true);
     try {
-      const res = await fetch(`/api/odds/taiwan-lottery?date=${selectedDate}&league=${activeLeague}`);
+      const res = await fetch(`/api/odds/sync-taiwan?date=${selectedDate}`);
       const json = await res.json();
       if (json.success && json.data) {
         const scraped = json.data;
@@ -720,7 +721,16 @@ export default function HomeClient() {
           localStorage.setItem('taiwan_odds_manual', JSON.stringify(next));
           return next;
         });
-        setToastMsg(`成功自動同步 ${syncCount} 場運彩賠率！`);
+
+        // Trigger refetch of games and smart parlays to align with backend DB sync
+        try {
+          refetch(true);
+        } catch (e) {
+          console.error(e);
+        }
+        await fetchSmartParlays().catch(() => {});
+
+        setToastMsg(`成功自動同步 ${syncCount} 場運彩賠率，並已更新後端與串關預估！`);
       } else {
         setToastMsg(`同步失敗：${json.error || '未找到當日運彩盤賠率'}`);
       }

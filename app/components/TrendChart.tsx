@@ -6,6 +6,7 @@ import {
   getBacktestGamesForDate, 
   getStaticLastDate,
   setDynamicGames,
+  setDbTaiwanOddsLines,
   BacktestTrendPoint,
   RawHistoricalGame 
 } from '../../lib/prediction/backtest';
@@ -230,6 +231,17 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
       })
       .catch(() => {});
 
+    // Fetch and inject Taiwan Odds Totals Lines for backtesting
+    fetch(`/api/backtest/taiwan-odds?_t=${Date.now()}`)
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && json.lines) {
+          setDbTaiwanOddsLines(json.lines);
+          setDataVersion(v => v + 1);
+        }
+      })
+      .catch(() => {});
+
     // 先載入 localStorage 快取 (立即顯示)
     try {
       const cached = localStorage.getItem('backtest_dynamic_games');
@@ -411,19 +423,19 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
               onClick={() => { setChartType('winner'); setHoverIndex(null); setSelectedIndex(null); }}
               className={`px-4 py-2 rounded-lg font-black text-xs transition-all ${chartType === 'winner' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
             >
-              🎯 獨贏勝負走勢
+              🎯 勝負預測準確率
             </button>
             <button
               onClick={() => { setChartType('ou'); setHoverIndex(null); setSelectedIndex(null); }}
               className={`px-4 py-2 rounded-lg font-black text-xs transition-all ${chartType === 'ou' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
             >
-              🎲 大小分分界走勢
+              🎲 大/小分預測準確率 (對比運彩大小盤)
             </button>
             <button
               onClick={() => { setChartType('totalScore'); setHoverIndex(null); setSelectedIndex(null); }}
               className={`px-4 py-2 rounded-lg font-black text-xs transition-all ${chartType === 'totalScore' ? 'bg-purple-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
             >
-              📊 總得分精準度 (±1.5分)
+              📊 總分神準率 (±1.5分)
             </button>
           </div>
 
@@ -862,7 +874,7 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                   </span>
                   <div className="text-right">
                     <span className="font-black font-mono text-amber-200">{hoverData.MetaModelV2[chartType]}%</span>
-                    <span className="text-[9px] text-gray-500 font-mono font-bold ml-1">({chartType === 'winner' ? hoverData.MetaModelV2.winnerStats : chartType === 'ou' ? hoverData.MetaModelV2.ouStats : hoverData.MetaModelV2.totalScoreStats}局)</span>
+                    <span className="text-[9px] text-gray-500 font-mono font-bold ml-1">({chartType === 'winner' ? hoverData.MetaModelV2.winnerStats : chartType === 'ou' ? hoverData.MetaModelV2.ouStats : hoverData.MetaModelV2.totalScoreStats}場)</span>
                   </div>
                 </div>
               )}
@@ -875,7 +887,7 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                   </span>
                   <div className="text-right">
                     <span className="font-black font-mono text-pink-200">{hoverData.MetaModel[chartType]}%</span>
-                    <span className="text-[9px] text-gray-500 font-mono font-bold ml-1">({chartType === 'winner' ? hoverData.MetaModel.winnerStats : chartType === 'ou' ? hoverData.MetaModel.ouStats : hoverData.MetaModel.totalScoreStats}局)</span>
+                    <span className="text-[9px] text-gray-500 font-mono font-bold ml-1">({chartType === 'winner' ? hoverData.MetaModel.winnerStats : chartType === 'ou' ? hoverData.MetaModel.ouStats : hoverData.MetaModel.totalScoreStats}場)</span>
                   </div>
                 </div>
               )}
@@ -888,7 +900,7 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                   </span>
                   <div className="text-right">
                     <span className="font-black font-mono text-purple-200">{hoverData.SportsAI[chartType]}%</span>
-                    <span className="text-[9px] text-gray-500 font-mono font-bold ml-1">({chartType === 'winner' ? hoverData.SportsAI.winnerStats : chartType === 'ou' ? hoverData.SportsAI.ouStats : hoverData.SportsAI.totalScoreStats}局)</span>
+                    <span className="text-[9px] text-gray-500 font-mono font-bold ml-1">({chartType === 'winner' ? hoverData.SportsAI.winnerStats : chartType === 'ou' ? hoverData.SportsAI.ouStats : hoverData.SportsAI.totalScoreStats}場)</span>
                   </div>
                 </div>
               )}
@@ -901,7 +913,7 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                   </span>
                   <div className="text-right">
                     <span className="font-black font-mono text-orange-200">{hoverData.EloRating[chartType]}%</span>
-                    <span className="text-[9px] text-gray-500 font-mono font-bold ml-1">({chartType === 'winner' ? hoverData.EloRating.winnerStats : chartType === 'ou' ? hoverData.EloRating.ouStats : hoverData.EloRating.totalScoreStats}局)</span>
+                    <span className="text-[9px] text-gray-500 font-mono font-bold ml-1">({chartType === 'winner' ? hoverData.EloRating.winnerStats : chartType === 'ou' ? hoverData.EloRating.ouStats : hoverData.EloRating.totalScoreStats}場)</span>
                   </div>
                 </div>
               )}
@@ -914,7 +926,7 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                   </span>
                   <div className="text-right">
                     <span className="font-black font-mono text-cyan-200">{hoverData.MonteCarlo[chartType]}%</span>
-                    <span className="text-[9px] text-gray-500 font-mono font-bold ml-1">({chartType === 'winner' ? hoverData.MonteCarlo.winnerStats : chartType === 'ou' ? hoverData.MonteCarlo.ouStats : hoverData.MonteCarlo.totalScoreStats}局)</span>
+                    <span className="text-[9px] text-gray-500 font-mono font-bold ml-1">({chartType === 'winner' ? hoverData.MonteCarlo.winnerStats : chartType === 'ou' ? hoverData.MonteCarlo.ouStats : hoverData.MonteCarlo.totalScoreStats}場)</span>
                   </div>
                 </div>
               )}

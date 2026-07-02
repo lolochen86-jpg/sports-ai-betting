@@ -124,6 +124,14 @@ export function loadRealGames(): RawHistoricalGame[] {
   return merged;
 }
 
+// Global cache for actual Taiwan Odds Lines
+let dbTaiwanOddsLines: Record<string, number> = {};
+
+/** Sets the global actual Taiwan Odds lines mapping for backtesting alignment */
+export function setDbTaiwanOddsLines(lines: Record<string, number>): void {
+  dbTaiwanOddsLines = lines;
+}
+
 // Dynamic real games extractor for a specific date and league
 export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' | 'MLB'): GameBacktestDetail[] {
   const realGames = loadRealGames();
@@ -151,24 +159,27 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
     const actualWinner = g.homeScore > g.awayScore ? 'home' : 'away';
     const actualTotal = g.homeScore + g.awayScore;
     
+    // Lookup real Taiwan Odds Totals Line from global injected map
+    const realLine = dbTaiwanOddsLines[`${g.id}_totals`] || dbTaiwanOddsLines[g.id];
+    
     const sportsWinner = sportsResult.homeProbability >= sportsResult.awayProbability ? 'home' : 'away';
     const sportsConf = sportsWinner === 'home' ? sportsResult.homeProbability : sportsResult.awayProbability;
-    const sportsT = sportsResult.ouLine; // Store ouLine in ouT!
-    const sportsOuPick = sportsResult.ouPick;
+    const sportsT = realLine !== undefined ? realLine : sportsResult.ouLine; // Use real line if available
+    const sportsOuPick = (sportsResult.homeExpectedScore + sportsResult.awayExpectedScore) > sportsT ? 'Over' : 'Under';
     const sportsWinnerCorrect = sportsWinner === actualWinner;
     const sportsOuCorrect = (sportsOuPick === 'Over' && actualTotal > sportsT) || (sportsOuPick === 'Under' && actualTotal < sportsT);
     
     const eloWinner = eloResult.homeProbability >= eloResult.awayProbability ? 'home' : 'away';
     const eloConf = eloWinner === 'home' ? eloResult.homeProbability : eloResult.awayProbability;
-    const eloT = eloResult.ouLine; // Store ouLine in ouT!
-    const eloOuPick = eloResult.ouPick;
+    const eloT = realLine !== undefined ? realLine : eloResult.ouLine; // Use real line if available
+    const eloOuPick = (eloResult.homeExpectedScore + eloResult.awayExpectedScore) > eloT ? 'Over' : 'Under';
     const eloWinnerCorrect = eloWinner === actualWinner;
     const eloOuCorrect = (eloOuPick === 'Over' && actualTotal > eloT) || (eloOuPick === 'Under' && actualTotal < eloT);
     
     const mcWinner = mcResult.homeProbability >= mcResult.awayProbability ? 'home' : 'away';
     const mcConf = mcWinner === 'home' ? mcResult.homeProbability : mcResult.awayProbability;
-    const mcT = mcResult.ouLine; // Store ouLine in ouT!
-    const mcOuPick = mcResult.ouPick;
+    const mcT = realLine !== undefined ? realLine : mcResult.ouLine; // Use real line if available
+    const mcOuPick = (mcResult.homeExpectedScore + mcResult.awayExpectedScore) > mcT ? 'Over' : 'Under';
     const mcWinnerCorrect = mcWinner === actualWinner;
     const mcOuCorrect = (mcOuPick === 'Over' && actualTotal > mcT) || (mcOuPick === 'Under' && actualTotal < mcT);
 
@@ -182,8 +193,8 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
 
     const metaHomeExpected = weights.SportsAI * sportsResult.homeExpectedScore + weights.EloRating * eloResult.homeExpectedScore + weights.MonteCarlo * mcResult.homeExpectedScore;
     const metaAwayExpected = weights.SportsAI * sportsResult.awayExpectedScore + weights.EloRating * eloResult.awayExpectedScore + weights.MonteCarlo * mcResult.awayExpectedScore;
-    const metaT = sportsResult.ouLine; // Store ouLine in ouT (MetaModel uses same line as SportsAI)!
-    const metaOuPick = (metaHomeExpected + metaAwayExpected) > sportsResult.ouLine ? 'Over' : 'Under';
+    const metaT = realLine !== undefined ? realLine : sportsResult.ouLine; // Use real line if available
+    const metaOuPick = (metaHomeExpected + metaAwayExpected) > metaT ? 'Over' : 'Under';
     const metaWinnerCorrect = metaWinner === actualWinner;
     const metaOuCorrect = (metaOuPick === 'Over' && actualTotal > metaT) || (metaOuPick === 'Under' && actualTotal < metaT);
 
@@ -282,8 +293,8 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
 
     const metaHomeExpectedV2 = weights.SportsAI * sportsResultV2.homeExpectedScore + weights.EloRating * eloResultV2.homeExpectedScore + weights.MonteCarlo * mcResultV2.homeExpectedScore;
     const metaAwayExpectedV2 = weights.SportsAI * sportsResultV2.awayExpectedScore + weights.EloRating * eloResultV2.awayExpectedScore + weights.MonteCarlo * mcResultV2.awayExpectedScore;
-    const metaTV2 = sportsResultV2.ouLine;
-    const metaOuPickV2 = (metaHomeExpectedV2 + metaAwayExpectedV2) > sportsResultV2.ouLine ? 'Over' : 'Under';
+    const metaTV2 = realLine !== undefined ? realLine : sportsResultV2.ouLine;
+    const metaOuPickV2 = (metaHomeExpectedV2 + metaAwayExpectedV2) > metaTV2 ? 'Over' : 'Under';
     const metaWinnerCorrectV2 = metaWinnerV2 === actualWinner;
     const metaOuCorrectV2 = (metaOuPickV2 === 'Over' && actualTotal > metaTV2) || (metaOuPickV2 === 'Under' && actualTotal < metaTV2);
 
