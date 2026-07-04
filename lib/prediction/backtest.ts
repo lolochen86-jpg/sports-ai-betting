@@ -72,7 +72,7 @@ export interface GameBacktestDetail {
     home: { name: string; era: number; advantageFactor: number } | null;
     away: { name: string; era: number; advantageFactor: number } | null;
   } | null;
-  errorAnalysis?: { reasons: string[]; severity: 'warning' | 'critical'; scoreDiff: number } | null;
+  errorAnalysis?: { reasons: string[]; severity: 'perfect' | 'success' | 'warning' | 'critical'; scoreDiff: number } | null;
 }
 
 // ─── Raw game entry format (matches real_historical_games.json) ───
