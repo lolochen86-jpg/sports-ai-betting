@@ -696,7 +696,7 @@ export default function HomeClient() {
 
   const [syncingOdds, setSyncingOdds] = useState(false);
 
-  const syncTaiwanOdds = async (silent: boolean = false) => {
+  const syncTaiwanOdds = async (silent: boolean = false, targetGames: GameWithTeams[] = games) => {
     if (!silent) setSyncingOdds(true);
     try {
       const res = await fetch(`/api/odds/sync-taiwan?date=${selectedDate}`);
@@ -706,7 +706,8 @@ export default function HomeClient() {
         let syncCount = 0;
         setManualOdds(prev => {
           const next = { ...prev };
-          (games || []).forEach(game => {
+          const listToSync = targetGames && targetGames.length > 0 ? targetGames : games;
+          (listToSync || []).forEach(game => {
             const key = `${game.awayTeam.code}_${game.homeTeam.code}`;
             const odds = scraped[key];
             if (odds) {
@@ -744,10 +745,14 @@ export default function HomeClient() {
     }
   };
 
-  // 自動同步台灣運彩賠率 (當日期變更或頁面載入時)
+  // 自動同步台灣運彩賠率 (當賽事資料載入或日期變更時)
   useEffect(() => {
-    syncTaiwanOdds(true);
-  }, [selectedDate]);
+    if (games && games.length > 0) {
+      syncTaiwanOdds(true, games);
+    } else {
+      syncTaiwanOdds(true);
+    }
+  }, [games, selectedDate]);
 
   // ─── Betting Settings State ───────────────────────────────────────────────
   const [bettingSettings, setBettingSettings] = useState<BettingSettings>(DEFAULT_BETTING_SETTINGS);
