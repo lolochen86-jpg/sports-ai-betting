@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useGames } from '@/hooks/useGames';
 import { useTeams } from '@/hooks/useTeams';
@@ -708,6 +708,7 @@ export default function HomeClient() {
   };
 
   const [syncingOdds, setSyncingOdds] = useState(false);
+  const syncedKeyRef = useRef<string>('');
 
   const syncTaiwanOdds = async (silent: boolean = false, targetGames: GameWithTeams[] = games) => {
     if (!silent) setSyncingOdds(true);
@@ -747,12 +748,6 @@ export default function HomeClient() {
           return next;
         });
 
-        // Trigger refetch of games and smart parlays to align with backend DB sync
-        try {
-          refetch(true);
-        } catch (e) {
-          console.error(e);
-        }
         await fetchSmartParlays().catch(() => {});
 
         if (!silent) {
@@ -769,14 +764,14 @@ export default function HomeClient() {
     }
   };
 
-  // 自動同步台灣運彩賠率 (當賽事資料載入或日期變更時)
+  // 自動同步台灣運彩賠率 (當日期/聯賽切換或賽事首次加載完成時觸發一次)
   useEffect(() => {
-    if (games && games.length > 0) {
+    const currentKey = `${selectedDate}_${activeLeague}_${games.length}`;
+    if (syncedKeyRef.current !== currentKey) {
+      syncedKeyRef.current = currentKey;
       syncTaiwanOdds(true, games);
-    } else {
-      syncTaiwanOdds(true);
     }
-  }, [games, selectedDate]);
+  }, [games, selectedDate, activeLeague]);
 
   // ─── Betting Settings State ───────────────────────────────────────────────
   const [bettingSettings, setBettingSettings] = useState<BettingSettings>(DEFAULT_BETTING_SETTINGS);
