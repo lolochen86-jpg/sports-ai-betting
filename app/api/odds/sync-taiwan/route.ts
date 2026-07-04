@@ -228,144 +228,149 @@ export async function GET(request: NextRequest) {
         };
       }
 
-      // A. Upsert Moneyline (Away)
-      if (scraped.awayOdds) {
-        const item = await prisma.oddsTaiwan.upsert({
-          where: {
-            gameExternalId_marketType_selection: {
+      // Safely perform DB upserts if database is connected
+      try {
+        // A. Upsert Moneyline (Away)
+        if (scraped.awayOdds) {
+          await prisma.oddsTaiwan.upsert({
+            where: {
+              gameExternalId_marketType_selection: {
+                gameExternalId: gameId,
+                marketType: 'moneyline',
+                selection: 'away'
+              }
+            },
+            update: {
+              taiwanOdds: scraped.awayOdds,
+              impliedProbability: 1 / scraped.awayOdds,
+              source: 'scraped',
+              gameDate,
+              homeTeam: scraped.homeCode,
+              awayTeam: scraped.awayCode
+            },
+            create: {
               gameExternalId: gameId,
+              league,
+              gameDate,
+              homeTeam: scraped.homeCode,
+              awayTeam: scraped.awayCode,
               marketType: 'moneyline',
-              selection: 'away'
+              selection: 'away',
+              taiwanOdds: scraped.awayOdds,
+              impliedProbability: 1 / scraped.awayOdds,
+              source: 'scraped'
             }
-          },
-          update: {
-            taiwanOdds: scraped.awayOdds,
-            impliedProbability: 1 / scraped.awayOdds,
-            source: 'scraped',
-            gameDate,
-            homeTeam: scraped.homeCode,
-            awayTeam: scraped.awayCode
-          },
-          create: {
-            gameExternalId: gameId,
-            league,
-            gameDate,
-            homeTeam: scraped.homeCode,
-            awayTeam: scraped.awayCode,
-            marketType: 'moneyline',
-            selection: 'away',
-            taiwanOdds: scraped.awayOdds,
-            impliedProbability: 1 / scraped.awayOdds,
-            source: 'scraped'
-          }
-        });
-        upsertedCount++;
-      }
+          });
+          upsertedCount++;
+        }
 
-      // B. Upsert Moneyline (Home)
-      if (scraped.homeOdds) {
-        await prisma.oddsTaiwan.upsert({
-          where: {
-            gameExternalId_marketType_selection: {
+        // B. Upsert Moneyline (Home)
+        if (scraped.homeOdds) {
+          await prisma.oddsTaiwan.upsert({
+            where: {
+              gameExternalId_marketType_selection: {
+                gameExternalId: gameId,
+                marketType: 'moneyline',
+                selection: 'home'
+              }
+            },
+            update: {
+              taiwanOdds: scraped.homeOdds,
+              impliedProbability: 1 / scraped.homeOdds,
+              source: 'scraped',
+              gameDate,
+              homeTeam: scraped.homeCode,
+              awayTeam: scraped.awayCode
+            },
+            create: {
               gameExternalId: gameId,
+              league,
+              gameDate,
+              homeTeam: scraped.homeCode,
+              awayTeam: scraped.awayCode,
               marketType: 'moneyline',
-              selection: 'home'
+              selection: 'home',
+              taiwanOdds: scraped.homeOdds,
+              impliedProbability: 1 / scraped.homeOdds,
+              source: 'scraped'
             }
-          },
-          update: {
-            taiwanOdds: scraped.homeOdds,
-            impliedProbability: 1 / scraped.homeOdds,
-            source: 'scraped',
-            gameDate,
-            homeTeam: scraped.homeCode,
-            awayTeam: scraped.awayCode
-          },
-          create: {
-            gameExternalId: gameId,
-            league,
-            gameDate,
-            homeTeam: scraped.homeCode,
-            awayTeam: scraped.awayCode,
-            marketType: 'moneyline',
-            selection: 'home',
-            taiwanOdds: scraped.homeOdds,
-            impliedProbability: 1 / scraped.homeOdds,
-            source: 'scraped'
-          }
-        });
-        upsertedCount++;
-      }
+          });
+          upsertedCount++;
+        }
 
-      // C. Upsert Totals (Over)
-      if (scraped.totalsLine && scraped.overOdds) {
-        await prisma.oddsTaiwan.upsert({
-          where: {
-            gameExternalId_marketType_selection: {
+        // C. Upsert Totals (Over)
+        if (scraped.totalsLine && scraped.overOdds) {
+          await prisma.oddsTaiwan.upsert({
+            where: {
+              gameExternalId_marketType_selection: {
+                gameExternalId: gameId,
+                marketType: 'totals',
+                selection: 'over'
+              }
+            },
+            update: {
+              taiwanOdds: scraped.overOdds,
+              line: scraped.totalsLine,
+              impliedProbability: 1 / scraped.overOdds,
+              source: 'scraped',
+              gameDate,
+              homeTeam: scraped.homeCode,
+              awayTeam: scraped.awayCode
+            },
+            create: {
               gameExternalId: gameId,
+              league,
+              gameDate,
+              homeTeam: scraped.homeCode,
+              awayTeam: scraped.awayCode,
               marketType: 'totals',
-              selection: 'over'
+              selection: 'over',
+              taiwanOdds: scraped.overOdds,
+              line: scraped.totalsLine,
+              impliedProbability: 1 / scraped.overOdds,
+              source: 'scraped'
             }
-          },
-          update: {
-            taiwanOdds: scraped.overOdds,
-            line: scraped.totalsLine,
-            impliedProbability: 1 / scraped.overOdds,
-            source: 'scraped',
-            gameDate,
-            homeTeam: scraped.homeCode,
-            awayTeam: scraped.awayCode
-          },
-          create: {
-            gameExternalId: gameId,
-            league,
-            gameDate,
-            homeTeam: scraped.homeCode,
-            awayTeam: scraped.awayCode,
-            marketType: 'totals',
-            selection: 'over',
-            taiwanOdds: scraped.overOdds,
-            line: scraped.totalsLine,
-            impliedProbability: 1 / scraped.overOdds,
-            source: 'scraped'
-          }
-        });
-        upsertedCount++;
-      }
+          });
+          upsertedCount++;
+        }
 
-      // D. Upsert Totals (Under)
-      if (scraped.totalsLine && scraped.underOdds) {
-        await prisma.oddsTaiwan.upsert({
-          where: {
-            gameExternalId_marketType_selection: {
+        // D. Upsert Totals (Under)
+        if (scraped.totalsLine && scraped.underOdds) {
+          await prisma.oddsTaiwan.upsert({
+            where: {
+              gameExternalId_marketType_selection: {
+                gameExternalId: gameId,
+                marketType: 'totals',
+                selection: 'under'
+              }
+            },
+            update: {
+              taiwanOdds: scraped.underOdds,
+              line: scraped.totalsLine,
+              impliedProbability: 1 / scraped.underOdds,
+              source: 'scraped',
+              gameDate,
+              homeTeam: scraped.homeCode,
+              awayTeam: scraped.awayCode
+            },
+            create: {
               gameExternalId: gameId,
+              league,
+              gameDate,
+              homeTeam: scraped.homeCode,
+              awayTeam: scraped.awayCode,
               marketType: 'totals',
-              selection: 'under'
+              selection: 'under',
+              taiwanOdds: scraped.underOdds,
+              line: scraped.totalsLine,
+              impliedProbability: 1 / scraped.underOdds,
+              source: 'scraped'
             }
-          },
-          update: {
-            taiwanOdds: scraped.underOdds,
-            line: scraped.totalsLine,
-            impliedProbability: 1 / scraped.underOdds,
-            source: 'scraped',
-            gameDate,
-            homeTeam: scraped.homeCode,
-            awayTeam: scraped.awayCode
-          },
-          create: {
-            gameExternalId: gameId,
-            league,
-            gameDate,
-            homeTeam: scraped.homeCode,
-            awayTeam: scraped.awayCode,
-            marketType: 'totals',
-            selection: 'under',
-            taiwanOdds: scraped.underOdds,
-            line: scraped.totalsLine,
-            impliedProbability: 1 / scraped.underOdds,
-            source: 'scraped'
-          }
-        });
-        upsertedCount++;
+          });
+          upsertedCount++;
+        }
+      } catch (dbErr) {
+        console.warn(`[Sync Odds API] DB upsert skipped/failed for ${matchKey}:`, dbErr instanceof Error ? dbErr.message : dbErr);
       }
 
       upsertedDetails.push({
