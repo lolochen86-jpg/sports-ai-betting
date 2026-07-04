@@ -696,8 +696,8 @@ export default function HomeClient() {
 
   const [syncingOdds, setSyncingOdds] = useState(false);
 
-  const syncTaiwanOdds = async () => {
-    setSyncingOdds(true);
+  const syncTaiwanOdds = async (silent: boolean = false) => {
+    if (!silent) setSyncingOdds(true);
     try {
       const res = await fetch(`/api/odds/sync-taiwan?date=${selectedDate}`);
       const json = await res.json();
@@ -730,17 +730,24 @@ export default function HomeClient() {
         }
         await fetchSmartParlays().catch(() => {});
 
-        setToastMsg(`成功自動同步 ${syncCount} 場運彩賠率，並已更新後端與串關預估！`);
-      } else {
+        if (!silent) {
+          setToastMsg(`成功自動同步 ${syncCount} 場運彩賠率，並已更新後端與串關預估！`);
+        }
+      } else if (!silent) {
         setToastMsg(`同步失敗：${json.error || '未找到當日運彩盤賠率'}`);
       }
     } catch (err) {
       console.error(err);
-      setToastMsg('連線異常，同步失敗');
+      if (!silent) setToastMsg('連線異常，同步失敗');
     } finally {
-      setSyncingOdds(false);
+      if (!silent) setSyncingOdds(false);
     }
   };
+
+  // 自動同步台灣運彩賠率 (當日期變更或頁面載入時)
+  useEffect(() => {
+    syncTaiwanOdds(true);
+  }, [selectedDate]);
 
   // ─── Betting Settings State ───────────────────────────────────────────────
   const [bettingSettings, setBettingSettings] = useState<BettingSettings>(DEFAULT_BETTING_SETTINGS);
@@ -2370,7 +2377,7 @@ export default function HomeClient() {
                                      {/* Auto-Sync Taiwan Odds Button */}
                                      <button
                                        type="button"
-                                       onClick={syncTaiwanOdds}
+                                       onClick={() => syncTaiwanOdds(false)}
                                        disabled={syncingOdds}
                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500 hover:text-black disabled:opacity-50 disabled:hover:bg-amber-500/10 disabled:hover:text-amber-400 transition-all duration-300 shadow-sm"
                                      >

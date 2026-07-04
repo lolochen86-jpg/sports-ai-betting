@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import realGames from '../../lib/prediction/real_historical_games.json';
-import { getBacktestGamesForDate } from '../../lib/prediction/backtest';
+import { getBacktestGamesForDate, setDbTaiwanOddsLines } from '../../lib/prediction/backtest';
 import type { RawHistoricalGame } from '../../lib/prediction/backtest';
 
 // ─── Team Chinese Name Mapping ───
@@ -124,9 +124,22 @@ export default function HistoryPage() {
   const [dynamicGames, setDynGames] = useState<RawGame[]>([]);
   const [isMounted, setIsMounted] = useState(false);
 
-  // 載入 localStorage 中的動態快取 + 背景同步
+  // 載入 localStorage 中的動態快取 + 背景同步與運彩盤口自動載入
   useEffect(() => {
-    // 1. 立即載入 localStorage 快取
+    // 1. 載入台灣運彩盤口 lines 注入回測引擎
+    fetch(`/api/backtest/taiwan-odds?_t=${Date.now()}`)
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && json.lines) {
+          setDbTaiwanOddsLines(json.lines);
+        }
+      })
+      .catch(() => { /* silently fail */ });
+
+    // 2. 背景自動同步最新台灣運彩賠率爬蟲
+    fetch(`/api/odds/sync-taiwan?_t=${Date.now()}`).catch(() => { /* silently fail */ });
+
+    // 3. 立即載入 localStorage 快取
     try {
       const cached = localStorage.getItem('backtest_dynamic_games');
       if (cached) {
@@ -536,61 +549,109 @@ export default function HistoryPage() {
                           </div>
                         </button>
 
-                        {/* Expanded AI Prediction Detail */}
+                        {/* Expanded AI Prediction Review & Diagnostics Card */}
                         {isExpanded && (
-                          <div className="bg-white/[0.02] border border-white/5 rounded-b-2xl -mt-1 p-4 md:p-5 animate-fade-in">
+                          <div className="bg-slate-950/90 border border-white/10 rounded-b-2xl -mt-1 p-5 md:p-6 backdrop-blur-xl animate-fade-in shadow-2xl">
                             {aiPred ? (
-                              <div className="flex flex-col gap-4">
-                                <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-                                  <span className="text-xs font-black text-purple-400 font-sans">🤖 AI 預測回顧</span>
-                                  <span className="text-[10px] font-mono text-gray-500 font-bold">
-                                    實際: {!homeWon ? awayCn : homeCn} 勝 ({game.awayScore} : {game.homeScore})
-                                  </span>
-                                </div>
+                              <div className="flex flex-col gap-5">
+                                {/* Top Diagnostic Header Banner */}
+                                {(() => {
+                                  const err = aiPred.errorAnalysis;
+                                  const severity = err?.severity || 'success';
+                                  const diff = err?.scoreDiff ?? Math.abs((game.homeScore + game.awayScore) - aiPred.MetaModel.predictedTotal);
+                                  
+                                  const banners = {
+                                    perfect: {
+                                      bg: 'from-emerald-500/20 via-purple-500/10 to-emerald-500/20 border-emerald-500/40 text-emerald-300',
+                                      icon: '🎯',
+                                      title: '全盤神準命中 (3/3 完勝覆盤)',
+                                      desc: `預估總分 ${aiPred.MetaModel.predictedTotal} 分與完賽總分 ${game.homeScore + game.awayScore} 分誤差僅 ${diff.toFixed(1)} 分`
+                                    },
+                                    success: {
+                                      bg: 'from-cyan-500/20 via-blue-500/10 to-cyan-500/20 border-cyan-500/40 text-cyan-300',
+                                      icon: '✅',
+                                      title: '高精準比分預測 (精準鎖定戰局)',
+                                      desc: `實際總分 ${game.homeScore + game.awayScore} 分，模型預估誤差 ${diff.toFixed(1)} 分 (≤ 2.5分)`
+                                    },
+                                    warning: {
+                                      bg: 'from-amber-500/20 via-orange-500/10 to-amber-500/20 border-amber-500/40 text-amber-300',
+                                      icon: '⚠️',
+                                      title: '戰略比分偏差檢討 (分數流向偏離)',
+                                      desc: `模型預估總分 ${aiPred.MetaModel.predictedTotal} 分 vs 實測總分 ${game.homeScore + game.awayScore} 分 (相差 ${diff.toFixed(1)} 分)`
+                                    },
+                                    critical: {
+                                      bg: 'from-red-500/20 via-rose-500/10 to-red-500/20 border-red-500/40 text-red-300',
+                                      icon: '🚨',
+                                      title: '賽事異常爆冷與深度偏差覆盤',
+                                      desc: `預測勝方 ${aiPred.MetaModel.winner === 'home' ? homeCn : awayCn} 遭逆轉或出現臨場極限高/低比分 (偏差 ${diff.toFixed(1)} 分)`
+                                    }
+                                  };
+                                  const config = banners[severity as keyof typeof banners] || banners.success;
 
+                                  return (
+                                    <div className={`rounded-2xl border bg-gradient-to-r ${config.bg} p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-lg`}>
+                                      <div className="flex items-center gap-3">
+                                        <span className="text-2xl p-2 rounded-xl bg-black/30 border border-white/10 shrink-0">{config.icon}</span>
+                                        <div>
+                                          <h4 className="text-sm font-black tracking-wide font-sans">{config.title}</h4>
+                                          <p className="text-xs text-gray-300 font-mono mt-0.5">{config.desc}</p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
+                                        <span className="px-2.5 py-1 rounded-lg bg-black/40 text-gray-300 text-[10px] font-mono font-black border border-white/10">
+                                          台灣運彩盤口: {aiPred.MetaModel.ouT} 分
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
+
+                                {/* 4 Model Breakdown */}
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                   {[
-                                    { name: '👑 Meta 元模型', data: aiPred.MetaModel, color: 'border-pink-500/20 bg-pink-500/5', dot: 'bg-pink-500', textColor: 'text-pink-300' },
-                                    { name: '🤖 SportsAI', data: aiPred.SportsAI, color: 'border-purple-500/20 bg-purple-500/5', dot: 'bg-purple-500', textColor: 'text-purple-300' },
-                                    { name: '📈 Elo 戰力', data: aiPred.EloRating, color: 'border-orange-500/20 bg-orange-500/5', dot: 'bg-orange-500', textColor: 'text-orange-300' },
-                                    { name: '🎲 Monte Carlo', data: aiPred.MonteCarlo, color: 'border-cyan-400/20 bg-cyan-400/5', dot: 'bg-cyan-400', textColor: 'text-cyan-300' },
+                                    { name: '👑 Meta 元模型', data: aiPred.MetaModel, color: 'border-pink-500/30 bg-pink-500/10', dot: 'bg-pink-500', textColor: 'text-pink-300' },
+                                    { name: '🤖 SportsAI', data: aiPred.SportsAI, color: 'border-purple-500/30 bg-purple-500/10', dot: 'bg-purple-500', textColor: 'text-purple-300' },
+                                    { name: '📈 Elo 戰力', data: aiPred.EloRating, color: 'border-orange-500/30 bg-orange-500/10', dot: 'bg-orange-500', textColor: 'text-orange-300' },
+                                    { name: '🎲 Monte Carlo', data: aiPred.MonteCarlo, color: 'border-cyan-400/30 bg-cyan-400/10', dot: 'bg-cyan-400', textColor: 'text-cyan-300' },
                                   ].map((m) => {
                                     const predWinnerName = m.data.winner === 'home' ? homeCn : awayCn;
                                     return (
-                                      <div key={m.name} className={`rounded-xl border p-3 ${m.color} flex flex-col gap-2`}>
-                                        <div className="flex items-center gap-1.5 border-b border-white/5 pb-1.5">
-                                          <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />
-                                          <span className="text-[10px] font-black text-white font-sans">{m.name}</span>
+                                      <div key={m.name} className={`rounded-xl border p-3.5 ${m.color} flex flex-col gap-2 shadow-sm`}>
+                                        <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className={`w-2 h-2 rounded-full ${m.dot}`} />
+                                            <span className="text-xs font-black text-white font-sans">{m.name}</span>
+                                          </div>
                                         </div>
-                                        <div className="flex justify-between items-center text-[11px]">
-                                          <span className="text-gray-400 font-bold">獨贏:</span>
+                                        <div className="flex justify-between items-center text-xs">
+                                          <span className="text-gray-400 font-bold">預測勝方:</span>
                                           <div className="flex items-center gap-1">
-                                            <span className={m.textColor + ' font-bold'}>{predWinnerName}</span>
-                                            <span className={`text-[8px] font-mono px-1 rounded ${m.data.winnerCorrect ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                                            <span className={m.textColor + ' font-black'}>{predWinnerName}</span>
+                                            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-black ${m.data.winnerCorrect ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-red-500/20 text-red-300 border border-red-500/30'}`}>
                                               {m.data.winnerCorrect ? '✓命中' : '✗未中'}
                                             </span>
                                           </div>
                                         </div>
-                                        <div className="flex justify-between items-center text-[11px]">
+                                        <div className="flex justify-between items-center text-xs">
                                           <span className="text-gray-400 font-bold">大小分:</span>
                                           <div className="flex items-center gap-1">
-                                            <span className="text-gray-300 font-mono font-bold text-[10px]">
-                                              {m.data.ouPick === 'Over' ? '大分' : '小分'}({m.data.ouPick === 'Over' ? '≥' : '<'}{m.data.ouT})
+                                            <span className="text-gray-200 font-mono font-bold text-[11px]">
+                                              {m.data.ouPick === 'Over' ? '大' : '小'}({m.data.ouT})
                                             </span>
-                                            <span className={`text-[8px] font-mono px-1 rounded ${m.data.ouCorrect ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                                            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-black ${m.data.ouCorrect ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-red-500/20 text-red-300 border border-red-500/30'}`}>
                                               {m.data.ouCorrect ? '✓命中' : '✗未中'}
                                             </span>
                                           </div>
                                         </div>
 
-                                        <div className="flex justify-between items-center text-[11px] border-t border-white/5 pt-1 mt-1">
-                                          <span className="text-gray-400 font-bold">預測總分:</span>
+                                        <div className="flex justify-between items-center text-xs border-t border-white/10 pt-1.5 mt-1">
+                                          <span className="text-gray-400 font-bold">預估總分:</span>
                                           <div className="flex items-center gap-1">
-                                            <span className="text-gray-300 font-mono font-bold text-[10px]">
-                                              {m.data.predictedTotal}分 (±1.5)
+                                            <span className="text-gray-200 font-mono font-black text-[11px]">
+                                              {m.data.predictedTotal}分
                                             </span>
-                                            <span className={`text-[8px] font-mono px-1 rounded ${m.data.totalScoreCorrect ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                                              {m.data.totalScoreCorrect ? '✓命中' : '✗未中'}
+                                            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-black ${m.data.totalScoreCorrect ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-red-500/20 text-red-300 border border-red-500/30'}`}>
+                                              {m.data.totalScoreCorrect ? '🎯神準' : '偏差'}
                                             </span>
                                           </div>
                                         </div>
@@ -599,14 +660,23 @@ export default function HistoryPage() {
                                   })}
                                 </div>
 
-                                {aiPred.errorAnalysis && (
-                                  <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-3 space-y-2 mt-4 font-sans">
-                                    <div className="flex items-center gap-1.5 text-red-400 text-xs font-black">
-                                      <span>⚠️ AI 誤差深度診斷原因 (偏差 {aiPred.errorAnalysis.scoreDiff} 分)：</span>
+                                {/* AI Diagnostics Analysis Box */}
+                                {aiPred.errorAnalysis && aiPred.errorAnalysis.reasons.length > 0 && (
+                                  <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-4 space-y-2.5 font-sans">
+                                    <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                                      <div className="flex items-center gap-2 text-purple-300 text-xs font-black">
+                                        <span>🔍 AI 對戰賽事檢討與覆盤診斷報告</span>
+                                      </div>
+                                      <span className="text-[10px] font-mono text-gray-500 font-bold">
+                                        依據近況/投手/比分流向自動生成
+                                      </span>
                                     </div>
-                                    <ul className="list-disc list-inside space-y-1 text-[11px] text-gray-400 font-semibold leading-relaxed">
+                                    <ul className="space-y-1.5 text-xs text-gray-300 font-semibold leading-relaxed">
                                       {aiPred.errorAnalysis.reasons.map((r: string, rIdx: number) => (
-                                        <li key={rIdx}>{r}</li>
+                                        <li key={rIdx} className="flex items-start gap-2">
+                                          <span className="text-purple-400 mt-0.5 font-bold">•</span>
+                                          <span>{r}</span>
+                                        </li>
                                       ))}
                                     </ul>
                                   </div>
