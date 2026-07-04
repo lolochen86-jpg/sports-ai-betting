@@ -112,11 +112,21 @@ export default function SmartParlayCard({
 
   // Helper to compute realistic odds for a leg
   const getLegDefaultOdds = (leg: SmartParlayLeg): string => {
-    if (manualOdds && manualOdds[leg.gameId]) {
-      const gOdds = manualOdds[leg.gameId];
-      const realOddsStr = leg.pick === 'home' ? gOdds.home : gOdds.away;
-      if (realOddsStr && parseFloat(realOddsStr) > 1.0) {
-        return parseFloat(realOddsStr).toFixed(2);
+    if (manualOdds) {
+      // 1. Try gameId lookup
+      let gOdds = manualOdds[leg.gameId];
+      
+      // 2. Try awayCode_homeCode lookup (e.g. SD_LAD, NYM_ATL)
+      if (!gOdds && leg.awayTeam?.code && leg.homeTeam?.code) {
+        const matchKey = `${leg.awayTeam.code}_${leg.homeTeam.code}`;
+        gOdds = manualOdds[matchKey];
+      }
+
+      if (gOdds) {
+        const realOddsStr = leg.pick === 'home' ? gOdds.home : gOdds.away;
+        if (realOddsStr && parseFloat(realOddsStr) > 1.0) {
+          return parseFloat(realOddsStr).toFixed(2);
+        }
       }
     }
     // Dynamic fallback based on AI confidence (with 8% bookmaker margin)

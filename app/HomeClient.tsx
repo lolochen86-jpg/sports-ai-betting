@@ -622,11 +622,17 @@ function generateDynamicPrediction(game: GameWithTeams): PredictionDetails {
   };
 }
 
+const getLocalTodayStr = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function HomeClient() {
   const [activeLeague, setActiveLeague] = useState<'NBA' | 'MLB'>('NBA');
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
-    return new Date().toISOString().split('T')[0];
-  });
+  const [selectedDate, setSelectedDate] = useState<string>(() => getLocalTodayStr());
   
   const { games, loading, error, refetch } = useGames(activeLeague, selectedDate);
   const { teams: apiTeams } = useTeams(activeLeague);
@@ -706,6 +712,17 @@ export default function HomeClient() {
         let syncCount = 0;
         setManualOdds(prev => {
           const next = { ...prev };
+          // 1. Save directly by matchKey (e.g. SD_LAD, NYM_ATL)
+          Object.entries(scraped).forEach(([mKey, odds]: [string, any]) => {
+            if (odds && (odds.awayOdds || odds.homeOdds)) {
+              next[mKey] = {
+                away: odds.awayOdds ? odds.awayOdds.toString() : '',
+                home: odds.homeOdds ? odds.homeOdds.toString() : '',
+                legLimit: 1
+              };
+            }
+          });
+          // 2. Save by game.id
           const listToSync = targetGames && targetGames.length > 0 ? targetGames : games;
           (listToSync || []).forEach(game => {
             const key = `${game.awayTeam.code}_${game.homeTeam.code}`;
