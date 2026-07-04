@@ -215,7 +215,13 @@ export default function SmartParlayCard({
       <div className="space-y-4">
         {parlays.map((parlay) => {
           const style = gradeStyles[parlay.grade] || gradeStyles.B;
-          const oddsArray = customOdds[parlay.id] || ['1.75', '1.75', '1.75'];
+          const oddsArray = parlay.legs.map((leg, idx) => {
+            const custom = customOdds[parlay.id]?.[idx];
+            if (custom && custom !== '' && !isNaN(parseFloat(custom))) {
+              return custom;
+            }
+            return getLegDefaultOdds(leg);
+          });
           
           // Calculate overall parlay stats
           const multiplier = oddsArray.reduce((acc, curr) => acc * (parseFloat(curr) || 1.0), 1.0);
@@ -253,7 +259,7 @@ export default function SmartParlayCard({
               <div className="space-y-2">
                 {parlay.legs.map((leg, legIdx) => {
                   const legNames = ['第一場', '第二場', '第三場'];
-                  const currentLegOdds = oddsArray[legIdx] || '1.75';
+                  const currentLegOdds = oddsArray[legIdx];
                   return (
                     <div
                       key={leg.gameId}
