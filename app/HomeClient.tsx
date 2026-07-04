@@ -1852,8 +1852,10 @@ export default function HomeClient() {
                   const isUnlocked = predictionsUnlocked[game.id];
                   const isExpanded = selectedGameId === game.id;
                   const isPredicting = predictingGameId === game.id;
+                  const basePred = predictions[game.id] || generateDynamicPrediction(game);
                   const pred = getAdjustedPrediction(game);
                   const activePred = pred ? (pred.models?.[selectedModelTab] || pred) : null;
+                  const baseActivePred = basePred ? (basePred.models?.[selectedModelTab] || basePred) : null;
                   
                   const homeProb = activePred ? ((activePred.winner === 'home' ? activePred.confidence : (100 - activePred.confidence)) / 100) : 0;
                   const awayProb = activePred ? ((activePred.winner === 'away' ? activePred.confidence : (100 - activePred.confidence)) / 100) : 0;
@@ -2135,32 +2137,102 @@ export default function HomeClient() {
                                 </div>
                               </div>
 
-                              <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-2 gap-4">
-                                <div>
-                                  <span className="block text-[10px] font-mono text-gray-500 uppercase font-bold">預期比分</span>
-                                  <span className="text-base font-black text-white font-mono mt-0.5 block">
-                                    客({game.awayTeam.code}) {activePred.awayExpectedScore} : 主({game.homeTeam.code}) {activePred.homeExpectedScore}
-                                  </span>
+                              <div className="mt-4 pt-4 border-t border-white/5 space-y-3 font-sans">
+                                <div className="text-[10px] font-mono text-purple-300 font-bold uppercase tracking-wider flex items-center justify-between">
+                                  <span>📊 預測比分對照 (無加成 vs 球員微調)</span>
                                 </div>
-                                <div>
-                                  <span className="block text-[10px] font-mono text-gray-500 uppercase font-bold">
-                                    預測總得分 (精準 ±1 分)
-                                  </span>
-                                  <span className="text-sm font-black text-purple-400 font-mono mt-0.5 block">
-                                    預估: {Math.round(activePred.homeExpectedScore + activePred.awayExpectedScore)} 分 ({Math.round(activePred.homeExpectedScore + activePred.awayExpectedScore) - 1} ~ {Math.round(activePred.homeExpectedScore + activePred.awayExpectedScore) + 1} 分)
-                                  </span>
-                                  {game.league === 'MLB' && activePred.mlbTotalScoreProbs && (
-                                    <div className="flex flex-col gap-1 mt-2 font-mono">
-                                      <span className="text-[9px] text-gray-500 block">Poisson 機率分佈:</span>
-                                      {activePred.mlbTotalScoreProbs.map((p, idx) => (
-                                        <div key={idx} className="flex items-center justify-between bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded text-[10px] font-black text-purple-300">
-                                          <span>🎯 {p.runs} 分</span>
-                                          <span className="text-emerald-400 font-bold">{p.probability}%</span>
-                                        </div>
-                                      ))}
+
+                                {/* 1. Unadjusted Baseline Score (沒加成的) */}
+                                <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="px-2 py-0.5 rounded bg-gray-500/20 text-gray-300 text-[10px] font-mono font-bold border border-white/10">
+                                      ⚪ 原始模型基準 (未加成)
+                                    </span>
+                                  </div>
+                                  <div className="text-sm font-black font-mono text-gray-300">
+                                    客({game.awayTeam.code}) {baseActivePred?.awayExpectedScore} : {baseActivePred?.homeExpectedScore} 主({game.homeTeam.code})
+                                    <span className="text-[11px] text-gray-400 font-normal ml-2">
+                                      (總分 {Math.round((baseActivePred?.homeExpectedScore || 0) + (baseActivePred?.awayExpectedScore || 0))} 分)
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* 2. Player Adjusted Score (有球員加成與扣減的) */}
+                                <div className={`border rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1 transition-all ${
+                                  (activeBoosts[game.id] || []).length > 0
+                                    ? 'bg-gradient-to-r from-purple-500/20 via-blue-500/10 to-purple-500/20 border-purple-500/40 text-purple-200 shadow-md'
+                                    : 'bg-white/[0.02] border-white/5 text-gray-400'
+                                }`}>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-black ${
+                                      (activeBoosts[game.id] || []).length > 0 ? 'bg-purple-500/30 text-purple-200 border border-purple-500/40 animate-pulse' : 'bg-gray-500/10 text-gray-400'
+                                    }`}>
+                                      {(activeBoosts[game.id] || []).length > 0 ? '⚡ 球員狀態微調後 (加成/扣減)' : '⚡ 球員狀態微調後'}
+                                    </span>
+                                  </div>
+                                  <div className="text-base font-black font-mono text-white">
+                                    客({game.awayTeam.code}) {activePred.awayExpectedScore} : {activePred.homeExpectedScore} 主({game.homeTeam.code})
+                                    <span className="text-xs text-purple-300 font-bold ml-2">
+                                      (總分 {Math.round(activePred.homeExpectedScore + activePred.awayExpectedScore)} 分)
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* 3. Itemized Player Impact List */}
+                                {(activeBoosts[game.id] || []).length > 0 ? (
+                                  <div className="bg-white/[0.02] border border-white/10 rounded-xl p-3 space-y-2 font-sans mt-2">
+                                    <div className="text-[11px] font-black text-gray-300 flex items-center justify-between border-b border-white/5 pb-1.5">
+                                      <span>⚖️ 球員狀況加成與扣減明細標示：</span>
+                                      <span className="text-[9px] font-mono text-purple-400">共 {(activeBoosts[game.id] || []).length} 項微調</span>
                                     </div>
-                                  )}
-                                </div>
+                                    <div className="flex flex-col gap-1.5">
+                                      {(activeBoosts[game.id] || []).map(b => {
+                                        const isNBA = game.league === 'NBA';
+                                        const impactText = b.type === 'hot' 
+                                          ? `🔥 狀態爆發 (+5% 勝率, 得分 +${isNBA ? '3.0' : '0.6'}分)`
+                                          : b.type === 'cold'
+                                            ? `🧊 手感低潮 (-3% 勝率, 得分 -${isNBA ? '2.0' : '0.4'}分)`
+                                            : b.type === 'injured'
+                                              ? `🩹 主力缺陣 (-5% 勝率, 得分 -${isNBA ? '3.5' : '0.7'}分)`
+                                              : `⚡ 傷病回歸 (+3% 勝率, 得分 +${isNBA ? '1.5' : '0.3'}分)`;
+                                        
+                                        const badgeStyle = b.type === 'hot' 
+                                          ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' 
+                                          : b.type === 'cold'
+                                            ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
+                                            : b.type === 'injured'
+                                              ? 'bg-red-500/15 text-red-300 border-red-500/30'
+                                              : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
+
+                                        return (
+                                          <div key={b.playerId} className={`flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg border ${badgeStyle}`}>
+                                            <span className="font-bold flex items-center gap-1.5">
+                                              <span>{b.teamType === 'home' ? '🏠 主隊' : '🚌 客隊'}</span>
+                                              <span className="text-white font-sans">{b.playerName}</span>
+                                            </span>
+                                            <span className="font-mono font-black text-[11px]">{impactText}</span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="text-[10px] text-gray-500 font-mono text-center pt-1">
+                                    💡 目前預測未套用球員加成或扣減。點擊右上角【球員狀態微調】可設定爆發、低潮或缺陣球員！
+                                  </div>
+                                )}
+
+                                {game.league === 'MLB' && activePred.mlbTotalScoreProbs && (
+                                  <div className="flex flex-col gap-1 mt-2 font-mono">
+                                    <span className="text-[9px] text-gray-500 block">Poisson 機率分佈:</span>
+                                    {activePred.mlbTotalScoreProbs.map((p, idx) => (
+                                      <div key={idx} className="flex items-center justify-between bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded text-[10px] font-black text-purple-300">
+                                        <span>🎯 {p.runs} 分</span>
+                                        <span className="text-emerald-400 font-bold">{p.probability}%</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
 
                               {/* 跨模型平均總分共識平均值 */}
