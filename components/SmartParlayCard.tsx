@@ -124,7 +124,7 @@ export default function SmartParlayCard({
 
       if (gOdds) {
         const realOddsStr = leg.pick === 'home' ? gOdds.home : gOdds.away;
-        if (realOddsStr && parseFloat(realOddsStr) > 1.0) {
+        if (realOddsStr && parseFloat(realOddsStr) > 1.0 && realOddsStr !== '1.75') {
           return parseFloat(realOddsStr).toFixed(2);
         }
       }

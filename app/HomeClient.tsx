@@ -678,7 +678,14 @@ export default function HomeClient() {
     const saved = localStorage.getItem('taiwan_odds_manual');
     if (saved) {
       try {
-        setManualOdds(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        const cleaned: Record<string, any> = {};
+        Object.entries(parsed).forEach(([k, v]: [string, any]) => {
+          if (v && (v.away !== '1.75' || v.home !== '1.75')) {
+            cleaned[k] = v;
+          }
+        });
+        setManualOdds(cleaned);
       } catch (e) {
         console.error(e);
       }
