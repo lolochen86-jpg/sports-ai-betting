@@ -1845,6 +1845,7 @@ export default function HomeClient() {
                     totalTeamsCovered={smartParlayData.totalTeamsCovered}
                     totalTeams={smartParlayData.totalTeams}
                     uncoveredTeams={smartParlayData.uncoveredTeams}
+                    manualOdds={manualOdds}
                     loading={smartParlayLoading}
                   />
                 )}

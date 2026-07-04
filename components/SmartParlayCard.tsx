@@ -33,6 +33,7 @@ interface SmartParlayCardProps {
   totalTeamsCovered: number;
   totalTeams: number;
   uncoveredTeams: string[];
+  manualOdds?: Record<string, { away: string; home: string; legLimit?: number }>;
   loading?: boolean;
 }
 
@@ -101,6 +102,7 @@ export default function SmartParlayCard({
   totalTeamsCovered,
   totalTeams,
   uncoveredTeams,
+  manualOdds,
   loading = false,
 }: SmartParlayCardProps) {
   // Global stake state in NTD
@@ -108,21 +110,38 @@ export default function SmartParlayCard({
   // Local odds override state: { [parlayId]: [oddsLeg1, oddsLeg2, oddsLeg3] }
   const [customOdds, setCustomOdds] = useState<Record<number, string[]>>({});
 
-  // Initialize odds state when parlays change
+  // Helper to compute realistic odds for a leg
+  const getLegDefaultOdds = (leg: SmartParlayLeg): string => {
+    if (manualOdds && manualOdds[leg.gameId]) {
+      const gOdds = manualOdds[leg.gameId];
+      const realOddsStr = leg.pick === 'home' ? gOdds.home : gOdds.away;
+      if (realOddsStr && parseFloat(realOddsStr) > 1.0) {
+        return parseFloat(realOddsStr).toFixed(2);
+      }
+    }
+    // Dynamic fallback based on AI confidence (with 8% bookmaker margin)
+    const winProb = Math.max(0.3, Math.min(0.9, (leg.avgConfidence || 50) / 100));
+    const estimatedOdds = (1 / winProb) * 0.92;
+    return Math.max(1.15, Math.min(3.20, estimatedOdds)).toFixed(2);
+  };
+
+  // Initialize odds state when parlays or manualOdds change
   useEffect(() => {
     if (parlays && parlays.length > 0) {
       const initialOdds: Record<number, string[]> = {};
       parlays.forEach(p => {
-        initialOdds[p.id] = p.legs.map(() => '1.75');
+        initialOdds[p.id] = p.legs.map(leg => getLegDefaultOdds(leg));
       });
       setCustomOdds(initialOdds);
     }
-  }, [parlays]);
+  }, [parlays, manualOdds]);
 
   const handleOddsChange = (parlayId: number, legIdx: number, val: string) => {
+    const targetParlay = parlays.find(p => p.id === parlayId);
+    const defaults = targetParlay ? targetParlay.legs.map(l => getLegDefaultOdds(l)) : ['1.75', '1.75', '1.75'];
     setCustomOdds(prev => ({
       ...prev,
-      [parlayId]: (prev[parlayId] || ['1.75', '1.75', '1.75']).map((o, idx) => idx === legIdx ? val : o)
+      [parlayId]: (prev[parlayId] || defaults).map((o, idx) => idx === legIdx ? val : o)
     }));
   };
 
