@@ -19,14 +19,13 @@ interface ScrapedOdds {
 // Helper to crawl and parse Playsport odds
 async function scrapePlaysport(dateStr: string, league: 'MLB' | 'NBA'): Promise<ScrapedOdds[]> {
   const allianceid = league === 'MLB' ? 1 : 3;
-  // Playsport date format: YYYYMMDD
   const formattedDate = dateStr.replace(/-/g, '');
-  const url = `https://www.playsport.cc/predictgame.php?action=scale&allianceid=${allianceid}&gamedate=${formattedDate}`;
+  const url = `https://www.playsport.cc/predict/scale?allianceid=${allianceid}&gamedate=${formattedDate}`;
 
   console.log(`[Sync Odds] Fetching ${league} from: ${url}`);
 
   try {
-    const res = await fetch(url, {
+    let res = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept-Language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7'
@@ -39,15 +38,36 @@ async function scrapePlaysport(dateStr: string, league: 'MLB' | 'NBA'): Promise<
       return [];
     }
 
-    const html = await res.text();
-
-    // 1. Find all gameids in the HTML
-    const gameidRegex = /gameid="(\d+)"/g;
-    const gameids: string[] = [];
+    let html = await res.text();
+    let gameidRegex = /gameid="(\d+)"/g;
+    let gameids: string[] = [];
     let match;
     while ((match = gameidRegex.exec(html)) !== null) {
       if (!gameids.includes(match[1])) {
         gameids.push(match[1]);
+      }
+    }
+
+    // Fallback if date-specific URL returns no games
+    if (gameids.length === 0) {
+      const fallbackUrl = `https://www.playsport.cc/predict/scale?allianceid=${allianceid}`;
+      console.log(`[Sync Odds] Retrying ${league} with fallback URL: ${fallbackUrl}`);
+      const fallbackRes = await fetch(fallbackUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept-Language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7'
+        },
+        next: { revalidate: 0 }
+      });
+      if (fallbackRes.ok) {
+        html = await fallbackRes.text();
+        gameids = [];
+        gameidRegex = /gameid="(\d+)"/g;
+        while ((match = gameidRegex.exec(html)) !== null) {
+          if (!gameids.includes(match[1])) {
+            gameids.push(match[1]);
+          }
+        }
       }
     }
 
@@ -97,26 +117,19 @@ async function scrapePlaysport(dateStr: string, league: 'MLB' | 'NBA'): Promise<
       let overOdds: number | null = null;
       let underOdds: number | null = null;
 
-      tds.forEach((td) => {
-        // ─── A. Parse Moneyline (td-bank-bet03) ───
-        if (td.includes('class="td-bank-bet03"')) {
-          // Look for odds inside span class="data-wrap"
-          const oddsMatch = td.match(/<span>\s*([0-9.]+)\s*<\/span>/);
-          const val = oddsMatch ? parseFloat(oddsMatch[1]) : null;
-          
-          if (td.includes(' team-side') && td.includes('客')) {
-            awayOdds = val;
-          } else if (td.includes(' team-side') && td.includes('主')) {
-            homeOdds = val;
-          } else {
-            // Fallback checking by text indicators if class parsing differs
-            const isAway = td.includes('客');
-            const isHome = td.includes('主');
-            if (isAway) awayOdds = val;
-            if (isHome) homeOdds = val;
-          }
+      const bet03Cells = gameBlock.split('<td').filter(t => t.includes('td-bank-bet03'));
+      bet03Cells.forEach(cell => {
+        const isAway = cell.includes('team-side') && cell.includes('客');
+        const isHome = cell.includes('team-side') && cell.includes('主');
+        const numMatch = cell.match(/<span>\s*([0-9.]+)\s*<\/span>/) || cell.match(/([0-9.]+)/);
+        if (numMatch && numMatch[1]) {
+          const val = parseFloat(numMatch[1]);
+          if (isAway && !awayOdds) awayOdds = val;
+          if (isHome && !homeOdds) homeOdds = val;
         }
+      });
 
+      tds.forEach((td) => {
         // ─── B. Parse Totals (td-bank-bet02) ───
         if (td.includes('class="td-bank-bet02"')) {
           const lineMatch = td.match(/<strong>\s*([0-9.]+)\s*<\/strong>/);
