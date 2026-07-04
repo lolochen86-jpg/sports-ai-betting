@@ -829,7 +829,7 @@ export default function HomeClient() {
     playerId: string;
     playerName: string;
     teamType: 'home' | 'away';
-    type: 'hot' | 'return' | 'injured';
+    type: 'hot' | 'return' | 'injured' | 'cold';
     jersey?: number;
     position?: string;
   }[]>>({});
@@ -839,9 +839,9 @@ export default function HomeClient() {
   const [loadingRoster, setLoadingRoster] = useState(false);
   
   const [selectedHomePlayerId, setSelectedHomePlayerId] = useState('');
-  const [selectedHomeBoostType, setSelectedHomeBoostType] = useState<'hot' | 'return' | 'injured'>('hot');
+  const [selectedHomeBoostType, setSelectedHomeBoostType] = useState<'hot' | 'return' | 'injured' | 'cold'>('hot');
   const [selectedAwayPlayerId, setSelectedAwayPlayerId] = useState('');
-  const [selectedAwayBoostType, setSelectedAwayBoostType] = useState<'hot' | 'return' | 'injured'>('hot');
+  const [selectedAwayBoostType, setSelectedAwayBoostType] = useState<'hot' | 'return' | 'injured' | 'cold'>('hot');
 
   // Injury reports state (normalized name -> { status, comment })
   const [injuryReports, setInjuryReports] = useState<Record<string, { status: string; comment: string }>>({});
@@ -1094,9 +1094,12 @@ export default function HomeClient() {
       } else if (b.type === 'return') {
         probVal = 3;
         scoreVal = isNBA ? 1.5 : 0.3;
+      } else if (b.type === 'cold') {
+        probVal = -3;
+        scoreVal = isNBA ? -2.0 : -0.4;
       } else if (b.type === 'injured') {
         probVal = -5;
-        scoreVal = isNBA ? -3.0 : -0.6;
+        scoreVal = isNBA ? -3.5 : -0.7;
       }
 
       if (b.teamType === 'home') {
@@ -1935,6 +1938,25 @@ export default function HomeClient() {
                             <div className="text-[10px] md:text-[11px] text-gray-400 font-semibold mt-1.5 bg-white/5 border border-white/5 rounded-md px-1.5 py-0.5 inline-block">
                               近5場均: <span className="font-black text-white font-mono">{game.awayTeam.avgPoints !== undefined ? `${game.awayTeam.avgPoints}分` : '--'}</span>
                             </div>
+                            
+                            {/* Away Team Player Status Badges */}
+                            <div className="flex flex-wrap gap-1 mt-1 justify-center md:justify-end">
+                              {(activeBoosts[game.id] || []).filter(b => b.teamType === 'away' && b.type === 'injured').length > 0 && (
+                                <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30 text-[9px] font-bold">
+                                  🩹 {(activeBoosts[game.id] || []).filter(b => b.teamType === 'away' && b.type === 'injured').length}人缺陣
+                                </span>
+                              )}
+                              {(activeBoosts[game.id] || []).filter(b => b.teamType === 'away' && b.type === 'cold').length > 0 && (
+                                <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[9px] font-bold">
+                                  🧊 {(activeBoosts[game.id] || []).filter(b => b.teamType === 'away' && b.type === 'cold').length}人低潮
+                                </span>
+                              )}
+                              {(activeBoosts[game.id] || []).filter(b => b.teamType === 'away' && b.type === 'hot').length > 0 && (
+                                <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-bold">
+                                  🔥 {(activeBoosts[game.id] || []).filter(b => b.teamType === 'away' && b.type === 'hot').length}人爆發
+                                </span>
+                              )}
+                            </div>
                           </div>
 
                           {/* VS / Score Divider */}
@@ -1974,6 +1996,25 @@ export default function HomeClient() {
                             <span className="text-xs font-mono font-bold text-gray-400 block mt-0.5">主隊 (Odds {homeOdds})</span>
                             <div className="text-[10px] md:text-[11px] text-gray-400 font-semibold mt-1.5 bg-white/5 border border-white/5 rounded-md px-1.5 py-0.5 inline-block">
                               近5場均: <span className="font-black text-white font-mono">{game.homeTeam.avgPoints !== undefined ? `${game.homeTeam.avgPoints}分` : '--'}</span>
+                            </div>
+
+                            {/* Home Team Player Status Badges */}
+                            <div className="flex flex-wrap gap-1 mt-1 justify-center md:justify-start">
+                              {(activeBoosts[game.id] || []).filter(b => b.teamType === 'home' && b.type === 'injured').length > 0 && (
+                                <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30 text-[9px] font-bold">
+                                  🩹 {(activeBoosts[game.id] || []).filter(b => b.teamType === 'home' && b.type === 'injured').length}人缺陣
+                                </span>
+                              )}
+                              {(activeBoosts[game.id] || []).filter(b => b.teamType === 'home' && b.type === 'cold').length > 0 && (
+                                <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[9px] font-bold">
+                                  🧊 {(activeBoosts[game.id] || []).filter(b => b.teamType === 'home' && b.type === 'cold').length}人低潮
+                                </span>
+                              )}
+                              {(activeBoosts[game.id] || []).filter(b => b.teamType === 'home' && b.type === 'hot').length > 0 && (
+                                <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-bold">
+                                  🔥 {(activeBoosts[game.id] || []).filter(b => b.teamType === 'home' && b.type === 'hot').length}人爆發
+                                </span>
+                              )}
                             </div>
                           </div>
 
