@@ -856,6 +856,7 @@ export default function HomeClient() {
     type: 'hot' | 'return' | 'injured' | 'cold';
     jersey?: number;
     position?: string;
+    isStarterPitcher?: boolean;
   }[]>>({});
   
   const [homeRoster, setHomeRoster] = useState<PlayerInfo[]>([]);
@@ -1057,8 +1058,30 @@ export default function HomeClient() {
     });
   }, [selectedGameId, games]);
 
-  const handleAddBoost = (teamType: 'home' | 'away') => {
-    if (!selectedGameId) return;
+  const isPitcherPos = (pos?: string) => {
+    if (!pos) return false;
+    const p = pos.toUpperCase();
+    return p.includes('P') || p.includes('SP') || p.includes('RP') || p.includes('CP') || p.includes('RHP') || p.includes('LHP');
+  };
+
+  const isStarterPitcher = (player: PlayerInfo, game?: GameWithTeams) => {
+    if (!player) return false;
+    if (player.starter || player.position === 'SP') return true;
+    if (game && isPitcherPos(player.position)) {
+      const normName = player.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const homeProb = game.homeProbablePitcher?.name?.toLowerCase().replace(/[^a-z0-9]/g, '') || '';
+      const awayProb = game.awayProbablePitcher?.name?.toLowerCase().replace(/[^a-z0-9]/g, '') || '';
+      if ((homeProb && homeProb.includes(normName)) || (awayProb && awayProb.includes(normName))) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const handleAddBoost = (teamType: 'home' | 'away', targetGameId?: string) => {
+    const gameId = targetGameId || selectedGameId;
+    if (!gameId) return;
+    const game = games.find(g => g.id === gameId);
     const roster = teamType === 'home' ? homeRoster : awayRoster;
     const playerId = teamType === 'home' ? selectedHomePlayerId : selectedAwayPlayerId;
     const boostType = teamType === 'home' ? selectedHomeBoostType : selectedAwayBoostType;
@@ -1067,7 +1090,27 @@ export default function HomeClient() {
     const player = roster.find(p => p.id === playerId);
     if (!player) return;
 
-    const currentBoosts = activeBoosts[selectedGameId] || [];
+    const currentBoosts = activeBoosts[gameId] || [];
+    const isPitcher = isPitcherPos(player.position);
+    const isStarter = isStarterPitcher(player, game);
+
+    // Hitter limit check: max 2 hot hitters, max 2 cold hitters per team
+    if (!isPitcher) {
+      if (boostType === 'hot') {
+        const existingHotHitters = currentBoosts.filter(b => b.teamType === teamType && b.type === 'hot' && !isPitcherPos(b.position) && b.playerId !== playerId);
+        if (existingHotHitters.length >= 2) {
+          setToastMsg(`⚠️ 【${teamType === 'home' ? '主隊' : '客隊'}】打者爆發加成已達上限 2 位！`);
+          return;
+        }
+      } else if (boostType === 'cold') {
+        const existingColdHitters = currentBoosts.filter(b => b.teamType === teamType && b.type === 'cold' && !isPitcherPos(b.position) && b.playerId !== playerId);
+        if (existingColdHitters.length >= 2) {
+          setToastMsg(`⚠️ 【${teamType === 'home' ? '主隊' : '客隊'}】打者手感低潮扣減已達上限 2 位！`);
+          return;
+        }
+      }
+    }
+
     const filtered = currentBoosts.filter(b => b.playerId !== playerId);
     const newBoost = {
       playerId,
@@ -1075,22 +1118,24 @@ export default function HomeClient() {
       teamType,
       type: boostType,
       jersey: player.number || undefined,
-      position: player.position || undefined
+      position: player.position || undefined,
+      isStarterPitcher: isStarter
     };
 
     const updated = [...filtered, newBoost];
-    setActiveBoosts(prev => ({ ...prev, [selectedGameId]: updated }));
+    setActiveBoosts(prev => ({ ...prev, [gameId]: updated }));
     
     // Reset player selection dropdown
     if (teamType === 'home') setSelectedHomePlayerId('');
     else setSelectedAwayPlayerId('');
   };
 
-  const handleRemoveBoost = (playerId: string) => {
-    if (!selectedGameId) return;
-    const currentBoosts = activeBoosts[selectedGameId] || [];
+  const handleRemoveBoost = (playerId: string, targetGameId?: string) => {
+    const gameId = targetGameId || selectedGameId;
+    if (!gameId) return;
+    const currentBoosts = activeBoosts[gameId] || [];
     const updated = currentBoosts.filter(b => b.playerId !== playerId);
-    setActiveBoosts(prev => ({ ...prev, [selectedGameId]: updated }));
+    setActiveBoosts(prev => ({ ...prev, [gameId]: updated }));
   };
 
   // ─── Apply Player boosts dynamically to predictions ───
@@ -2473,6 +2518,183 @@ export default function HomeClient() {
                                 </div>
                               )}
 
+                              {/* 🌟 AI 主力球員加成與狀態微調沙盤 (熱門比賽預測板內部) */}
+                              <div className="md:col-span-12 mt-6 pt-6 border-t border-white/5">
+                                <div className="bg-purple-950/20 border border-purple-500/20 rounded-2xl p-5 md:p-6 relative overflow-hidden">
+                                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xl">🌟</span>
+                                      <div>
+                                        <h4 className="text-sm font-black text-purple-300 tracking-wider font-sans">
+                                          AI 主力球員加成與狀態微調沙盤
+                                        </h4>
+                                        <p className="text-[10px] text-gray-400 font-sans mt-0.5 font-medium">
+                                          可手動微調本場兩隊主力球員（含先發投手 ⚾ 及打者 ⚾，打者加分與低潮上限各 2 位），即時動態重算預估勝率與比分。
+                                        </p>
+                                      </div>
+                                    </div>
+                                    {activeBoosts[game.id] && activeBoosts[game.id].length > 0 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setActiveBoosts(prev => ({ ...prev, [game.id]: [] }))}
+                                        className="text-[10px] text-gray-400 hover:text-red-400 font-bold font-sans bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 transition-colors shrink-0"
+                                      >
+                                        🧹 清除本場加成
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  {/* Roster & Boost Selection Controls */}
+                                  {loadingRoster ? (
+                                    <div className="flex items-center justify-center py-4 text-xs text-gray-400 gap-2 font-bold font-mono">
+                                      <svg className="animate-spin h-4 w-4 text-purple-400" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                      </svg>
+                                      載入陣容數據中...
+                                    </div>
+                                  ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      {/* Away Team Selection */}
+                                      <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3.5 space-y-2.5">
+                                        <div className="flex justify-between items-center text-xs font-black text-white font-sans">
+                                          <span>🚌 {game.awayTeam.nameCn || game.awayTeam.name} (客隊)</span>
+                                          <span className="text-[9px] text-gray-400 font-mono">
+                                            爆發打者: {activeBoosts[game.id]?.filter(b => b.teamType === 'away' && b.type === 'hot' && !isPitcherPos(b.position)).length || 0}/2
+                                          </span>
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                          <select
+                                            value={selectedAwayPlayerId}
+                                            onChange={(e) => setSelectedAwayPlayerId(e.target.value)}
+                                            className="bg-[#0b0f19] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-bold text-gray-200 focus:outline-none focus:border-purple-500 font-sans"
+                                          >
+                                            <option value="">-- 選擇客隊主力球員 --</option>
+                                            {awayRoster.map(p => {
+                                              const isSP = isStarterPitcher(p, game);
+                                              const isP = isPitcherPos(p.position);
+                                              const roleBadge = isSP ? '⚾ [先發投手]' : (isP ? '🧢 [投手]' : '⚾ [打者]');
+                                              const normP = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
+                                              const injury = injuryReports[normP];
+                                              const hot = hotPlayers[normP];
+                                              return (
+                                                <option key={p.id} value={p.id}>
+                                                  {roleBadge} {translatePlayerName(p.name)} {p.number !== null ? `#${p.number}` : ''} ({p.position}){injury ? ` [傷-${injury.status}]` : ''}{hot ? ` [火-${hot.reason}]` : ''}
+                                                </option>
+                                              );
+                                            })}
+                                          </select>
+                                          <div className="flex gap-2">
+                                            <select
+                                              value={selectedAwayBoostType}
+                                              onChange={(e) => setSelectedAwayBoostType(e.target.value as any)}
+                                              className="bg-[#0b0f19] border border-white/10 rounded-lg px-2 py-1.5 text-[11px] font-bold text-gray-200 focus:outline-none focus:border-purple-500 flex-1 font-sans"
+                                            >
+                                              <option value="hot">🔥 狀態爆發 (+5% 勝率, 得分加成)</option>
+                                              <option value="cold">🧊 手感低潮 (-5% 勝率, 得分扣減)</option>
+                                              <option value="return">⚡ 傷病回歸 (+3% 勝率, 得分加成)</option>
+                                              <option value="injured">🩹 主力缺陣 (-5% 勝率, 得分扣減)</option>
+                                            </select>
+                                            <button
+                                              type="button"
+                                              onClick={() => handleAddBoost('away', game.id)}
+                                              disabled={!selectedAwayPlayerId}
+                                              className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-black text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0 font-sans"
+                                            >
+                                              + 套用
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {/* Home Team Selection */}
+                                      <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3.5 space-y-2.5">
+                                        <div className="flex justify-between items-center text-xs font-black text-white font-sans">
+                                          <span>🏠 {game.homeTeam.nameCn || game.homeTeam.name} (主隊)</span>
+                                          <span className="text-[9px] text-gray-400 font-mono">
+                                            爆發打者: {activeBoosts[game.id]?.filter(b => b.teamType === 'home' && b.type === 'hot' && !isPitcherPos(b.position)).length || 0}/2
+                                          </span>
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                          <select
+                                            value={selectedHomePlayerId}
+                                            onChange={(e) => setSelectedHomePlayerId(e.target.value)}
+                                            className="bg-[#0b0f19] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-bold text-gray-200 focus:outline-none focus:border-purple-500 font-sans"
+                                          >
+                                            <option value="">-- 選擇主隊主力球員 --</option>
+                                            {homeRoster.map(p => {
+                                              const isSP = isStarterPitcher(p, game);
+                                              const isP = isPitcherPos(p.position);
+                                              const roleBadge = isSP ? '⚾ [先發投手]' : (isP ? '🧢 [投手]' : '⚾ [打者]');
+                                              const normP = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
+                                              const injury = injuryReports[normP];
+                                              const hot = hotPlayers[normP];
+                                              return (
+                                                <option key={p.id} value={p.id}>
+                                                  {roleBadge} {translatePlayerName(p.name)} {p.number !== null ? `#${p.number}` : ''} ({p.position}){injury ? ` [傷-${injury.status}]` : ''}{hot ? ` [火-${hot.reason}]` : ''}
+                                                </option>
+                                              );
+                                            })}
+                                          </select>
+                                          <div className="flex gap-2">
+                                            <select
+                                              value={selectedHomeBoostType}
+                                              onChange={(e) => setSelectedHomeBoostType(e.target.value as any)}
+                                              className="bg-[#0b0f19] border border-white/10 rounded-lg px-2 py-1.5 text-[11px] font-bold text-gray-200 focus:outline-none focus:border-purple-500 flex-1 font-sans"
+                                            >
+                                              <option value="hot">🔥 狀態爆發 (+5% 勝率, 得分加成)</option>
+                                              <option value="cold">🧊 手感低潮 (-5% 勝率, 得分扣減)</option>
+                                              <option value="return">⚡ 傷病回歸 (+3% 勝率, 得分加成)</option>
+                                              <option value="injured">🩹 主力缺陣 (-5% 勝率, 得分扣減)</option>
+                                            </select>
+                                            <button
+                                              type="button"
+                                              onClick={() => handleAddBoost('home', game.id)}
+                                              disabled={!selectedHomePlayerId}
+                                              className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-black text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0 font-sans"
+                                            >
+                                              + 套用
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Active Boost Badges Display */}
+                                  {activeBoosts[game.id] && activeBoosts[game.id].length > 0 && (
+                                    <div className="mt-3 pt-3 border-t border-white/5 flex flex-wrap gap-2">
+                                      {activeBoosts[game.id].map(b => (
+                                        <div
+                                          key={b.playerId}
+                                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-black font-sans ${
+                                            b.isStarterPitcher ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 animate-pulse' :
+                                            b.type === 'hot' ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' :
+                                            b.type === 'cold' ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30' :
+                                            b.type === 'return' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' :
+                                            'bg-red-500/10 text-red-300 border-red-500/30'
+                                          }`}
+                                        >
+                                          <span>{b.teamType === 'home' ? '🏠' : '🚌'}</span>
+                                          <span>{b.isStarterPitcher ? '⚾ 先發投手: ' : ''}{b.playerName}</span>
+                                          <span className="opacity-75">
+                                            ({b.type === 'hot' ? '爆發+5%' : b.type === 'cold' ? '低潮-5%' : b.type === 'return' ? '回歸+3%' : '缺陣-5%'})
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleRemoveBoost(b.playerId, game.id)}
+                                            className="hover:text-white transition-colors ml-1 font-bold"
+                                            title="移除"
+                                          >
+                                            ✕
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
 
 
                             </div>
@@ -3599,51 +3821,7 @@ export default function HomeClient() {
               );
             })()}
 
-            {/* Accuracy dashboard widget */}
-            <div id="accuracy-section" className="glass-panel rounded-3xl p-6 md:p-8 border border-white/5 relative overflow-hidden">
-              <div className="absolute top-[-50px] right-[-50px] w-[150px] h-[150px] bg-purple-500/10 rounded-full blur-2xl" />
-              
-              <h3 className="text-lg font-black text-white mb-4 flex items-center gap-2 font-sans">
-                <ChartIcon className="w-5 h-5 text-purple-400 animate-pulse" />
-                模型歷史精準度
-              </h3>
 
-              <div className="flex items-baseline gap-2 mb-6 font-sans">
-                <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400 font-mono">67.8%</span>
-                <span className="text-xs text-gray-400 font-bold">歷史均值 (當前賽季)</span>
-              </div>
-
-              {/* Mini Accuracy Chart Bars */}
-              <div className="space-y-4 font-sans font-bold">
-                {[
-                  { month: '一月 (NBA 常規賽)', acc: 64.2 },
-                  { month: '二月 (全明星期)', acc: 65.8 },
-                  { month: '三月 (季後賽前衝刺)', acc: 68.1 },
-                  { month: '四月 (NBA 季後賽首輪)', acc: 67.4 },
-                  { month: '五月 (季後/MLB季初 Peak)', acc: 69.8 }
-                ].map((bar, idx) => (
-                  <div key={idx} className="space-y-1.5">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-400 font-bold">{bar.month}</span>
-                      <span className="font-bold text-gray-200 font-mono">{bar.acc}%</span>
-                    </div>
-                    <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full ${idx === 4 ? 'bg-gradient-to-r from-purple-500 to-blue-400' : 'bg-white/10'}`} 
-                        style={{ width: `${bar.acc}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-white/5 flex gap-2 justify-between items-center text-[10px] text-gray-500 font-mono font-bold">
-                <span>最後同步時間: 10分鐘前</span>
-                <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 uppercase tracking-widest font-mono">
-                  AUTO-UPDATED
-                </span>
-              </div>
-            </div>
 
             {/* Custom scenario engine - replaced with Key Player Boost Sandbox */}
             <div id="custom-predictor" className="glass-panel rounded-3xl p-6 md:p-8 border border-white/5 relative">

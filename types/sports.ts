@@ -83,6 +83,8 @@ export interface GameWithTeams {
   status: GameStatus;
   homeScore: number | null;
   awayScore: number | null;
+  homeProbablePitcher?: { name: string; era?: number };
+  awayProbablePitcher?: { name: string; era?: number };
 }
 
 /** Player DTO for roster responses */
@@ -95,6 +97,7 @@ export interface PlayerInfo {
   weight?: number;
   teamId: string;
   teamCode: string;
+  starter?: boolean;
 }
 
 /** Standardized API response wrapper */

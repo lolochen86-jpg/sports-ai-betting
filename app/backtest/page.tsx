@@ -156,6 +156,52 @@ export default function BacktestPage() {
           <TrendChart refreshKey={refreshKey} onSyncStatus={handleSyncStatus} />
         </div>
 
+        {/* AI 模型真實量化回測面板 (從主頁搬移至此) */}
+        <div id="accuracy-section" className="glass-panel rounded-3xl p-6 md:p-8 border border-white/5 relative overflow-hidden mb-12">
+          <div className="absolute top-[-50px] right-[-50px] w-[150px] h-[150px] bg-purple-500/10 rounded-full blur-2xl" />
+          
+          <h3 className="text-lg font-black text-white mb-4 flex items-center gap-2 font-sans">
+            <ChartIcon className="w-5 h-5 text-purple-400 animate-pulse" />
+            AI 模型真實量化回測面板
+          </h3>
+
+          <div className="flex items-baseline gap-2 mb-6 font-sans">
+            <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400 font-mono">67.8%</span>
+            <span className="text-xs text-gray-400 font-bold">歷史均值 (當前賽季真實完賽回測)</span>
+          </div>
+
+          {/* Mini Accuracy Chart Bars */}
+          <div className="space-y-4 font-sans font-bold">
+            {[
+              { month: '一月 (NBA 常規賽)', acc: 64.2 },
+              { month: '二月 (全明星期)', acc: 65.8 },
+              { month: '三月 (季後賽前衝刺)', acc: 68.1 },
+              { month: '四月 (NBA 季後賽首輪)', acc: 67.4 },
+              { month: '五月 (季後/MLB季初 Peak)', acc: 69.8 }
+            ].map((bar, idx) => (
+              <div key={idx} className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-400 font-bold">{bar.month}</span>
+                  <span className="font-bold text-gray-200 font-mono">{bar.acc}%</span>
+                </div>
+                <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full ${idx === 4 ? 'bg-gradient-to-r from-purple-500 to-blue-400' : 'bg-white/10'}`} 
+                    style={{ width: `${bar.acc}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-white/5 flex gap-2 justify-between items-center text-[10px] text-gray-500 font-mono font-bold">
+            <span>最後同步時間: 10分鐘前</span>
+            <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 uppercase tracking-widest font-mono">
+              REAL-TIME BACKTESTED
+            </span>
+          </div>
+        </div>
+
         {/* 4. Methodology Explanation Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
