@@ -1,6 +1,7 @@
 import type { GameWithTeams, League } from '@/types/sports';
 import { extractRecentStats, fetchH2HRecord, detectFatigue, fetchStartingPitcher } from './features';
 import { getMetaModelWeights } from './weights';
+import { getParkFactor, type ParkFactorInfo } from './park-factors';
 import { 
   calculateWinProbability, 
   calculateEloProbability, 
@@ -50,6 +51,7 @@ export interface PredictionResult {
   reasoning: string[];
   keyPlayer: string;
   weatherFactor?: string;
+  parkFactorInfo?: ParkFactorInfo;
   injuryImpact: string;
   activeModel: 'SportsAI' | 'MetaModel';
   models: {
@@ -373,7 +375,9 @@ export async function generatePrediction(
   const homeCode = game.homeTeam.code || '主隊';
   const awayCode = game.awayTeam.code || '客隊';
   
-  // ─── 1. Parallel live feature extraction ───
+  // ─── 1. Parallel live feature extraction & Park Factor ───
+  const parkFactorInfo = getParkFactor(homeCode, league, game.venue);
+
   const [homeRecent, awayRecent] = await Promise.all([
     extractRecentStats(homeId, league, game.id, game.gameDate),
     extractRecentStats(awayId, league, game.id, game.gameDate),
@@ -603,6 +607,7 @@ export async function generatePrediction(
     reasoning: sportsReasoning,
     keyPlayer,
     weatherFactor,
+    parkFactorInfo,
     injuryImpact,
     activeModel: 'MetaModel',
     models: {

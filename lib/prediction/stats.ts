@@ -1,4 +1,5 @@
 import type { League } from '@/types/sports';
+import type { ParkFactorInfo } from './park-factors';
 
 export interface TeamRecentStats {
   wins: number;
@@ -568,6 +569,7 @@ export function calculateStrengthIndexV2(
     isTeamA?: boolean;
     fatigue?: FatigueInfo;
     opponentPitcher?: PitcherInfo | null;
+    parkFactor?: ParkFactorInfo | null;
   }
 ): number {
   // Start with base V1 calculation
@@ -614,6 +616,20 @@ export function calculateStrengthIndexV2(
       ? stats.scoringMomentum * 0.8  // NBA: each point of slope = 0.8 index points
       : stats.scoringMomentum * 1.5 * K_HOT; // MLB: scaled by backtested K_HOT
     index += momentumBoost;
+  }
+
+  // ⑥ Park Factor (球場修正係數) Adjustment
+  if (extras?.parkFactor) {
+    const pf = extras.parkFactor;
+    if (league === 'MLB') {
+      // E.g. Coors Field runFactor = 1.18 (+18% runs), shift strength index by +2.7
+      const pfDiff = (pf.runFactor - 1.00) * 15.0;
+      index += pfDiff;
+    } else if (league === 'NBA' && pf.altitudeMeters >= 1200) {
+      // High-altitude NBA court (DEN / UTA): Home team boost, Away team penalty
+      if (isHome) index += 3.5;
+      else index -= 3.5;
+    }
   }
 
   return index;

@@ -91,6 +91,8 @@ const UserIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
   </svg>
 );
 
+import type { ParkFactorInfo } from '@/lib/prediction/park-factors';
+
 interface PeriodDistributionItem {
   name: string;
   score: number;
@@ -126,6 +128,7 @@ interface PredictionDetails {
   reasoning: string[];
   keyPlayer: string;
   weatherFactor?: string;
+  parkFactorInfo?: ParkFactorInfo;
   injuryImpact: string;
   activeModel: string;
   models: {
@@ -2479,6 +2482,43 @@ export default function HomeClient() {
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
                                   </svg>
                                   <span className="font-mono">{pred.weatherFactor}</span>
+                                </div>
+                              )}
+
+                              {/* 🏟️ 球場修正係數 (Park Factor) 資訊卡 */}
+                              {pred.parkFactorInfo && (
+                                <div className="bg-emerald-500/5 border border-emerald-500/15 rounded-xl p-3 text-xs text-emerald-300 flex items-start gap-2.5 font-sans font-semibold">
+                                  <span className="text-base shrink-0 leading-none">🏟️</span>
+                                  <div className="space-y-0.5">
+                                    <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
+                                      <span className="font-black text-white">{pred.parkFactorInfo.venueName}</span>
+                                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                                        pred.parkFactorInfo.category.includes('hitter') 
+                                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' 
+                                          : pred.parkFactorInfo.category.includes('pitcher')
+                                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                                            : 'bg-gray-500/20 text-gray-300'
+                                      }`}>
+                                        {pred.parkFactorInfo.category === 'hitter_paradise' ? '🔥 打者天堂' :
+                                         pred.parkFactorInfo.category === 'hitter_friendly' ? '⚾ 利於打者' :
+                                         pred.parkFactorInfo.category === 'pitcher_paradise' ? '🛡️ 投手天堂' :
+                                         pred.parkFactorInfo.category === 'pitcher_friendly' ? '🧢 利於投手' : '中性球場'}
+                                      </span>
+                                      {game.league === 'MLB' && (
+                                        <span className="text-gray-400 font-bold">
+                                          得分修正: <span className="text-emerald-400 font-black">{pred.parkFactorInfo.runFactor.toFixed(2)}x</span>
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-[11px] text-gray-300 leading-relaxed">
+                                      {pred.parkFactorInfo.description}
+                                    </p>
+                                    {pred.parkFactorInfo.specialEffectNotes && (
+                                      <p className="text-[10px] text-emerald-400 font-mono font-bold">
+                                        {pred.parkFactorInfo.specialEffectNotes}
+                                      </p>
+                                    )}
+                                  </div>
                                 </div>
                               )}
 
