@@ -1,5 +1,7 @@
 import type { League } from '@/types/sports';
 import type { ParkFactorInfo } from './park-factors';
+import type { RestDaysInfo } from './rest-travel';
+import type { TeamDepthInfo } from './depth-quality';
 
 export interface TeamRecentStats {
   wins: number;
@@ -570,6 +572,8 @@ export function calculateStrengthIndexV2(
     fatigue?: FatigueInfo;
     opponentPitcher?: PitcherInfo | null;
     parkFactor?: ParkFactorInfo | null;
+    restTravel?: RestDaysInfo | null;
+    depthInfo?: TeamDepthInfo | null;
   }
 ): number {
   // Start with base V1 calculation
@@ -629,6 +633,32 @@ export function calculateStrengthIndexV2(
       // High-altitude NBA court (DEN / UTA): Home team boost, Away team penalty
       if (isHome) index += 3.5;
       else index -= 3.5;
+    }
+  }
+
+  // ⑦ Rest & Travel Fatigue Adjustment (長途奔波與休息日調整)
+  if (extras?.restTravel) {
+    const rt = extras.restTravel;
+    if (rt.travelFatigueLevel === 'extreme') {
+      index -= league === 'NBA' ? 5.0 : 4.0;
+    } else if (rt.travelFatigueLevel === 'heavy') {
+      index -= league === 'NBA' ? 3.0 : 2.5;
+    } else if (rt.travelFatigueLevel === 'mild') {
+      index -= league === 'NBA' ? 1.5 : 1.0;
+    }
+  }
+
+  // ⑧ Bullpen / Bench Depth Quality Adjustment (牛棚與板凳深度調整)
+  if (extras?.depthInfo) {
+    const depth = extras.depthInfo;
+    if (depth.bullpenTier === 'elite') {
+      index += league === 'NBA' ? 3.0 : 2.5;
+    } else if (depth.bullpenTier === 'above_avg') {
+      index += league === 'NBA' ? 1.5 : 1.2;
+    } else if (depth.bullpenTier === 'below_avg') {
+      index -= league === 'NBA' ? 1.5 : 1.2;
+    } else if (depth.bullpenTier === 'weak') {
+      index -= league === 'NBA' ? 3.0 : 2.5;
     }
   }
 

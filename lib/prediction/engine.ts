@@ -2,6 +2,8 @@ import type { GameWithTeams, League } from '@/types/sports';
 import { extractRecentStats, fetchH2HRecord, detectFatigue, fetchStartingPitcher } from './features';
 import { getMetaModelWeights } from './weights';
 import { getParkFactor, type ParkFactorInfo } from './park-factors';
+import { calculateRestAndTravel, type RestDaysInfo } from './rest-travel';
+import { getTeamDepth, type TeamDepthInfo } from './depth-quality';
 import { 
   calculateWinProbability, 
   calculateEloProbability, 
@@ -52,6 +54,9 @@ export interface PredictionResult {
   keyPlayer: string;
   weatherFactor?: string;
   parkFactorInfo?: ParkFactorInfo;
+  restTravelInfo?: RestDaysInfo;
+  homeDepthInfo?: TeamDepthInfo;
+  awayDepthInfo?: TeamDepthInfo;
   injuryImpact: string;
   activeModel: 'SportsAI' | 'MetaModel';
   models: {
@@ -375,8 +380,11 @@ export async function generatePrediction(
   const homeCode = game.homeTeam.code || '主隊';
   const awayCode = game.awayTeam.code || '客隊';
   
-  // ─── 1. Parallel live feature extraction & Park Factor ───
+  // ─── 1. Parallel live feature extraction, Park Factor, Rest/Travel & Depth ───
   const parkFactorInfo = getParkFactor(homeCode, league, game.venue);
+  const restTravelInfo = calculateRestAndTravel(awayCode, homeCode, league, 1);
+  const homeDepthInfo = getTeamDepth(homeCode, league);
+  const awayDepthInfo = getTeamDepth(awayCode, league);
 
   const [homeRecent, awayRecent] = await Promise.all([
     extractRecentStats(homeId, league, game.id, game.gameDate),
@@ -420,6 +428,20 @@ export async function generatePrediction(
     sportsReasoning.push(`${sportsLoserName} 近 5 場吞下 ${sportsLoserStats.losses} 敗，球隊在關鍵局數/末節防守端壓制力顯著下滑，戰術配合出現停滯。`);
   } else {
     sportsReasoning.push(`${sportsLoserName} 近期客場/客戰表現起伏較大，主力陣容在連續作戰下面臨體能考驗。`);
+  }
+
+  // Bullpen / Bench depth reasoning
+  if (league === 'MLB') {
+    if (homeDepthInfo.bullpenTier === 'elite' || homeDepthInfo.bullpenTier === 'above_avg') {
+      sportsReasoning.push(`🛡️ 【牛棚深度採計】主隊(${homeCode}) ${homeDepthInfo.description}`);
+    }
+    if (awayDepthInfo.bullpenTier === 'weak' || awayDepthInfo.bullpenTier === 'below_avg') {
+      sportsReasoning.push(`⚠️ 【牛棚風險警示】客隊(${awayCode}) ${awayDepthInfo.description}`);
+    }
+  } else {
+    if (homeDepthInfo.bullpenTier === 'elite' || homeDepthInfo.bullpenTier === 'above_avg') {
+      sportsReasoning.push(`🔥 【板凳深度採計】主隊(${homeCode}) ${homeDepthInfo.description}`);
+    }
   }
 
   // Fluctuation adjustment reasoning for V1
@@ -608,6 +630,9 @@ export async function generatePrediction(
     keyPlayer,
     weatherFactor,
     parkFactorInfo,
+    restTravelInfo,
+    homeDepthInfo,
+    awayDepthInfo,
     injuryImpact,
     activeModel: 'MetaModel',
     models: {

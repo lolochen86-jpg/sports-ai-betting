@@ -92,6 +92,8 @@ const UserIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
 );
 
 import type { ParkFactorInfo } from '@/lib/prediction/park-factors';
+import type { RestDaysInfo } from '@/lib/prediction/rest-travel';
+import type { TeamDepthInfo } from '@/lib/prediction/depth-quality';
 
 interface PeriodDistributionItem {
   name: string;
@@ -129,6 +131,9 @@ interface PredictionDetails {
   keyPlayer: string;
   weatherFactor?: string;
   parkFactorInfo?: ParkFactorInfo;
+  restTravelInfo?: RestDaysInfo;
+  homeDepthInfo?: TeamDepthInfo;
+  awayDepthInfo?: TeamDepthInfo;
   injuryImpact: string;
   activeModel: string;
   models: {
@@ -1836,8 +1841,8 @@ export default function HomeClient() {
         {/* Prediction Cards Board */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-16">
           <div className="lg:col-span-2 flex flex-col gap-6">
-            <h2 className="text-2xl font-black flex items-center gap-2 text-white font-sans tracking-wide">
-              <span className={`w-1.5 h-6 rounded bg-gradient-to-b ${activeLeague === 'NBA' ? 'from-orange-500 to-yellow-500' : 'from-cyan-400 to-blue-500'}`} />
+            <h2 className="text-3xl font-black flex items-center gap-2.5 text-white font-sans tracking-wide">
+              <span className={`w-2 h-7 rounded bg-gradient-to-b ${activeLeague === 'NBA' ? 'from-orange-500 to-yellow-500' : 'from-cyan-400 to-blue-500'}`} />
               熱門比賽預測板 (今日推薦)
             </h2>
 
@@ -1962,15 +1967,15 @@ export default function HomeClient() {
                         
                         {/* Status/Venue Badge */}
                         <div className="absolute top-4 left-6 flex items-center gap-2">
-                          <span className="text-[10px] font-mono text-gray-400 font-bold max-w-[200px] truncate">{game.venue}</span>
+                          <span className="text-xs font-mono text-gray-400 font-bold max-w-[240px] truncate">{game.venue}</span>
                           <span className="w-1 h-1 rounded-full bg-gray-700 shrink-0" />
                           {game.status === 'live' ? (
-                            <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 text-[9px] font-bold font-mono animate-pulse flex items-center gap-1 shrink-0">
+                            <span className="px-2.5 py-1 rounded bg-red-500/10 text-red-400 border border-red-500/20 text-[11px] font-bold font-mono animate-pulse flex items-center gap-1 shrink-0">
                               <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                               LIVE
                             </span>
                           ) : game.status === 'completed' ? (
-                            <span className="px-2 py-0.5 rounded bg-gray-500/20 text-gray-300 text-[9px] font-bold shrink-0">
+                            <span className="px-2.5 py-1 rounded bg-gray-500/20 text-gray-300 text-[11px] font-bold shrink-0">
                               已結束
                             </span>
                           ) : game.status === 'postponed' ? (
@@ -1993,12 +1998,12 @@ export default function HomeClient() {
                           
                           {/* Away Team */}
                           <div className="flex flex-col items-center md:items-end text-center md:text-right w-24 md:w-32">
-                            <div className="relative w-12 h-12 rounded-2xl flex items-center justify-center shadow-md overflow-hidden bg-white/5 border border-white/10 shrink-0">
+                            <div className="relative w-14 h-14 rounded-2xl flex items-center justify-center shadow-md overflow-hidden bg-white/5 border border-white/10 shrink-0">
                               {game.awayTeam.logo ? (
                                 <img 
                                   src={game.awayTeam.logo} 
                                   alt={game.awayTeam.name} 
-                                  className="w-10 h-10 object-contain z-10"
+                                  className="w-12 h-12 object-contain z-10"
                                   onError={(e) => {
                                     e.currentTarget.style.display = 'none';
                                   }}
@@ -2008,26 +2013,26 @@ export default function HomeClient() {
                                 {game.awayTeam.code}
                               </div>
                             </div>
-                            <span className="text-base font-black text-white mt-2 block line-clamp-1">{game.awayTeam.nameCn || game.awayTeam.name}</span>
-                            <span className="text-xs font-mono font-bold text-gray-400 block mt-0.5">客隊 (Odds {awayOdds})</span>
-                            <div className="text-[10px] md:text-[11px] text-gray-400 font-semibold mt-1.5 bg-white/5 border border-white/5 rounded-md px-1.5 py-0.5 inline-block">
+                            <span className="text-lg font-black text-white mt-2 block line-clamp-1">{game.awayTeam.nameCn || game.awayTeam.name}</span>
+                            <span className="text-sm font-mono font-bold text-gray-400 block mt-0.5">客隊 (Odds {awayOdds})</span>
+                            <div className="text-xs text-gray-400 font-semibold mt-1.5 bg-white/5 border border-white/5 rounded-md px-2 py-1 inline-block">
                               近5場均: <span className="font-black text-white font-mono">{game.awayTeam.avgPoints !== undefined ? `${game.awayTeam.avgPoints}分` : '--'}</span>
                             </div>
                             
                             {/* Away Team Player Status Badges */}
                             <div className="flex flex-wrap gap-1 mt-1 justify-center md:justify-end">
                               {(activeBoosts[game.id] || []).filter(b => b.teamType === 'away' && b.type === 'injured').length > 0 && (
-                                <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30 text-[9px] font-bold">
+                                <span className="px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30 text-[11px] font-bold">
                                   🩹 {(activeBoosts[game.id] || []).filter(b => b.teamType === 'away' && b.type === 'injured').length}人缺陣
                                 </span>
                               )}
                               {(activeBoosts[game.id] || []).filter(b => b.teamType === 'away' && b.type === 'cold').length > 0 && (
-                                <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[9px] font-bold">
+                                <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[11px] font-bold">
                                   🧊 {(activeBoosts[game.id] || []).filter(b => b.teamType === 'away' && b.type === 'cold').length}人低潮
                                 </span>
                               )}
                               {(activeBoosts[game.id] || []).filter(b => b.teamType === 'away' && b.type === 'hot').length > 0 && (
-                                <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-bold">
+                                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-bold">
                                   🔥 {(activeBoosts[game.id] || []).filter(b => b.teamType === 'away' && b.type === 'hot').length}人爆發
                                 </span>
                               )}
@@ -2038,26 +2043,26 @@ export default function HomeClient() {
                           <div className="flex flex-col items-center justify-center shrink-0">
                             {game.status === 'live' || game.status === 'completed' ? (
                               <div className="flex items-center gap-3">
-                                <span className="text-3xl font-black text-white font-mono">{game.awayScore ?? 0}</span>
-                                <span className="text-gray-600 font-bold">:</span>
-                                <span className="text-3xl font-black text-white font-mono">{game.homeScore ?? 0}</span>
+                                <span className="text-4xl font-black text-white font-mono">{game.awayScore ?? 0}</span>
+                                <span className="text-gray-600 font-bold text-lg">:</span>
+                                <span className="text-4xl font-black text-white font-mono">{game.homeScore ?? 0}</span>
                               </div>
                             ) : (
-                              <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs font-mono font-bold text-gray-500">
+                              <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-sm font-mono font-bold text-gray-500">
                                 VS
                               </div>
                             )}
-                            <span className="text-[10px] font-mono text-purple-400 mt-1 uppercase tracking-widest bg-purple-500/10 px-1.5 py-0.5 rounded">AI 可推演</span>
+                            <span className="text-xs font-mono text-purple-400 mt-1 uppercase tracking-widest bg-purple-500/10 px-2 py-0.5 rounded">AI 可推演</span>
                           </div>
 
                           {/* Home Team */}
                           <div className="flex flex-col items-center md:items-start text-center md:text-left w-24 md:w-32">
-                            <div className="relative w-12 h-12 rounded-2xl flex items-center justify-center shadow-md overflow-hidden bg-white/5 border border-white/10 shrink-0">
+                            <div className="relative w-14 h-14 rounded-2xl flex items-center justify-center shadow-md overflow-hidden bg-white/5 border border-white/10 shrink-0">
                               {game.homeTeam.logo ? (
                                 <img 
                                   src={game.homeTeam.logo} 
                                   alt={game.homeTeam.name} 
-                                  className="w-10 h-10 object-contain z-10"
+                                  className="w-12 h-12 object-contain z-10"
                                   onError={(e) => {
                                     e.currentTarget.style.display = 'none';
                                   }}
@@ -2067,26 +2072,26 @@ export default function HomeClient() {
                                 {game.homeTeam.code}
                               </div>
                             </div>
-                            <span className="text-base font-black text-white mt-2 block line-clamp-1">{game.homeTeam.nameCn || game.homeTeam.name}</span>
-                            <span className="text-xs font-mono font-bold text-gray-400 block mt-0.5">主隊 (Odds {homeOdds})</span>
-                            <div className="text-[10px] md:text-[11px] text-gray-400 font-semibold mt-1.5 bg-white/5 border border-white/5 rounded-md px-1.5 py-0.5 inline-block">
+                            <span className="text-lg font-black text-white mt-2 block line-clamp-1">{game.homeTeam.nameCn || game.homeTeam.name}</span>
+                            <span className="text-sm font-mono font-bold text-gray-400 block mt-0.5">主隊 (Odds {homeOdds})</span>
+                            <div className="text-xs text-gray-400 font-semibold mt-1.5 bg-white/5 border border-white/5 rounded-md px-2 py-1 inline-block">
                               近5場均: <span className="font-black text-white font-mono">{game.homeTeam.avgPoints !== undefined ? `${game.homeTeam.avgPoints}分` : '--'}</span>
                             </div>
 
                             {/* Home Team Player Status Badges */}
                             <div className="flex flex-wrap gap-1 mt-1 justify-center md:justify-start">
                               {(activeBoosts[game.id] || []).filter(b => b.teamType === 'home' && b.type === 'injured').length > 0 && (
-                                <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30 text-[9px] font-bold">
+                                <span className="px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30 text-[11px] font-bold">
                                   🩹 {(activeBoosts[game.id] || []).filter(b => b.teamType === 'home' && b.type === 'injured').length}人缺陣
                                 </span>
                               )}
                               {(activeBoosts[game.id] || []).filter(b => b.teamType === 'home' && b.type === 'cold').length > 0 && (
-                                <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[9px] font-bold">
+                                <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[11px] font-bold">
                                   🧊 {(activeBoosts[game.id] || []).filter(b => b.teamType === 'home' && b.type === 'cold').length}人低潮
                                 </span>
                               )}
                               {(activeBoosts[game.id] || []).filter(b => b.teamType === 'home' && b.type === 'hot').length > 0 && (
-                                <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-bold">
+                                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-bold">
                                   🔥 {(activeBoosts[game.id] || []).filter(b => b.teamType === 'home' && b.type === 'hot').length}人爆發
                                 </span>
                               )}
@@ -2171,8 +2176,8 @@ export default function HomeClient() {
                                       : 'text-gray-400 hover:text-white hover:bg-white/5'
                                   }`}
                                 >
-                                  <span className="text-xs font-bold leading-none">{m.name}</span>
-                                  <span className={`text-[8px] font-mono mt-1 opacity-70 ${
+                                  <span className="text-sm font-bold leading-none">{m.name}</span>
+                                  <span className={`text-[10px] font-mono mt-1 opacity-70 ${
                                     selectedModelTab === m.id 
                                       ? (m.id === 'MetaModel' ? 'text-pink-100' : (game.league === 'NBA' ? 'text-orange-200' : 'text-slate-700')) 
                                       : 'text-gray-500'
@@ -2186,23 +2191,23 @@ export default function HomeClient() {
                             
                             {/* Winner Forecast */}
                             <div className="md:col-span-5 flex flex-col justify-center glass-panel-ai rounded-2xl p-6 border relative overflow-hidden shimmer">
-                              <span className="text-xs font-mono text-purple-300 mb-1 uppercase tracking-wider font-bold">AI 預測首選</span>
+                              <span className="text-sm font-mono text-purple-300 mb-1.5 uppercase tracking-wider font-bold">AI 預測首選</span>
                               
                               <div className="flex items-baseline gap-3 my-2">
-                                <span className="text-3xl font-black text-white font-sans">
+                                <span className="text-4xl font-black text-white font-sans">
                                   {activePred.winner === 'home' 
                                     ? (game.homeTeam.nameCn || game.homeTeam.name) 
                                     : (game.awayTeam.nameCn || game.awayTeam.name)} 
                                 </span>
-                                <span className="text-lg font-bold text-emerald-400 font-sans">勝出</span>
+                                <span className="text-xl font-bold text-emerald-400 font-sans">勝出</span>
                               </div>
 
                               <div className="mt-4">
-                                <div className="flex justify-between text-xs mb-1.5 font-mono">
+                                <div className="flex justify-between text-sm mb-1.5 font-mono">
                                   <span className="text-gray-300 font-bold">AI 決策置信度</span>
-                                  <span className="text-lg font-black text-purple-400 font-mono">{activePred.confidence}%</span>
+                                  <span className="text-xl font-black text-purple-400 font-mono">{activePred.confidence}%</span>
                                 </div>
-                                <div className="w-full bg-white/5 h-2.5 rounded-full overflow-hidden">
+                                <div className="w-full bg-white/5 h-3 rounded-full overflow-hidden">
                                   <div 
                                     className="bg-gradient-to-r from-purple-600 to-blue-500 h-full rounded-full transition-all duration-500"
                                     style={{ width: `${activePred.confidence}%` }}
@@ -2211,20 +2216,20 @@ export default function HomeClient() {
                               </div>
 
                               <div className="mt-4 pt-4 border-t border-white/5 space-y-3 font-sans">
-                                <div className="text-[10px] font-mono text-purple-300 font-bold uppercase tracking-wider flex items-center justify-between">
+                                <div className="text-xs font-mono text-purple-300 font-bold uppercase tracking-wider flex items-center justify-between">
                                   <span>📊 預測比分對照 (無加成 vs 球員微調)</span>
                                 </div>
 
                                 {/* 1. Unadjusted Baseline Score (沒加成的) */}
                                 <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                                   <div className="flex items-center gap-1.5">
-                                    <span className="px-2 py-0.5 rounded bg-gray-500/20 text-gray-300 text-[10px] font-mono font-bold border border-white/10">
+                                    <span className="px-2.5 py-1 rounded bg-gray-500/20 text-gray-300 text-xs font-mono font-bold border border-white/10">
                                       ⚪ 原始模型基準 (未加成)
                                     </span>
                                   </div>
-                                  <div className="text-sm font-black font-mono text-gray-300">
+                                  <div className="text-base font-black font-mono text-gray-300">
                                     客({game.awayTeam.code}) {baseActivePred?.awayExpectedScore} : {baseActivePred?.homeExpectedScore} 主({game.homeTeam.code})
-                                    <span className="text-[11px] text-gray-400 font-normal ml-2">
+                                    <span className="text-xs text-gray-400 font-normal ml-2">
                                       (總分 {Math.round((baseActivePred?.homeExpectedScore || 0) + (baseActivePred?.awayExpectedScore || 0))} 分)
                                     </span>
                                   </div>
@@ -2237,15 +2242,15 @@ export default function HomeClient() {
                                     : 'bg-white/[0.02] border-white/5 text-gray-400'
                                 }`}>
                                   <div className="flex items-center gap-1.5">
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-black ${
+                                    <span className={`px-2.5 py-1 rounded text-xs font-mono font-black ${
                                       (activeBoosts[game.id] || []).length > 0 ? 'bg-purple-500/30 text-purple-200 border border-purple-500/40 animate-pulse' : 'bg-gray-500/10 text-gray-400'
                                     }`}>
                                       {(activeBoosts[game.id] || []).length > 0 ? '⚡ 球員狀態微調後 (加成/扣減)' : '⚡ 球員狀態微調後'}
                                     </span>
                                   </div>
-                                  <div className="text-base font-black font-mono text-white">
+                                  <div className="text-lg font-black font-mono text-white">
                                     客({game.awayTeam.code}) {activePred.awayExpectedScore} : {activePred.homeExpectedScore} 主({game.homeTeam.code})
-                                    <span className="text-xs text-purple-300 font-bold ml-2">
+                                    <span className="text-sm text-purple-300 font-bold ml-2">
                                       (總分 {Math.round(activePred.homeExpectedScore + activePred.awayExpectedScore)} 分)
                                     </span>
                                   </div>
@@ -2254,9 +2259,9 @@ export default function HomeClient() {
                                 {/* 3. Itemized Player Impact List */}
                                 {(activeBoosts[game.id] || []).length > 0 ? (
                                   <div className="bg-white/[0.02] border border-white/10 rounded-xl p-3 space-y-2 font-sans mt-2">
-                                    <div className="text-[11px] font-black text-gray-300 flex items-center justify-between border-b border-white/5 pb-1.5">
+                                    <div className="text-xs font-black text-gray-300 flex items-center justify-between border-b border-white/5 pb-1.5">
                                       <span>⚖️ 球員狀況加成與扣減明細標示：</span>
-                                      <span className="text-[9px] font-mono text-purple-400">共 {(activeBoosts[game.id] || []).length} 項微調</span>
+                                      <span className="text-[11px] font-mono text-purple-400">共 {(activeBoosts[game.id] || []).length} 項微調</span>
                                     </div>
                                     <div className="flex flex-col gap-1.5">
                                       {(activeBoosts[game.id] || []).map(b => {
@@ -2377,16 +2382,16 @@ export default function HomeClient() {
                                 );
                               })()}
 
-                              <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-gray-500 font-bold">
+                              <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center text-xs font-mono text-gray-500 font-bold">
                                 <span>精準度演算模型:</span>
-                                <span className="text-gray-300 font-bold font-mono">{activePred.modelVersion}</span>
+                                <span className="text-gray-300 font-bold font-mono text-sm">{activePred.modelVersion}</span>
                               </div>
                             </div>
 
                             {/* 特殊標註區塊 */}
                             {pred?.annotations && pred.annotations.length > 0 && (
                               <div className="md:col-span-12 mt-3">
-                                <span className="text-[10px] font-mono text-gray-500 uppercase tracking-widest font-black block mb-2">
+                                <span className="text-xs font-mono text-gray-500 uppercase tracking-widest font-black block mb-2.5">
                                   ⚡ 賽事前瞻數據警示 (數據指標)
                                 </span>
                                 <div className="flex flex-wrap gap-2">
@@ -2447,11 +2452,11 @@ export default function HomeClient() {
                             {/* Analysis Factors list */}
                             <div className="md:col-span-7 flex flex-col justify-between gap-4">
                               <div>
-                                <span className="text-xs font-bold text-gray-300 block mb-3 uppercase tracking-wider font-sans">🧠 AI 權重因子剖析</span>
-                                <ul className="flex flex-col gap-2.5">
+                                <span className="text-sm font-bold text-gray-300 block mb-3 uppercase tracking-wider font-sans">🧠 AI 權重因子剖析</span>
+                                <ul className="flex flex-col gap-3">
                                   {activePred.reasoning.map((item, idx) => (
-                                    <li key={idx} className="flex gap-2.5 text-xs md:text-sm text-gray-300 leading-relaxed font-sans font-semibold">
-                                      <span className="text-purple-400 font-bold mt-0.5 font-mono">#{idx+1}</span>
+                                    <li key={idx} className="flex gap-2.5 text-sm md:text-base text-gray-300 leading-relaxed font-sans font-semibold">
+                                      <span className="text-purple-400 font-bold mt-0.5 font-mono text-sm">#{idx+1}</span>
                                       <span>{item}</span>
                                     </li>
                                   ))}
@@ -2460,16 +2465,16 @@ export default function HomeClient() {
 
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/5">
                                 <div className="bg-white/5 rounded-xl p-3 border border-white/5">
-                                  <span className="text-[10px] font-mono text-gray-400 block mb-1 font-bold">焦點對位球員</span>
-                                  <span className="text-xs font-bold text-white flex items-center gap-1.5 font-sans">
+                                  <span className="text-xs font-mono text-gray-400 block mb-1.5 font-bold">焦點對位球員</span>
+                                  <span className="text-sm font-bold text-white flex items-center gap-1.5 font-sans">
                                     <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
                                     {pred.keyPlayer}
                                   </span>
                                 </div>
                                 
                                 <div className="bg-white/5 rounded-xl p-3 border border-white/5">
-                                  <span className="text-[10px] font-mono text-gray-400 block mb-1 font-bold">傷兵名單衝擊</span>
-                                  <span className="text-xs font-semibold text-gray-300 flex items-center gap-1.5 font-sans font-bold">
+                                  <span className="text-xs font-mono text-gray-400 block mb-1.5 font-bold">傷兵名單衝擊</span>
+                                  <span className="text-sm font-semibold text-gray-300 flex items-center gap-1.5 font-sans font-bold">
                                     <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
                                     {pred.injuryImpact}
                                   </span>
@@ -2518,6 +2523,57 @@ export default function HomeClient() {
                                         {pred.parkFactorInfo.specialEffectNotes}
                                       </p>
                                     )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* ✈️ 長途奔波與休息日 (Rest & Travel) 資訊卡 */}
+                              {pred.restTravelInfo && pred.restTravelInfo.travelFatigueLevel !== 'none' && (
+                                <div className="bg-purple-500/5 border border-purple-500/15 rounded-xl p-3 text-xs text-purple-300 flex items-start gap-2.5 font-sans font-semibold">
+                                  <span className="text-base shrink-0 leading-none">✈️</span>
+                                  <div className="space-y-0.5">
+                                    <div className="flex flex-wrap items-center gap-2 font-mono text-[11px]">
+                                      <span className="font-black text-white">移動距離: {pred.restTravelInfo.travelDistanceKm} km</span>
+                                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                                        pred.restTravelInfo.travelFatigueLevel === 'extreme' 
+                                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse' 
+                                          : pred.restTravelInfo.travelFatigueLevel === 'heavy'
+                                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                            : 'bg-blue-500/20 text-blue-300'
+                                      }`}>
+                                        {pred.restTravelInfo.travelFatigueLevel === 'extreme' ? '🚨 長途奔波 (極高疲勞)' :
+                                         pred.restTravelInfo.travelFatigueLevel === 'heavy' ? '✈️ 跨區遠征 (中高疲勞)' : '🚗 常態移動'}
+                                      </span>
+                                    </div>
+                                    <p className="text-[11px] text-gray-300 leading-relaxed">
+                                      {pred.restTravelInfo.description}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* 🛡️ 陣容與牛棚深度 (Depth Quality) 資訊卡 */}
+                              {(pred.homeDepthInfo || pred.awayDepthInfo) && (
+                                <div className="bg-indigo-500/5 border border-indigo-500/15 rounded-xl p-3 text-xs text-indigo-300 flex items-start gap-2.5 font-sans font-semibold">
+                                  <span className="text-base shrink-0 leading-none">🛡️</span>
+                                  <div className="space-y-1 w-full">
+                                    <div className="text-[11px] font-mono font-black text-white">
+                                      {game.league === 'MLB' ? 'MLB 牛棚深度評級' : 'NBA 板凳深度評級'}
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                                      {pred.awayDepthInfo && (
+                                        <div className="bg-white/5 p-2 rounded-lg border border-white/5">
+                                          <span className="text-gray-400 font-bold">客隊 ({game.awayTeam.code}): </span>
+                                          <span className="font-bold text-white">{pred.awayDepthInfo.description}</span>
+                                        </div>
+                                      )}
+                                      {pred.homeDepthInfo && (
+                                        <div className="bg-white/5 p-2 rounded-lg border border-white/5">
+                                          <span className="text-gray-400 font-bold">主隊 ({game.homeTeam.code}): </span>
+                                          <span className="font-bold text-white">{pred.homeDepthInfo.description}</span>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               )}
