@@ -681,6 +681,10 @@ export function calculateWinProbabilityV2(
     awayPitcher?: PitcherInfo | null;
     homeRecord?: string;
     awayRecord?: string;
+    parkFactor?: ParkFactorInfo | null;
+    restTravel?: RestDaysInfo | null;
+    homeDepthInfo?: TeamDepthInfo | null;
+    awayDepthInfo?: TeamDepthInfo | null;
   }
 ): PredictionDetailStats {
   let finalHomeProb = 0.5;
@@ -707,12 +711,18 @@ export function calculateWinProbabilityV2(
       isTeamA: true,
       fatigue: extras?.homeFatigue,
       opponentPitcher: extras?.awayPitcher, // Away pitcher affects home team's scoring
+      parkFactor: extras?.parkFactor,
+      restTravel: null, // Travel fatigue mainly affects away team
+      depthInfo: extras?.homeDepthInfo,
     });
     const awayStrength = calculateStrengthIndexV2(awayStats, league, false, {
       h2h: extras?.h2h,
       isTeamA: false,
       fatigue: extras?.awayFatigue,
       opponentPitcher: extras?.homePitcher, // Home pitcher affects away team's scoring
+      parkFactor: extras?.parkFactor,
+      restTravel: extras?.restTravel,
+      depthInfo: extras?.awayDepthInfo,
     });
 
     const diff = homeStrength - awayStrength;
@@ -756,19 +766,74 @@ export function calculateWinProbabilityV2(
     isTeamA: true,
     fatigue: extras?.homeFatigue,
     opponentPitcher: extras?.awayPitcher,
+    parkFactor: extras?.parkFactor,
+    restTravel: null,
+    depthInfo: extras?.homeDepthInfo,
   });
   const awayStrength = calculateStrengthIndexV2(awayStats, league, false, {
     h2h: extras?.h2h,
     isTeamA: false,
     fatigue: extras?.awayFatigue,
     opponentPitcher: extras?.homePitcher,
+    parkFactor: extras?.parkFactor,
+    restTravel: extras?.restTravel,
+    depthInfo: extras?.awayDepthInfo,
   });
   const diff = homeStrength - awayStrength;
   const shift = diff * (league === 'NBA' ? 0.08 : 0.04);
   const homeFluct = calculateFluctuation(homeStats.streak, league);
   const awayFluct = calculateFluctuation(awayStats.streak, league);
-  const homeExp = homeBaseScore + shift + homeMomentumAdj - homeFatiguePenalty + awayPitcherAdj + homeFluct.scoreAdj;
-  const awayExp = awayBaseScore - shift + awayMomentumAdj - awayFatiguePenalty + homePitcherAdj + awayFluct.scoreAdj;
+  let homeExp = homeBaseScore + shift + homeMomentumAdj - homeFatiguePenalty + awayPitcherAdj + homeFluct.scoreAdj;
+  let awayExp = awayBaseScore - shift + awayMomentumAdj - awayFatiguePenalty + homePitcherAdj + awayFluct.scoreAdj;
+
+  // ─── Apply new V2 details (Park Factor, Rest/Travel, Depth) directly to score expectations ───
+  if (extras?.parkFactor) {
+    const pf = extras.parkFactor;
+    if (league === 'MLB') {
+      homeExp *= pf.runFactor;
+      awayExp *= pf.runFactor;
+    } else if (league === 'NBA' && pf.altitudeMeters >= 1200) {
+      homeExp += 1.5;
+      awayExp -= 1.5;
+    }
+  }
+
+  if (extras?.restTravel) {
+    const rt = extras.restTravel;
+    if (rt.travelFatigueLevel === 'extreme') {
+      awayExp -= league === 'NBA' ? 5.0 : 1.5;
+    } else if (rt.travelFatigueLevel === 'heavy') {
+      awayExp -= league === 'NBA' ? 3.0 : 0.8;
+    } else if (rt.travelFatigueLevel === 'mild') {
+      awayExp -= league === 'NBA' ? 1.5 : 0.3;
+    }
+  }
+
+  if (extras?.homeDepthInfo) {
+    const depth = extras.homeDepthInfo;
+    if (depth.bullpenTier === 'elite') {
+      homeExp += league === 'NBA' ? 3.0 : 0.8;
+    } else if (depth.bullpenTier === 'above_avg') {
+      homeExp += league === 'NBA' ? 1.5 : 0.4;
+    } else if (depth.bullpenTier === 'below_avg') {
+      homeExp -= league === 'NBA' ? 1.5 : 0.4;
+    } else if (depth.bullpenTier === 'weak') {
+      homeExp -= league === 'NBA' ? 3.0 : 0.8;
+    }
+  }
+
+  if (extras?.awayDepthInfo) {
+    const depth = extras.awayDepthInfo;
+    if (depth.bullpenTier === 'elite') {
+      awayExp += league === 'NBA' ? 3.0 : 0.8;
+    } else if (depth.bullpenTier === 'above_avg') {
+      awayExp += league === 'NBA' ? 1.5 : 0.4;
+    } else if (depth.bullpenTier === 'below_avg') {
+      awayExp -= league === 'NBA' ? 1.5 : 0.4;
+    } else if (depth.bullpenTier === 'weak') {
+      awayExp -= league === 'NBA' ? 3.0 : 0.8;
+    }
+  }
 
   let homeExpectedScore: number;
   let awayExpectedScore: number;
@@ -931,6 +996,10 @@ export function calculateMonteCarloProbabilityV2(
     awayFatigue?: FatigueInfo;
     homePitcher?: PitcherInfo | null;
     awayPitcher?: PitcherInfo | null;
+    parkFactor?: ParkFactorInfo | null;
+    restTravel?: RestDaysInfo | null;
+    homeDepthInfo?: TeamDepthInfo | null;
+    awayDepthInfo?: TeamDepthInfo | null;
   }
 ): PredictionDetailStats {
   const sims = 10000;
@@ -1008,6 +1077,55 @@ export function calculateMonteCarloProbabilityV2(
 
   if (extras?.awayFatigue?.fatigueLevel === 'heavy') awayMean -= (league === 'NBA' ? 3.5 : 0.7);
   else if (extras?.awayFatigue?.fatigueLevel === 'mild') awayMean -= (league === 'NBA' ? 1.5 : 0.3);
+
+  // ─── Apply new V2 details (Park Factor, Rest/Travel, Depth) directly to Monte Carlo means ───
+  if (extras?.parkFactor) {
+    const pf = extras.parkFactor;
+    if (league === 'MLB') {
+      homeMean *= pf.runFactor;
+      awayMean *= pf.runFactor;
+    } else if (league === 'NBA' && pf.altitudeMeters >= 1200) {
+      homeMean += 1.5;
+      awayMean -= 1.5;
+    }
+  }
+
+  if (extras?.restTravel) {
+    const rt = extras.restTravel;
+    if (rt.travelFatigueLevel === 'extreme') {
+      awayMean -= league === 'NBA' ? 5.0 : 1.5;
+    } else if (rt.travelFatigueLevel === 'heavy') {
+      awayMean -= league === 'NBA' ? 3.0 : 0.8;
+    } else if (rt.travelFatigueLevel === 'mild') {
+      awayMean -= league === 'NBA' ? 1.5 : 0.3;
+    }
+  }
+
+  if (extras?.homeDepthInfo) {
+    const depth = extras.homeDepthInfo;
+    if (depth.bullpenTier === 'elite') {
+      homeMean += league === 'NBA' ? 3.0 : 0.8;
+    } else if (depth.bullpenTier === 'above_avg') {
+      homeMean += league === 'NBA' ? 1.5 : 0.4;
+    } else if (depth.bullpenTier === 'below_avg') {
+      homeMean -= league === 'NBA' ? 1.5 : 0.4;
+    } else if (depth.bullpenTier === 'weak') {
+      homeMean -= league === 'NBA' ? 3.0 : 0.8;
+    }
+  }
+
+  if (extras?.awayDepthInfo) {
+    const depth = extras.awayDepthInfo;
+    if (depth.bullpenTier === 'elite') {
+      awayMean += league === 'NBA' ? 3.0 : 0.8;
+    } else if (depth.bullpenTier === 'above_avg') {
+      awayMean += league === 'NBA' ? 1.5 : 0.4;
+    } else if (depth.bullpenTier === 'below_avg') {
+      awayMean -= league === 'NBA' ? 1.5 : 0.4;
+    } else if (depth.bullpenTier === 'weak') {
+      awayMean -= league === 'NBA' ? 3.0 : 0.8;
+    }
+  }
   
   for (let i = 0; i < sims; i++) {
     const homeSimScore = randomNormal(homeMean, homeStdDev) + homeFieldAdv;

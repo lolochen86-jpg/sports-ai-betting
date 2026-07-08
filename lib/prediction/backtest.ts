@@ -11,6 +11,9 @@ import {
 import { getTeamNameCn } from '../sports-api/team-translations';
 import { getMetaModelWeights } from './weights';
 import { analyzeScoreError } from './error-analysis';
+import { getParkFactor } from './park-factors';
+import { calculateRestAndTravel } from './rest-travel';
+import { getTeamDepth } from './depth-quality';
 
 // Deterministic Polynomial Hash function
 function getHash(str: string): number {
@@ -262,6 +265,11 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
       }
     } : { home: null, away: null };
 
+    const parkFactor = getParkFactor(g.homeCode, g.league);
+    const restTravel = calculateRestAndTravel(g.awayCode, g.homeCode, g.league, 1);
+    const homeDepthInfo = getTeamDepth(g.homeCode, g.league);
+    const awayDepthInfo = getTeamDepth(g.awayCode, g.league);
+
     const sportsResultV2 = calculateWinProbabilityV2(splitsHomeStats, splitsAwayStats, g.id, g.league, {
       h2h: h2hRecord,
       homeFatigue,
@@ -269,7 +277,11 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
       homePitcher: pitchers.home,
       awayPitcher: pitchers.away,
       homeRecord: homeRecord,
-      awayRecord: awayRecord
+      awayRecord: awayRecord,
+      parkFactor,
+      restTravel,
+      homeDepthInfo,
+      awayDepthInfo
     });
     const eloResultV2 = calculateEloProbabilityV2(homeRecord, awayRecord, splitsHomeStats, splitsAwayStats, g.id, g.league, {
       h2h: h2hRecord,
@@ -281,7 +293,11 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
       homeFatigue,
       awayFatigue,
       homePitcher: pitchers.home,
-      awayPitcher: pitchers.away
+      awayPitcher: pitchers.away,
+      parkFactor,
+      restTravel,
+      homeDepthInfo,
+      awayDepthInfo
     });
 
     const sportsWinnerV2 = sportsResultV2.homeProbability >= sportsResultV2.awayProbability ? 'home' : 'away';

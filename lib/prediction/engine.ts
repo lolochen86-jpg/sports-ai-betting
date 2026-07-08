@@ -716,7 +716,12 @@ export async function generatePredictionV2(
   
   const dateStr = game.gameDate.split('T')[0];
 
-  // ─── 1. Parallel dynamic data extraction (6 dimensions) ───
+  // ─── 1. Parallel dynamic data extraction (6 dimensions + 3 new V2 modules) ───
+  const parkFactorInfo = getParkFactor(homeCode, league, game.venue);
+  const restTravelInfo = calculateRestAndTravel(awayCode, homeCode, league, 1);
+  const homeDepthInfo = getTeamDepth(homeCode, league);
+  const awayDepthInfo = getTeamDepth(awayCode, league);
+
   const [
     homeRecent,
     awayRecent,
@@ -746,7 +751,11 @@ export async function generatePredictionV2(
       homePitcher: pitchers.home,
       awayPitcher: pitchers.away,
       homeRecord: game.homeTeam.record,
-      awayRecord: game.awayTeam.record
+      awayRecord: game.awayTeam.record,
+      parkFactor: parkFactorInfo,
+      restTravel: restTravelInfo,
+      homeDepthInfo,
+      awayDepthInfo
     }
   );
   const sportsWinner = sportsResult.homeProbability >= sportsResult.awayProbability ? 'home' : 'away';
@@ -898,7 +907,11 @@ export async function generatePredictionV2(
       homeFatigue,
       awayFatigue,
       homePitcher: pitchers.home,
-      awayPitcher: pitchers.away
+      awayPitcher: pitchers.away,
+      parkFactor: parkFactorInfo,
+      restTravel: restTravelInfo,
+      homeDepthInfo,
+      awayDepthInfo
     }
   );
   const mcWinner = mcResult.homeProbability >= mcResult.awayProbability ? 'home' : 'away';
@@ -1024,6 +1037,10 @@ export async function generatePredictionV2(
     reasoning: sportsReasoning,
     keyPlayer,
     weatherFactor,
+    parkFactorInfo,
+    restTravelInfo,
+    homeDepthInfo,
+    awayDepthInfo,
     injuryImpact,
     activeModel: 'MetaModel',
     models: {
