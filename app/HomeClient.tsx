@@ -649,10 +649,43 @@ export default function HomeClient() {
   const [predictingGameId, setPredictingGameId] = useState<string | null>(null);
   const [predictionsUnlocked, setPredictionsUnlocked] = useState<Record<string, boolean>>({});
   const [predictions, setPredictions] = useState<Record<string, PredictionDetails>>({});
+  const [collapsedGames, setCollapsedGames] = useState<Record<string, boolean>>({});
   const [selectedModelTab, setSelectedModelTab] = useState<'SportsAI' | 'EloRating' | 'MonteCarlo' | 'MetaModel'>('MetaModel');
   const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
   const [smartParlayData, setSmartParlayData] = useState<any>(null);
   const [smartParlayLoading, setSmartParlayLoading] = useState(false);
+
+  const handleRunPredictionSilently = async (gameId: string, league: 'NBA' | 'MLB', dateStr: string) => {
+    try {
+      const res = await fetch('/api/predictions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gameId, league, date: dateStr })
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          setPredictions(prev => ({ ...prev, [gameId]: json.data }));
+          setPredictionsUnlocked(prev => ({ ...prev, [gameId]: true }));
+        }
+      }
+    } catch (err) {
+      console.warn('Silent prediction fetch error:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (games && games.length > 0) {
+      games.forEach(game => {
+        if (!predictions[game.id]) {
+          handleRunPredictionSilently(game.id, game.league, game.gameDate);
+        }
+      });
+      if (!selectedGameId || !games.some(g => g.id === selectedGameId)) {
+        setSelectedGameId(games[0].id);
+      }
+    }
+  }, [games]);
 
   const fetchSmartParlays = async () => {
     setSmartParlayLoading(true);
@@ -1927,8 +1960,8 @@ export default function HomeClient() {
                   />
                 )}
                 {games.map((game) => {
-                  const isUnlocked = predictionsUnlocked[game.id];
-                  const isExpanded = selectedGameId === game.id;
+                  const isUnlocked = true;
+                  const isExpanded = !collapsedGames[game.id];
                   const isPredicting = predictingGameId === game.id;
                   const basePred = predictions[game.id] || generateDynamicPrediction(game);
                   const pred = getAdjustedPrediction(game);
@@ -2102,33 +2135,26 @@ export default function HomeClient() {
 
                         {/* Action Block */}
                         <div className="w-full md:w-auto flex flex-col sm:flex-row md:flex-col gap-2 items-stretch justify-center md:items-end">
-                          {isPredicting ? (
-                            <div className="px-6 py-3 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center gap-3 text-purple-300 font-black text-xs font-sans">
-                              <svg className="animate-spin h-4 w-4 text-purple-400" viewBox="0 0 24 24" fill="none">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                              </svg>
-                              大數據模擬計算中...
-                            </div>
-                          ) : isUnlocked && pred ? (
-                            <button
-                              onClick={() => setSelectedGameId(isExpanded ? null : game.id)}
-                              className="px-6 py-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-black text-xs border border-white/10 hover:border-purple-500/30 transition-all flex items-center justify-center gap-1.5 font-sans"
-                            >
-                              {isExpanded ? '隱藏分析報告' : '查看 AI 分析報告'}
-                              <svg className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
-                              </svg>
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleRunPrediction(game.id)}
-                              className="px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-black text-xs shadow-lg shadow-purple-500/10 hover:shadow-purple-500/25 transition-all flex items-center justify-center gap-2 group border border-purple-400/20 font-sans"
-                            >
-                              <CpuIcon className="w-4 h-4 text-purple-200 group-hover:rotate-12 transition-transform animate-pulse" />
-                              解鎖 AI 預測數據
-                            </button>
-                          )}
+                          <button
+                            onClick={() => setCollapsedGames(prev => ({ ...prev, [game.id]: !prev[game.id] }))}
+                            className="px-6 py-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-black text-xs border border-white/10 hover:border-purple-500/30 transition-all flex items-center justify-center gap-1.5 font-sans shrink-0"
+                          >
+                            {isExpanded ? '隱藏分析報告' : '查看 AI 分析報告'}
+                            <svg className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                          
+                          <button
+                            onClick={() => setSelectedGameId(game.id)}
+                            className={`px-6 py-3 rounded-2xl font-black text-xs transition-all flex items-center justify-center gap-1.5 font-sans shrink-0 border ${
+                              selectedGameId === game.id 
+                                ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white border-transparent shadow-lg shadow-purple-500/25' 
+                                : 'bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border-white/10'
+                            }`}
+                          >
+                            <span>🎯 {selectedGameId === game.id ? '已選定沙盤加成' : '選定沙盤加成'}</span>
+                          </button>
                         </div>
 
                       </div>
@@ -3927,12 +3953,12 @@ export default function HomeClient() {
               </h3>
               
               <p className="text-xs text-gray-400 leading-relaxed mb-6 font-sans font-semibold">
-                選擇下方今日已解鎖的賽事，手動微調主客隊核心/明星球員的出戰狀態（如狀態爆發、健康回歸、主力缺陣），即可即時模擬並動態重算該場賽事的預估勝率與期望比分。
+                選擇下方今日賽事並點擊「選定沙盤加成」按鈕，手動微調主客隊核心/明星球員的出戰狀態（如狀態爆發、健康回歸、主力缺陣），即可即時模擬並動態重算該場賽事的預估勝率與期望比分。
               </p>
 
               {!selectedGameId ? (
                 <div className="text-center py-8 px-4 border border-dashed border-white/10 rounded-2xl text-xs text-gray-500 font-sans font-bold">
-                  💡 請先解鎖並展開下方任意一場今日賽事之【AI 分析報告】以在此載入該賽事之主力陣容進行加成演算。
+                  💡 請在上方賽事卡片中，點擊任意一場賽事之【選定沙盤加成】按鈕，即可在此載入該賽事之主力陣容進行加成演算。
                 </div>
               ) : (
                 <div className="space-y-6 font-sans">
