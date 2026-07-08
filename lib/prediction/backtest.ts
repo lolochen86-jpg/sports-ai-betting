@@ -107,6 +107,13 @@ export function getStaticLastDate(): string {
   return dates.length > 0 ? dates[dates.length - 1] : '2026-06-02';
 }
 
+/** 取得目前已載入的所有比賽（包含靜態與動態）中最後一筆資料的日期 */
+export function getLatestLoadedDate(): string {
+  const games = loadRealGames();
+  const dates = games.map(g => g.date).sort();
+  return dates.length > 0 ? dates[dates.length - 1] : '2026-06-02';
+}
+
 // ─── Load Real Historical Games: static JSON + dynamic merge ───
 export function loadRealGames(): RawHistoricalGame[] {
   const staticData = realGames as RawHistoricalGame[];

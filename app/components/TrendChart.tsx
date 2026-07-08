@@ -5,6 +5,7 @@ import {
   getHistoricalAccuracy, 
   getBacktestGamesForDate, 
   getStaticLastDate,
+  getLatestLoadedDate,
   setDynamicGames,
   setDbTaiwanOddsLines,
   BacktestTrendPoint,
@@ -139,46 +140,79 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
     try {
       onSyncStatus?.({ syncing: true, message: '正在從 MLB/NBA 官方 API 抓取最新完賽數據...', newGames: 0 });
       
-      const lastDate = getStaticLastDate();
-      const res = await fetch(`/api/backtest/sync?after=${lastDate}&_t=${Date.now()}`);
-      
-      if (!res.ok) {
-        onSyncStatus?.({ syncing: false, message: '❌ 同步失敗：API 回應異常', newGames: 0 });
-        return;
+      let totalNewGamesCount = 0;
+      let hasMore = true;
+      let currentAfter = getLatestLoadedDate();
+      let iteration = 0;
+      const maxIterations = 6; // 安全次數上限限制，避免意外的無窮迴圈
+
+      while (hasMore && iteration < maxIterations) {
+        iteration++;
+        console.log(`Syncing latest games starting after: ${currentAfter}`);
+        const res = await fetch(`/api/backtest/sync?after=${currentAfter}&_t=${Date.now()}`);
+        
+        if (!res.ok) {
+          onSyncStatus?.({ syncing: false, message: '❌ 同步失敗：API 回應異常', newGames: 0 });
+          return;
+        }
+        
+        const json = await res.json();
+        
+        if (json.success && json.data && json.data.length > 0) {
+          // 讀取本地動態快取
+          let existingDynamic: RawHistoricalGame[] = [];
+          try {
+            const cached = localStorage.getItem('backtest_dynamic_games');
+            if (cached) existingDynamic = JSON.parse(cached);
+          } catch { /* ignore */ }
+          
+          // 合併去重
+          const existingIds = new Set(existingDynamic.map(g => g.id));
+          const newGames = json.data.filter((g: RawHistoricalGame) => !existingIds.has(g.id));
+          const merged = [...existingDynamic, ...newGames];
+          
+          // 寫入 localStorage 持久化
+          try {
+            localStorage.setItem('backtest_dynamic_games', JSON.stringify(merged));
+          } catch { /* localStorage full */ }
+          
+          // 注入回測引擎
+          setDynamicGames(merged);
+          setDataVersion(v => v + 1);
+          totalNewGamesCount += newGames.length;
+
+          // 更新下一次抓取的 after 日期為當前最新抓到的日期
+          const fetchedDates = json.data.map((g: RawHistoricalGame) => g.date).sort();
+          if (fetchedDates.length > 0) {
+            currentAfter = fetchedDates[fetchedDates.length - 1];
+          } else {
+            hasMore = false;
+          }
+
+          // 如果還有剩餘日期，且本次抓到了資料，則繼續下一輪
+          if (json.meta.remainingDates > 0) {
+            onSyncStatus?.({ 
+              syncing: true, 
+              message: `⏳ 正在同步下一批次... (已載入 ${totalNewGamesCount} 場新數據，尚有 ${json.meta.remainingDates} 天)`, 
+              newGames: totalNewGamesCount 
+            });
+            // 稍等 1 秒避免對 API 造成過大負擔
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } else {
+            hasMore = false;
+          }
+        } else {
+          hasMore = false;
+        }
       }
-      
-      const json = await res.json();
-      
-      if (json.success && json.data && json.data.length > 0) {
-        // 也嘗試從 localStorage 讀取先前已快取的動態數據
-        let existingDynamic: RawHistoricalGame[] = [];
-        try {
-          const cached = localStorage.getItem('backtest_dynamic_games');
-          if (cached) existingDynamic = JSON.parse(cached);
-        } catch { /* ignore */ }
-        
-        // 合併去重
-        const existingIds = new Set(existingDynamic.map(g => g.id));
-        const newGames = json.data.filter((g: RawHistoricalGame) => !existingIds.has(g.id));
-        const merged = [...existingDynamic, ...newGames];
-        
-        // 寫入 localStorage 持久化
-        try {
-          localStorage.setItem('backtest_dynamic_games', JSON.stringify(merged));
-        } catch { /* localStorage full */ }
-        
-        // 注入回測引擎
-        setDynamicGames(merged);
-        setDataVersion(v => v + 1);
-        
+
+      // 同步完畢後的最終狀態回報
+      if (totalNewGamesCount > 0) {
         onSyncStatus?.({ 
           syncing: false, 
-          message: `✅ 成功同步 ${json.meta.datesChecked} 天、共 ${newGames.length} 場新完賽數據${json.meta.remainingDates > 0 ? ` (尚有 ${json.meta.remainingDates} 天待同步)` : ''}`, 
-          newGames: newGames.length 
+          message: `✅ 成功同步共 ${totalNewGamesCount} 場最新完賽數據`, 
+          newGames: totalNewGamesCount 
         });
-
-        // 最新數據同步完成後，開始背景向後同步歷史數據
-        syncBackwardGames();
       } else {
         // 沒有新數據，但仍嘗試載入 localStorage 的快取
         try {
@@ -193,10 +227,11 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
         } catch { /* ignore */ }
         
         onSyncStatus?.({ syncing: false, message: '📊 回測數據已是最新狀態', newGames: 0 });
-
-        // 開始背景向後同步歷史數據
-        syncBackwardGames();
       }
+
+      // 最新數據同步完成後，開始背景向後同步歷史數據
+      syncBackwardGames();
+
     } catch (err) {
       // 網路錯誤時嘗試載入 localStorage 快取
       try {
@@ -213,7 +248,7 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
       onSyncStatus?.({ syncing: false, message: '⚠️ 同步失敗，使用本地快取數據', newGames: 0 });
       console.error('Backtest sync error:', err);
     }
-  }, [onSyncStatus]);
+  }, [onSyncStatus, syncBackwardGames]);
 
   // 首次掛載時自動同步 + 載入 localStorage 快取
   useEffect(() => {
