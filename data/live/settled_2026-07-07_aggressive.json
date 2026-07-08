@@ -5,14 +5,20 @@
     "sport": "PARLAY",
     "parlay_odds": 5.473,
     "bet_amount": 10.0,
-    "result": "VOID",
-    "pnl": 0.0,
+    "result": "LOSS",
+    "pnl": -10.0,
     "leg_results": [
       {
         "game_id": "823929",
         "expected": "COL",
-        "winner": null,
-        "result": "VOID"
+        "winner": "COL",
+        "result": "WIN"
+      },
+      {
+        "game_id": "822713",
+        "expected": "WSH",
+        "winner": "HOU",
+        "result": "LOSS"
       }
     ],
     "legs": [
