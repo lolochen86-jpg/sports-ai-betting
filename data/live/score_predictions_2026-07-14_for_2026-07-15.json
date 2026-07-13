@@ -1,0 +1,27 @@
+{
+  "report_date": "2026-07-14",
+  "target_date": "2026-07-15",
+  "timezone": "Asia/Taipei",
+  "generated_at_tw": "2026-07-14T00:34:58+08:00",
+  "source_note": "尚未取得隔天 NBA / MLB 賽程資料",
+  "strategies": [
+    {
+      "slug": "conservative",
+      "name": "穩健型 Conservative",
+      "games": [],
+      "total_games": 0
+    },
+    {
+      "slug": "aggressive",
+      "name": "激進型 Aggressive",
+      "games": [],
+      "total_games": 0
+    },
+    {
+      "slug": "underdog",
+      "name": "冷門獵人 Underdog",
+      "games": [],
+      "total_games": 0
+    }
+  ]
+}
