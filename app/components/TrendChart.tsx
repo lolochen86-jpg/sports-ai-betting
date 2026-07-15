@@ -33,7 +33,8 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
     EloRating: true,
     MonteCarlo: true,
     MetaModel: true,
-    MetaModelV2: true
+    MetaModelV2: true,
+    QuantML: true
   });
   
   // Interactive Hovering & Selecting States
@@ -364,7 +365,7 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
   };
 
   // Generate Path Strings for SVG
-  const generatePaths = (modelKey: 'SportsAI' | 'EloRating' | 'MonteCarlo' | 'MetaModel' | 'MetaModelV2') => {
+  const generatePaths = (modelKey: 'SportsAI' | 'EloRating' | 'MonteCarlo' | 'MetaModel' | 'MetaModelV2' | 'QuantML') => {
     if (chartData.length === 0) return { strokePath: '', areaPath: '' };
     
     let strokePath = '';
@@ -396,6 +397,7 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
   const mcPaths = useMemo(() => generatePaths('MonteCarlo'), [chartData, chartType]);
   const metaPaths = useMemo(() => generatePaths('MetaModel'), [chartData, chartType]);
   const metaV2Paths = useMemo(() => generatePaths('MetaModelV2'), [chartData, chartType]);
+  const quantPaths = useMemo(() => generatePaths('QuantML'), [chartData, chartType]);
 
   // Handle SVG Mouse Move to calculate hover index
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
@@ -534,6 +536,7 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
         <div className="flex flex-wrap items-center justify-center gap-6 mb-4 w-full">
           {[
             { id: 'MetaModelV2' as const, name: '👑 Meta 2.0 增強元模型 (v2.0)', color: 'border-amber-500 text-amber-400 bg-amber-500/10' },
+            { id: 'QuantML' as const, name: '🔬 QuantML 量化物理模型 (v1.0)', color: 'border-emerald-500 text-emerald-400 bg-emerald-500/10' },
             { id: 'MetaModel' as const, name: '👑 Meta 堆疊元模型 (v1.0)', color: 'border-pink-500 text-pink-400 bg-pink-500/10' },
             { id: 'SportsAI' as const, name: 'SportsAI 迴歸 (v4.2)', color: 'border-purple-500 text-purple-400 bg-purple-500/10' },
             { id: 'EloRating' as const, name: 'Elo 戰力比對 (v1.8)', color: 'border-orange-500 text-orange-400 bg-orange-500/10' },
@@ -551,8 +554,10 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
               <span className={`w-2 h-2 rounded-full shrink-0 ${
                 !visibleModels[model.id] ? 'bg-gray-700' : (
                   model.id === 'MetaModelV2' ? 'bg-amber-500' : (
-                    model.id === 'MetaModel' ? 'bg-pink-500' : (
-                      model.id === 'SportsAI' ? 'bg-purple-500' : (model.id === 'EloRating' ? 'bg-orange-500' : 'bg-cyan-400')
+                    model.id === 'QuantML' ? 'bg-emerald-500' : (
+                      model.id === 'MetaModel' ? 'bg-pink-500' : (
+                        model.id === 'SportsAI' ? 'bg-purple-500' : (model.id === 'EloRating' ? 'bg-orange-500' : 'bg-cyan-400')
+                      )
                     )
                   )
                 )
@@ -573,6 +578,10 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
           >
             {/* Defs for gradients & shadow glows */}
             <defs>
+              <linearGradient id="quantGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#10b981" stopOpacity="0.12" />
+                <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+              </linearGradient>
               <linearGradient id="metaV2Grad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.12" />
                 <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
@@ -724,6 +733,9 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
             {visibleModels.MetaModelV2 && metaV2Paths.areaPath && (
               <path d={metaV2Paths.areaPath} fill="url(#metaV2Grad)" />
             )}
+            {visibleModels.QuantML && quantPaths.areaPath && (
+              <path d={quantPaths.areaPath} fill="url(#quantGrad)" />
+            )}
             {visibleModels.MetaModel && metaPaths.areaPath && (
               <path d={metaPaths.areaPath} fill="url(#metaGrad)" />
             )}
@@ -743,6 +755,17 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                 d={metaV2Paths.strokePath} 
                 fill="none" 
                 stroke="#f59e0b" 
+                strokeWidth="3.5" 
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="url(#glow-metaV2)"
+              />
+            )}
+            {visibleModels.QuantML && quantPaths.strokePath && (
+              <path 
+                d={quantPaths.strokePath} 
+                fill="none" 
+                stroke="#10b981" 
                 strokeWidth="3.5" 
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -820,6 +843,16 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                     r="6" 
                     fill="#030712"
                     stroke="#f59e0b" 
+                    strokeWidth="3" 
+                  />
+                )}
+                {visibleModels.QuantML && (
+                  <circle 
+                    cx={getX(hoverIndex)} 
+                    cy={getY(hoverData.QuantML[chartType])} 
+                    r="6" 
+                    fill="#030712"
+                    stroke="#10b981" 
                     strokeWidth="3" 
                   />
                 )}
@@ -910,6 +943,18 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                   <div className="text-right">
                     <span className="font-black font-mono text-amber-200">{hoverData.MetaModelV2[chartType]}%</span>
                     <span className="text-[9px] text-gray-500 font-mono font-bold ml-1">({chartType === 'winner' ? hoverData.MetaModelV2.winnerStats : chartType === 'ou' ? hoverData.MetaModelV2.ouStats : hoverData.MetaModelV2.totalScoreStats}場)</span>
+                  </div>
+                </div>
+              )}
+              {visibleModels.QuantML && (
+                <div className="flex justify-between items-center text-xs text-emerald-400">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    QuantML 量化物理模型:
+                  </span>
+                  <div className="text-right">
+                    <span className="font-black font-mono text-emerald-200">{hoverData.QuantML[chartType]}%</span>
+                    <span className="text-[9px] text-gray-500 font-mono font-bold ml-1">({chartType === 'winner' ? hoverData.QuantML.winnerStats : chartType === 'ou' ? hoverData.QuantML.ouStats : hoverData.QuantML.totalScoreStats}場)</span>
                   </div>
                 </div>
               )}
@@ -1035,7 +1080,7 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                         <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse" />
                         <span>預估共識平均:</span>
                         <span className="text-pink-300 font-black font-mono text-xs">
-                          {((game.SportsAI.ouT + game.EloRating.ouT + game.MonteCarlo.ouT + game.MetaModel.ouT + game.MetaModelV2.ouT) / 5).toFixed(1)} 分
+                          {((game.SportsAI.ouT + game.EloRating.ouT + game.MonteCarlo.ouT + game.MetaModel.ouT + game.MetaModelV2.ouT + (game.QuantML?.ouT ?? game.SportsAI.ouT)) / 6).toFixed(1)} 分
                         </span>
                       </div>
                     </div>
@@ -1071,12 +1116,13 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                     {[
                       { id: 'MetaModelV2', name: '👑 Meta 2.0 增強元模型', data: game.MetaModelV2, stroke: 'border-amber-500/20 focus:border-amber-500/50 bg-amber-500/5', color: 'text-amber-300', dot: 'bg-amber-500' },
+                      { id: 'QuantML', name: '🔬 QuantML 量化物理模型', data: game.QuantML ?? game.SportsAI, stroke: 'border-emerald-500/20 focus:border-emerald-500/50 bg-emerald-500/5', color: 'text-emerald-300', dot: 'bg-emerald-500' },
                       { id: 'MetaModel', name: '👑 Meta 堆疊元模型', data: game.MetaModel, stroke: 'border-pink-500/20 focus:border-pink-500/50 bg-pink-500/5', color: 'text-pink-300', dot: 'bg-pink-500' },
                       { id: 'SportsAI', name: '🤖 SportsAI 迴歸', data: game.SportsAI, stroke: 'border-purple-500/20 focus:border-purple-500/50 bg-purple-500/5', color: 'text-purple-300', dot: 'bg-purple-500' },
                       { id: 'EloRating', name: '📈 Elo 戰力比對', data: game.EloRating, stroke: 'border-orange-500/20 focus:border-orange-500/50 bg-orange-500/5', color: 'text-orange-300', dot: 'bg-orange-500' },
                       { id: 'MonteCarlo', name: '🎲 Monte Carlo 模擬', data: game.MonteCarlo, stroke: 'border-cyan-400/20 focus:border-cyan-400/50 bg-cyan-400/5', color: 'text-cyan-300', dot: 'bg-cyan-400' }
                     ].map((m) => {
-                      if (!visibleModels[m.id as 'SportsAI' | 'EloRating' | 'MonteCarlo' | 'MetaModel' | 'MetaModelV2']) return null;
+                      if (!visibleModels[m.id as 'SportsAI' | 'EloRating' | 'MonteCarlo' | 'MetaModel' | 'MetaModelV2' | 'QuantML']) return null;
                       
                       const predictedWinnerName = m.data.winner === 'home' ? game.homeTeam.nameCn : game.awayTeam.nameCn;
                       const winnerAccBadge = m.data.winnerCorrect

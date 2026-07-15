@@ -8,12 +8,37 @@ export const dynamic = 'force-dynamic';
 
 const CACHE_TTL_PREDICTION_ROUTE = 60 * 60; // Cache prediction results for 1 hour
 
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+function corsJson(data: any, init?: ResponseInit) {
+  const mergedHeaders = new Headers(init?.headers);
+  Object.entries(CORS_HEADERS).forEach(([key, val]) => {
+    mergedHeaders.set(key, val);
+  });
+  return corsJson(data, {
+    ...init,
+    headers: mergedHeaders,
+  });
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: CORS_HEADERS,
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { gameId, league, date } = await request.json();
 
     if (!gameId || !league) {
-      return NextResponse.json(
+      return corsJson(
         { success: false, error: '缺少必要參數 (gameId 或 league)' },
         { status: 400 }
       );
@@ -21,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const leagueUpper = league.toUpperCase() as 'MLB' | 'NBA';
     if (leagueUpper !== 'MLB' && leagueUpper !== 'NBA') {
-      return NextResponse.json(
+      return corsJson(
         { success: false, error: '無效的聯盟名稱' },
         { status: 400 }
       );
@@ -31,7 +56,7 @@ export async function POST(request: NextRequest) {
     const cacheKey = `prediction_result:${leagueUpper.toLowerCase()}:${gameId}`;
     const cachedPrediction = apiCache.get(cacheKey);
     if (cachedPrediction) {
-      return NextResponse.json({
+      return corsJson({
         success: true,
         data: cachedPrediction,
         meta: { cached: true }
@@ -50,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     const game = games.find(g => String(g.id) === String(gameId));
     if (!game) {
-      return NextResponse.json(
+      return corsJson(
         { success: false, error: '找不到指定賽事，AI 預測引擎目前僅支持解鎖本日賽事' },
         { status: 404 }
       );
@@ -62,14 +87,14 @@ export async function POST(request: NextRequest) {
     // Save prediction in TTL Cache
     apiCache.set(cacheKey, prediction, CACHE_TTL_PREDICTION_ROUTE);
 
-    return NextResponse.json({
+    return corsJson({
       success: true,
       data: prediction,
       meta: { cached: false }
     });
   } catch (error) {
     console.error('Predictions API error:', error);
-    return NextResponse.json(
+    return corsJson(
       { success: false, error: error instanceof Error ? error.message : '生成預測報告失敗，請重試' },
       { status: 500 }
     );
@@ -83,7 +108,7 @@ export async function GET(request: NextRequest) {
   const league = searchParams.get('league')?.toUpperCase() || 'ALL';
 
   if (!dateStr) {
-    return NextResponse.json({ success: false, error: '缺少 date 參數' }, { status: 400 });
+    return corsJson({ success: false, error: '缺少 date 參數' }, { status: 400 });
   }
 
   try {
@@ -127,13 +152,13 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    return NextResponse.json({
+    return corsJson({
       success: true,
       data: predictionsList,
     });
   } catch (error) {
     console.error('Predictions GET API error:', error);
-    return NextResponse.json(
+    return corsJson(
       { success: false, error: error instanceof Error ? error.message : '取得預測資料失敗' },
       { status: 500 }
     );

@@ -6,6 +6,31 @@ import type { GameWithTeams, ApiResponse } from '@/types/sports';
 
 export const dynamic = 'force-dynamic';
 
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+function corsJson(data: any, init?: ResponseInit) {
+  const mergedHeaders = new Headers(init?.headers);
+  Object.entries(CORS_HEADERS).forEach(([key, val]) => {
+    mergedHeaders.set(key, val);
+  });
+  return corsJson(data, {
+    ...init,
+    headers: mergedHeaders,
+  });
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: CORS_HEADERS,
+  });
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const league = searchParams.get('league')?.toUpperCase();
@@ -65,10 +90,10 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    return NextResponse.json(response);
+    return corsJson(response);
   } catch (error) {
     console.error('Games API error:', error);
-    return NextResponse.json(
+    return corsJson(
       { success: false, data: [], meta: { count: 0, cached: false }, error: String(error) },
       { status: 500 }
     );

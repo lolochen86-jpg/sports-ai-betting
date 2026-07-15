@@ -606,13 +606,15 @@ export default function HistoryPage() {
                                   );
                                 })()}
 
-                                {/* 4 Model Breakdown */}
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                                {/* 6 Model Breakdown */}
+                                <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
                                   {[
                                     { name: '👑 Meta 元模型', data: aiPred.MetaModel, color: 'border-pink-500/30 bg-pink-500/10', dot: 'bg-pink-500', textColor: 'text-pink-300' },
                                     { name: '🤖 SportsAI', data: aiPred.SportsAI, color: 'border-purple-500/30 bg-purple-500/10', dot: 'bg-purple-500', textColor: 'text-purple-300' },
                                     { name: '📈 Elo 戰力', data: aiPred.EloRating, color: 'border-orange-500/30 bg-orange-500/10', dot: 'bg-orange-500', textColor: 'text-orange-300' },
                                     { name: '🎲 Monte Carlo', data: aiPred.MonteCarlo, color: 'border-cyan-400/30 bg-cyan-400/10', dot: 'bg-cyan-400', textColor: 'text-cyan-300' },
+                                    { name: game.league === 'MLB' ? '⚾ 投打後援' : '🏀 先發板凳', data: aiPred.PitcherBullpen || aiPred.SportsAI, color: 'border-emerald-500/30 bg-emerald-500/10', dot: 'bg-emerald-500', textColor: 'text-emerald-300' },
+                                    { name: '🔬 QuantML', data: aiPred.QuantML || aiPred.SportsAI, color: 'border-teal-500/30 bg-teal-500/10', dot: 'bg-teal-500', textColor: 'text-teal-300' },
                                   ].map((m) => {
                                     const predWinnerName = m.data.winner === 'home' ? homeCn : awayCn;
                                     return (

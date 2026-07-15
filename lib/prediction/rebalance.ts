@@ -13,6 +13,7 @@ export interface RebalanceResult {
     SportsAI: number;
     EloRating: number;
     MonteCarlo: number;
+    QuantML: number;
   };
   logs: string[];
 }
@@ -57,7 +58,7 @@ export async function runAutoRebalancing(): Promise<RebalanceResult> {
       gameCount,
       oldWeights: currentWeights,
       newWeights: currentWeights,
-      subModelWinRates: { SportsAI: 0, EloRating: 0, MonteCarlo: 0 },
+      subModelWinRates: { SportsAI: 0, EloRating: 0, MonteCarlo: 0, QuantML: 0 },
       logs
     };
   }
@@ -78,6 +79,7 @@ export async function runAutoRebalancing(): Promise<RebalanceResult> {
   let sportsCorrectCount = 0;
   let eloCorrectCount = 0;
   let mcCorrectCount = 0;
+  let quantCorrectCount = 0;
   let evaluatedCount = 0;
 
   for (const game of latest50Games) {
@@ -88,6 +90,12 @@ export async function runAutoRebalancing(): Promise<RebalanceResult> {
       if (detail.SportsAI.winnerCorrect) sportsCorrectCount++;
       if (detail.EloRating.winnerCorrect) eloCorrectCount++;
       if (detail.MonteCarlo.winnerCorrect) mcCorrectCount++;
+      if (detail.QuantML && detail.QuantML.winnerCorrect) {
+        quantCorrectCount++;
+      } else if (!detail.QuantML) {
+        // If QuantML is missing in historical backtest records, fallback to SportsAI for evaluation
+        if (detail.SportsAI.winnerCorrect) quantCorrectCount++;
+      }
     }
   }
 
@@ -95,18 +103,21 @@ export async function runAutoRebalancing(): Promise<RebalanceResult> {
   const sportsWinRate = evaluatedCount > 0 ? sportsCorrectCount / evaluatedCount : 0;
   const eloWinRate = evaluatedCount > 0 ? eloCorrectCount / evaluatedCount : 0;
   const mcWinRate = evaluatedCount > 0 ? mcCorrectCount / evaluatedCount : 0;
+  const quantWinRate = evaluatedCount > 0 ? quantCorrectCount / evaluatedCount : 0;
 
   log(`MetaModel Win Rate: ${(metaWinRate * 100).toFixed(1)}% (${metaCorrectCount}/${evaluatedCount})`);
   log(`Sub-model Win Rates over these ${evaluatedCount} games:`);
   log(`  - SportsAI (Regression): ${(sportsWinRate * 100).toFixed(1)}% (${sportsCorrectCount})`);
   log(`  - EloRating (Elo): ${(eloWinRate * 100).toFixed(1)}% (${eloCorrectCount})`);
   log(`  - MonteCarlo (Monte Carlo): ${(mcWinRate * 100).toFixed(1)}% (${mcCorrectCount})`);
+  log(`  - QuantML (Quantitative): ${(quantWinRate * 100).toFixed(1)}% (${quantCorrectCount})`);
 
   const oldWeights = getMetaModelWeights();
   const subModelWinRates = {
     SportsAI: sportsWinRate,
     EloRating: eloWinRate,
-    MonteCarlo: mcWinRate
+    MonteCarlo: mcWinRate,
+    QuantML: quantWinRate
   };
 
   // 4. Trigger check: Threshold = 60% (0.60)
@@ -123,7 +134,8 @@ export async function runAutoRebalancing(): Promise<RebalanceResult> {
       subModelWinRates: {
         SportsAI: Number((sportsWinRate * 100).toFixed(1)),
         EloRating: Number((eloWinRate * 100).toFixed(1)),
-        MonteCarlo: Number((mcWinRate * 100).toFixed(1))
+        MonteCarlo: Number((mcWinRate * 100).toFixed(1)),
+        QuantML: Number((quantWinRate * 100).toFixed(1))
       },
       logs
     };
@@ -132,8 +144,7 @@ export async function runAutoRebalancing(): Promise<RebalanceResult> {
   log(`Meta-Model win rate ${(metaWinRate * 100).toFixed(1)}% is below 60%. Triggering weight rebalancing!`);
 
   // 5. Weight rebalancing logic
-  // Models are: 'SportsAI', 'EloRating', 'MonteCarlo'
-  const models: Array<keyof MetaModelWeights> = ['SportsAI', 'EloRating', 'MonteCarlo'];
+  const models: Array<keyof MetaModelWeights> = ['SportsAI', 'EloRating', 'MonteCarlo', 'QuantML'];
 
   // Find the model with the lowest win rate
   let worstModel = models[0];
@@ -171,14 +182,15 @@ export async function runAutoRebalancing(): Promise<RebalanceResult> {
       subModelWinRates: {
         SportsAI: Number((sportsWinRate * 100).toFixed(1)),
         EloRating: Number((eloWinRate * 100).toFixed(1)),
-        MonteCarlo: Number((mcWinRate * 100).toFixed(1))
+        MonteCarlo: Number((mcWinRate * 100).toFixed(1)),
+        QuantML: Number((quantWinRate * 100).toFixed(1))
       },
       logs
     };
   }
 
   // Perform weight shifts: worst model -5%, best model +5%
-  const currentWorstWeight = oldWeights[worstModel];
+  const currentWorstWeight = oldWeights[worstModel] ?? 0;
   const targetWorstWeight = Math.max(0, currentWorstWeight - 0.05);
   const actualDecrease = Number((currentWorstWeight - targetWorstWeight).toFixed(4));
 
@@ -195,7 +207,8 @@ export async function runAutoRebalancing(): Promise<RebalanceResult> {
       subModelWinRates: {
         SportsAI: Number((sportsWinRate * 100).toFixed(1)),
         EloRating: Number((eloWinRate * 100).toFixed(1)),
-        MonteCarlo: Number((mcWinRate * 100).toFixed(1))
+        MonteCarlo: Number((mcWinRate * 100).toFixed(1)),
+        QuantML: Number((quantWinRate * 100).toFixed(1))
       },
       logs
     };
@@ -204,23 +217,25 @@ export async function runAutoRebalancing(): Promise<RebalanceResult> {
   // Build new weights
   const newWeights: MetaModelWeights = { ...oldWeights };
   newWeights[worstModel] = Number((currentWorstWeight - actualDecrease).toFixed(4));
-  newWeights[bestModel] = Number((oldWeights[bestModel] + actualDecrease).toFixed(4));
+  newWeights[bestModel] = Number(((oldWeights[bestModel] ?? 0) + actualDecrease).toFixed(4));
 
   // Round all weights to 4 decimal places for floating point safety
-  newWeights.SportsAI = Number(newWeights.SportsAI.toFixed(4));
-  newWeights.EloRating = Number(newWeights.EloRating.toFixed(4));
-  newWeights.MonteCarlo = Number(newWeights.MonteCarlo.toFixed(4));
+  newWeights.SportsAI = Number((newWeights.SportsAI ?? 0).toFixed(4));
+  newWeights.EloRating = Number((newWeights.EloRating ?? 0).toFixed(4));
+  newWeights.MonteCarlo = Number((newWeights.MonteCarlo ?? 0).toFixed(4));
+  newWeights.QuantML = Number((newWeights.QuantML ?? 0).toFixed(4));
 
   // Verify weights sum to exactly 1.0 (100%)
-  const weightSum = newWeights.SportsAI + newWeights.EloRating + newWeights.MonteCarlo;
+  const weightSum = (newWeights.SportsAI ?? 0) + (newWeights.EloRating ?? 0) + (newWeights.MonteCarlo ?? 0) + (newWeights.QuantML ?? 0);
   if (Math.abs(weightSum - 1.0) > 0.0001) {
     // Gracefully correct any tiny rounding error by adjusting the bestModel's weight slightly
-    newWeights[bestModel] = Number((1.0 - (newWeights.SportsAI + newWeights.EloRating + newWeights.MonteCarlo - newWeights[bestModel])).toFixed(4));
+    const currentSum = (newWeights.SportsAI ?? 0) + (newWeights.EloRating ?? 0) + (newWeights.MonteCarlo ?? 0) + (newWeights.QuantML ?? 0);
+    newWeights[bestModel] = Number((1.0 - (currentSum - (newWeights[bestModel] ?? 0))).toFixed(4));
   }
 
   log(`Weight adjustment plan:`);
-  log(`  - ${worstModel}: ${oldWeights[worstModel] * 100}% -> ${newWeights[worstModel] * 100}% (-5%)`);
-  log(`  - ${bestModel}: ${oldWeights[bestModel] * 100}% -> ${newWeights[bestModel] * 100}% (+5%)`);
+  log(`  - ${worstModel}: ${(oldWeights[worstModel] ?? 0) * 100}% -> ${(newWeights[worstModel] ?? 0) * 100}% (-5%)`);
+  log(`  - ${bestModel}: ${(oldWeights[bestModel] ?? 0) * 100}% -> ${(newWeights[bestModel] ?? 0) * 100}% (+5%)`);
 
   // Save the new weights to local file and database
   const saveSuccess = await saveMetaModelWeights(newWeights);
@@ -238,7 +253,8 @@ export async function runAutoRebalancing(): Promise<RebalanceResult> {
       subModelWinRates: {
         SportsAI: Number((sportsWinRate * 100).toFixed(1)),
         EloRating: Number((eloWinRate * 100).toFixed(1)),
-        MonteCarlo: Number((mcWinRate * 100).toFixed(1))
+        MonteCarlo: Number((mcWinRate * 100).toFixed(1)),
+        QuantML: Number((quantWinRate * 100).toFixed(1))
       },
       logs
     };
@@ -255,7 +271,8 @@ export async function runAutoRebalancing(): Promise<RebalanceResult> {
       subModelWinRates: {
         SportsAI: Number((sportsWinRate * 100).toFixed(1)),
         EloRating: Number((eloWinRate * 100).toFixed(1)),
-        MonteCarlo: Number((mcWinRate * 100).toFixed(1))
+        MonteCarlo: Number((mcWinRate * 100).toFixed(1)),
+        QuantML: Number((quantWinRate * 100).toFixed(1))
       },
       logs
     };

@@ -2,12 +2,14 @@ export interface MetaModelWeights {
   SportsAI: number;
   EloRating: number;
   MonteCarlo: number;
+  QuantML?: number;
 }
 
 export const DEFAULT_WEIGHTS: MetaModelWeights = {
-  SportsAI: 0.45,
-  EloRating: 0.25,
-  MonteCarlo: 0.30
+  SportsAI: 0.35,
+  EloRating: 0.20,
+  MonteCarlo: 0.20,
+  QuantML: 0.25
 };
 
 // In-memory cache for server-side weights (updated after DB reads or saves)
@@ -28,19 +30,50 @@ function getWeightsFilePath(): string {
  * - Browser: reads from localStorage
  * - Server: reads from in-memory cache → local JSON file → defaults
  */
+export function normalizeWeights(weights: any): MetaModelWeights {
+  if (!weights) return DEFAULT_WEIGHTS;
+  let sportsAI = typeof weights.SportsAI === 'number' ? weights.SportsAI : 0.35;
+  let eloRating = typeof weights.EloRating === 'number' ? weights.EloRating : 0.20;
+  let monteCarlo = typeof weights.MonteCarlo === 'number' ? weights.MonteCarlo : 0.20;
+  let quantML = typeof weights.QuantML === 'number' ? weights.QuantML : undefined;
+
+  if (quantML === undefined) {
+    const sumOthers = sportsAI + eloRating + monteCarlo;
+    if (sumOthers > 0) {
+      sportsAI = (sportsAI / sumOthers) * 0.75;
+      eloRating = (eloRating / sumOthers) * 0.75;
+      monteCarlo = (monteCarlo / sumOthers) * 0.75;
+    } else {
+      sportsAI = 0.35;
+      eloRating = 0.20;
+      monteCarlo = 0.20;
+    }
+    quantML = 0.25;
+  }
+
+  const total = sportsAI + eloRating + monteCarlo + quantML;
+  if (Math.abs(total - 1.0) > 0.001 && total > 0) {
+    const factor = 1.0 / total;
+    sportsAI *= factor;
+    eloRating *= factor;
+    monteCarlo *= factor;
+    quantML *= factor;
+  }
+
+  return {
+    SportsAI: Number(sportsAI.toFixed(3)),
+    EloRating: Number(eloRating.toFixed(3)),
+    MonteCarlo: Number(monteCarlo.toFixed(3)),
+    QuantML: Number(quantML.toFixed(3))
+  };
+}
+
 export function getMetaModelWeights(): MetaModelWeights {
   if (typeof window !== 'undefined') {
     try {
       const cached = localStorage.getItem('meta_model_weights');
       if (cached) {
-        const weights = JSON.parse(cached);
-        if (
-          typeof weights.SportsAI === 'number' &&
-          typeof weights.EloRating === 'number' &&
-          typeof weights.MonteCarlo === 'number'
-        ) {
-          return weights;
-        }
+        return normalizeWeights(JSON.parse(cached));
       }
     } catch { /* ignore */ }
     return DEFAULT_WEIGHTS;
@@ -56,18 +89,9 @@ export function getMetaModelWeights(): MetaModelWeights {
     const weightsFilePath = getWeightsFilePath();
     if (fs.existsSync(weightsFilePath)) {
       const data = fs.readFileSync(weightsFilePath, 'utf8');
-      const weights = JSON.parse(data);
-      if (
-        typeof weights.SportsAI === 'number' &&
-        typeof weights.EloRating === 'number' &&
-        typeof weights.MonteCarlo === 'number'
-      ) {
-        const sum = weights.SportsAI + weights.EloRating + weights.MonteCarlo;
-        if (Math.abs(sum - 1.0) < 0.01) {
-          _serverWeightsCache = weights;
-          return weights;
-        }
-      }
+      const weights = normalizeWeights(JSON.parse(data));
+      _serverWeightsCache = weights;
+      return weights;
     }
   } catch (error) {
     console.error('[Weights Manager] Failed to read weights from file:', error);
@@ -91,18 +115,9 @@ export async function getMetaModelWeightsAsync(): Promise<MetaModelWeights> {
       where: { key: 'meta_model_weights' }
     });
     if (row && row.value) {
-      const weights = JSON.parse(row.value);
-      if (
-        typeof weights.SportsAI === 'number' &&
-        typeof weights.EloRating === 'number' &&
-        typeof weights.MonteCarlo === 'number'
-      ) {
-        const sum = weights.SportsAI + weights.EloRating + weights.MonteCarlo;
-        if (Math.abs(sum - 1.0) < 0.01) {
-          _serverWeightsCache = weights;
-          return weights;
-        }
-      }
+      const weights = normalizeWeights(JSON.parse(row.value));
+      _serverWeightsCache = weights;
+      return weights;
     }
   } catch (error) {
     console.warn('[Weights Manager] DB read failed, falling back to file/defaults:', error);
@@ -138,12 +153,12 @@ export async function saveMetaModelWeights(weights: MetaModelWeights): Promise<b
       where: { key: 'meta_model_weights' },
       update: {
         value: JSON.stringify(weights),
-        description: 'Ensemble MetaModel weights for SportsAI, EloRating, and MonteCarlo'
+        description: 'Ensemble MetaModel weights for SportsAI, EloRating, MonteCarlo, and QuantML'
       },
       create: {
         key: 'meta_model_weights',
         value: JSON.stringify(weights),
-        description: 'Ensemble MetaModel weights for SportsAI, EloRating, and MonteCarlo'
+        description: 'Ensemble MetaModel weights for SportsAI, EloRating, MonteCarlo, and QuantML'
       }
     });
     dbSaved = true;

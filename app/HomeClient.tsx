@@ -136,10 +136,12 @@ interface PredictionDetails {
   awayDepthInfo?: TeamDepthInfo;
   injuryImpact: string;
   activeModel: string;
-  models: {
+    models: {
     SportsAI: ModelPrediction;
     EloRating: ModelPrediction;
     MonteCarlo: ModelPrediction;
+    PitcherBullpen: ModelPrediction;
+    QuantML: ModelPrediction;
     MetaModel: ModelPrediction;
   };
   pitchers?: {
@@ -593,7 +595,7 @@ function generateDynamicPrediction(game: GameWithTeams): PredictionDetails {
         ouPick: eloOuPick,
         highestScoringPeriod: calculatePeriodPrediction(eloHomeScore, eloAwayScore, game.id, game.league, 'EloRating'),
       },
-      MonteCarlo: {
+            MonteCarlo: {
         name: 'Monte Carlo 萬次隨機模擬模型 (v2.5) [模擬]',
         winner,
         confidence: Number((confidence + 1.2).toFixed(1)),
@@ -608,6 +610,36 @@ function generateDynamicPrediction(game: GameWithTeams): PredictionDetails {
         ouLine,
         ouPick: mcOuPick,
         highestScoringPeriod: calculatePeriodPrediction(mcHomeScore, mcAwayScore, game.id, game.league, 'MonteCarlo'),
+      },
+      PitcherBullpen: {
+        name: game.league === 'MLB' ? '⚾ 投打與後援牛棚對位模型 [模擬]' : '🏀 先發防守與板凳深度對位模型 [模擬]',
+        winner,
+        confidence: Number((confidence - 0.5).toFixed(1)),
+        modelVersion: 'PitcherBullpen-v1.0',
+        reasoning: [
+          `對戰對位特徵顯示，${winnerName} 面對對手先發與深度防禦具有對位優勢。`,
+          `主隊先發壓制/進攻配合板凳替補深度，預估比分為 ${mcHomeScore} - ${mcAwayScore}。`,
+        ],
+        homeExpectedScore: mcHomeScore,
+        awayExpectedScore: mcAwayScore,
+        ouLine,
+        ouPick: mcOuPick,
+        highestScoringPeriod: calculatePeriodPrediction(mcHomeScore, mcAwayScore, game.id, game.league, 'PitcherBullpen'),
+      },
+      QuantML: {
+        name: game.league === 'MLB' ? '🔬 QuantML 量化機器學習模型 [模擬]' : '🏀 QuantML 量化模擬預測 [模擬]',
+        winner,
+        confidence: Number((confidence + 0.5).toFixed(1)),
+        modelVersion: 'QuantML-Poisson-Lite-v1.0',
+        reasoning: [
+          `🔬 量化 Poisson GLM 迴歸模擬結果。`,
+          `基於打擊 wOBA/ISO 與投手 xFIP/ADI 環境，預估比分 ${mcHomeScore} - ${mcAwayScore}。`,
+        ],
+        homeExpectedScore: mcHomeScore,
+        awayExpectedScore: mcAwayScore,
+        ouLine,
+        ouPick: mcOuPick,
+        highestScoringPeriod: calculatePeriodPrediction(mcHomeScore, mcAwayScore, game.id, game.league, 'QuantML'),
       },
       MetaModel: {
         name: '👑 Meta 堆疊元模型 (v1.0) [模擬]',
@@ -650,7 +682,7 @@ export default function HomeClient() {
   const [predictionsUnlocked, setPredictionsUnlocked] = useState<Record<string, boolean>>({});
   const [predictions, setPredictions] = useState<Record<string, PredictionDetails>>({});
   const [collapsedGames, setCollapsedGames] = useState<Record<string, boolean>>({});
-  const [selectedModelTab, setSelectedModelTab] = useState<'SportsAI' | 'EloRating' | 'MonteCarlo' | 'MetaModel'>('MetaModel');
+  const [selectedModelTab, setSelectedModelTab] = useState<'SportsAI' | 'EloRating' | 'MonteCarlo' | 'PitcherBullpen' | 'QuantML' | 'MetaModel'>('MetaModel');
   const [consoleLogs, setConsoleLogs] = useState<string[]>([]);
   const [smartParlayData, setSmartParlayData] = useState<any>(null);
   const [smartParlayLoading, setSmartParlayLoading] = useState(false);
@@ -900,14 +932,24 @@ export default function HomeClient() {
     isStarterPitcher?: boolean;
   }[]>>({});
   
-  const [homeRoster, setHomeRoster] = useState<PlayerInfo[]>([]);
-  const [awayRoster, setAwayRoster] = useState<PlayerInfo[]>([]);
-  const [loadingRoster, setLoadingRoster] = useState(false);
+    const [gameRosters, setGameRosters] = useState<Record<string, { home: PlayerInfo[]; away: PlayerInfo[] }>>({});
+  const [loadingRosters, setLoadingRosters] = useState<Record<string, boolean>>({});
   
-  const [selectedHomePlayerId, setSelectedHomePlayerId] = useState('');
-  const [selectedHomeBoostType, setSelectedHomeBoostType] = useState<'hot' | 'return' | 'injured' | 'cold'>('hot');
-  const [selectedAwayPlayerId, setSelectedAwayPlayerId] = useState('');
-  const [selectedAwayBoostType, setSelectedAwayBoostType] = useState<'hot' | 'return' | 'injured' | 'cold'>('hot');
+  const [selectedPlayers, setSelectedPlayers] = useState<Record<string, { homeId: string; homeType: 'hot' | 'return' | 'cold' | 'injured'; awayId: string; awayType: 'hot' | 'return' | 'cold' | 'injured' }>>({});
+
+  const getSelectedPlayerState = (gameId: string) => {
+    return selectedPlayers[gameId] || { homeId: '', homeType: 'hot', awayId: '', awayType: 'hot' };
+  };
+
+  const updateSelectedPlayerState = (gameId: string, updates: Partial<{ homeId: string; homeType: 'hot' | 'return' | 'cold' | 'injured'; awayId: string; awayType: 'hot' | 'return' | 'cold' | 'injured' }>) => {
+    setSelectedPlayers(prev => ({
+      ...prev,
+      [gameId]: {
+        ...getSelectedPlayerState(gameId),
+        ...updates
+      }
+    }));
+  };
 
   // Injury reports state (normalized name -> { status, comment })
   const [injuryReports, setInjuryReports] = useState<Record<string, { status: string; comment: string }>>({});
@@ -920,186 +962,7 @@ export default function HomeClient() {
   const [autoInjuriesApplied, setAutoInjuriesApplied] = useState<Record<string, boolean>>({});
 
 
-  // Load rosters and sync injuries when selectedGameId changes
-  useEffect(() => {
-    if (!selectedGameId) {
-      setHomeRoster([]);
-      setAwayRoster([]);
-      return;
-    }
-    const game = games.find(g => g.id === selectedGameId);
-    if (!game) return;
-
-    setLoadingRoster(true);
-    setLoadingInjuries(true);
-    setLoadingHotPlayers(true);
-    setSelectedHomePlayerId('');
-    setSelectedAwayPlayerId('');
-
-    // Normalize text helper to handle name matching and strip accents/diacritics
-    const normalizeText = (text: string) => 
-      text.normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .toLowerCase()
-          .replace(/[^a-z0-9]/g, '');
-
-    Promise.all([
-      // Fetch rosters
-      fetch(`/api/players?league=${game.league}&teamId=${game.homeTeam.id}`).then(res => res.json()),
-      fetch(`/api/players?league=${game.league}&teamId=${game.awayTeam.id}`).then(res => res.json()),
-      // Fetch injuries for the league
-      fetch(`/api/predictions/injuries?league=${game.league}`).then(res => res.json()).catch(() => ({ success: false, data: [] })),
-      // Fetch hot players for the league
-      fetch(`/api/predictions/hotplayers?league=${game.league}`).then(res => res.json()).catch(() => ({ success: false, data: {} }))
-    ]).then(([homeRes, awayRes, injuriesRes, hotRes]) => {
-      let homePlayers: PlayerInfo[] = [];
-      let awayPlayers: PlayerInfo[] = [];
-
-      if (homeRes.success && homeRes.data) {
-        homePlayers = homeRes.data;
-        setHomeRoster(homePlayers);
-      }
-      if (awayRes.success && awayRes.data) {
-        awayPlayers = awayRes.data;
-        setAwayRoster(awayPlayers);
-      }
-
-      // Handle injury report mapping
-      if (injuriesRes.success && injuriesRes.data) {
-        const reportsMap: Record<string, { status: string; comment: string }> = {};
-        injuriesRes.data.forEach((t: any) => {
-          t.players.forEach((p: any) => {
-            reportsMap[normalizeText(p.name)] = {
-              status: p.status,
-              comment: p.comment
-            };
-          });
-        });
-        setInjuryReports(reportsMap);
-      }
-
-      // Handle hot player mapping
-      if (hotRes.success && hotRes.data) {
-        setHotPlayers(hotRes.data);
-      }
-
-      // Auto-apply injuries & hot players if not already applied for this game
-      if (!autoInjuriesApplied[selectedGameId]) {
-        const autoBoosts: any[] = [];
-        
-        // Helper to check if team matches (fuzzy substring check)
-        const isTeamMatch = (espnTeam: string, appTeam: string) => {
-          const normEspn = normalizeText(espnTeam);
-          const normApp = normalizeText(appTeam);
-          return normEspn.includes(normApp) || normApp.includes(normEspn);
-        };
-
-        const homeTeamInjuries = (injuriesRes.success && injuriesRes.data) ? injuriesRes.data.find((t: any) => isTeamMatch(t.team, game.homeTeam.name))?.players || [] : [];
-        const awayTeamInjuries = (injuriesRes.success && injuriesRes.data) ? injuriesRes.data.find((t: any) => isTeamMatch(t.team, game.awayTeam.name))?.players || [] : [];
-
-        // Match home players (injuries)
-        homePlayers.forEach(p => {
-          const normPName = normalizeText(p.name);
-          const isInjured = homeTeamInjuries.find((ip: any) => {
-            const normIpName = normalizeText(ip.name);
-            return normPName === normIpName ||
-                   (normPName.length > 5 && normIpName.includes(normPName)) ||
-                   (normIpName.length > 5 && normPName.includes(normIpName));
-          });
-
-          if (isInjured) {
-            autoBoosts.push({
-              playerId: p.id,
-              playerName: translatePlayerName(p.name),
-              teamType: 'home',
-              type: 'injured',
-              jersey: p.number || undefined,
-              position: p.position || undefined
-            });
-          }
-        });
-
-        // Match away players (injuries)
-        awayPlayers.forEach(p => {
-          const normPName = normalizeText(p.name);
-          const isInjured = awayTeamInjuries.find((ip: any) => {
-            const normIpName = normalizeText(ip.name);
-            return normPName === normIpName ||
-                   (normPName.length > 5 && normIpName.includes(normPName)) ||
-                   (normIpName.length > 5 && normPName.includes(normIpName));
-          });
-
-          if (isInjured) {
-            autoBoosts.push({
-              playerId: p.id,
-              playerName: translatePlayerName(p.name),
-              teamType: 'away',
-              type: 'injured',
-              jersey: p.number || undefined,
-              position: p.position || undefined
-            });
-          }
-        });
-
-        // Match home players (hot performance)
-        if (hotRes.success && hotRes.data) {
-          homePlayers.forEach(p => {
-            const normPName = normalizeText(p.name);
-            const isHot = hotRes.data[normPName];
-            if (isHot) {
-              const alreadyAdded = autoBoosts.some(ab => ab.playerId === p.id);
-              if (!alreadyAdded) {
-                autoBoosts.push({
-                  playerId: p.id,
-                  playerName: translatePlayerName(p.name),
-                  teamType: 'home',
-                  type: 'hot',
-                  jersey: p.number || undefined,
-                  position: p.position || undefined
-                });
-              }
-            }
-          });
-
-          // Match away players (hot performance)
-          awayPlayers.forEach(p => {
-            const normPName = normalizeText(p.name);
-            const isHot = hotRes.data[normPName];
-            if (isHot) {
-              const alreadyAdded = autoBoosts.some(ab => ab.playerId === p.id);
-              if (!alreadyAdded) {
-                autoBoosts.push({
-                  playerId: p.id,
-                  playerName: translatePlayerName(p.name),
-                  teamType: 'away',
-                  type: 'hot',
-                  jersey: p.number || undefined,
-                  position: p.position || undefined
-                });
-              }
-            }
-          });
-        }
-
-        if (autoBoosts.length > 0) {
-          setActiveBoosts(prev => ({
-            ...prev,
-            [selectedGameId]: [...(prev[selectedGameId] || []), ...autoBoosts]
-          }));
-        }
-
-        setAutoInjuriesApplied(prev => ({ ...prev, [selectedGameId]: true }));
-      }
-    }).catch(err => {
-      console.error('Failed to load rosters/injuries/hot:', err);
-    }).finally(() => {
-      setLoadingRoster(false);
-      setLoadingInjuries(false);
-      setLoadingHotPlayers(false);
-    });
-  }, [selectedGameId, games]);
-
-  const isPitcherPos = (pos?: string) => {
+    const isPitcherPos = (pos?: string) => {
     if (!pos) return false;
     const p = pos.toUpperCase();
     return p.includes('P') || p.includes('SP') || p.includes('RP') || p.includes('CP') || p.includes('RHP') || p.includes('LHP');
@@ -1119,13 +982,185 @@ export default function HomeClient() {
     return false;
   };
 
-  const handleAddBoost = (teamType: 'home' | 'away', targetGameId?: string) => {
-    const gameId = targetGameId || selectedGameId;
-    if (!gameId) return;
+  const fetchRostersAndAutoBoost = async (game: GameWithTeams) => {
+    if (gameRosters[game.id] || loadingRosters[game.id]) return;
+    setLoadingRosters(prev => ({ ...prev, [game.id]: true }));
+    try {
+      const normalizeText = (text: string) => 
+        text.normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '');
+
+      // Fetch rosters & injuries & hot lists
+      const [homeRes, awayRes, injuriesRes, hotRes] = await Promise.all([
+        fetch(`/api/players?league=${game.league}&teamId=${game.homeTeam.id}`).then(res => res.json()),
+        fetch(`/api/players?league=${game.league}&teamId=${game.awayTeam.id}`).then(res => res.json()),
+        fetch(`/api/predictions/injuries?league=${game.league}`).then(res => res.json()).catch(() => ({ success: false, data: [] })),
+        fetch(`/api/predictions/hotplayers?league=${game.league}`).then(res => res.json()).catch(() => ({ success: false, data: {} }))
+      ]);
+
+      const homePlayers: PlayerInfo[] = homeRes.success ? homeRes.data : [];
+      const awayPlayers: PlayerInfo[] = awayRes.success ? awayRes.data : [];
+
+      setGameRosters(prev => ({
+        ...prev,
+        [game.id]: {
+          home: homePlayers,
+          away: awayPlayers
+        }
+      }));
+
+      // Update injury reports lookup
+      if (injuriesRes.success && injuriesRes.data) {
+        const reportsMap: Record<string, { status: string; comment: string }> = {};
+        injuriesRes.data.forEach((t: any) => {
+          t.players.forEach((p: any) => {
+            reportsMap[normalizeText(p.name)] = {
+              status: p.status,
+              comment: p.comment
+            };
+          });
+        });
+        setInjuryReports(prev => ({ ...prev, ...reportsMap }));
+      }
+
+      // Update hot players lookup
+      if (hotRes.success && hotRes.data) {
+        setHotPlayers(prev => ({ ...prev, ...hotRes.data }));
+      }
+
+      // Auto-apply injuries & hot players
+      if (!autoInjuriesApplied[game.id]) {
+        const autoBoosts: any[] = [];
+        const isTeamMatch = (espnTeam: string, appTeam: string) => {
+          const normEspn = normalizeText(espnTeam);
+          const normApp = normalizeText(appTeam);
+          return normEspn.includes(normApp) || normApp.includes(normEspn);
+        };
+
+        const homeTeamInjuries = injuriesRes.success ? injuriesRes.data.find((t: any) => isTeamMatch(t.team, game.homeTeam.name))?.players || [] : [];
+        const awayTeamInjuries = injuriesRes.success ? injuriesRes.data.find((t: any) => isTeamMatch(t.team, game.awayTeam.name))?.players || [] : [];
+
+        // Match home injuries
+        homePlayers.forEach(p => {
+          const normPName = normalizeText(p.name);
+          const isInjured = homeTeamInjuries.find((ip: any) => {
+            const normIpName = normalizeText(ip.name);
+            return normPName === normIpName ||
+                   (normPName.length > 5 && normIpName.includes(normPName)) ||
+                   (normIpName.length > 5 && normPName.includes(normIpName));
+          });
+
+          if (isInjured) {
+            autoBoosts.push({
+              playerId: p.id,
+              playerName: translatePlayerName(p.name),
+              teamType: 'home',
+              type: 'injured',
+              jersey: p.number || undefined,
+              position: p.position || undefined,
+              isStarterPitcher: isStarterPitcher(p, game)
+            });
+          }
+        });
+
+        // Match away injuries
+        awayPlayers.forEach(p => {
+          const normPName = normalizeText(p.name);
+          const isInjured = awayTeamInjuries.find((ip: any) => {
+            const normIpName = normalizeText(ip.name);
+            return normPName === normIpName ||
+                   (normPName.length > 5 && normIpName.includes(normPName)) ||
+                   (normIpName.length > 5 && normPName.includes(normIpName));
+          });
+
+          if (isInjured) {
+            autoBoosts.push({
+              playerId: p.id,
+              playerName: translatePlayerName(p.name),
+              teamType: 'away',
+              type: 'injured',
+              jersey: p.number || undefined,
+              position: p.position || undefined,
+              isStarterPitcher: isStarterPitcher(p, game)
+            });
+          }
+        });
+
+        // Match hot players
+        if (hotRes.success && hotRes.data) {
+          homePlayers.forEach(p => {
+            const normPName = normalizeText(p.name);
+            const isHot = hotRes.data[normPName];
+            if (isHot) {
+              const alreadyAdded = autoBoosts.some(ab => ab.playerId === p.id);
+              if (!alreadyAdded) {
+                autoBoosts.push({
+                  playerId: p.id,
+                  playerName: translatePlayerName(p.name),
+                  teamType: 'home',
+                  type: 'hot',
+                  jersey: p.number || undefined,
+                  position: p.position || undefined,
+                  isStarterPitcher: isStarterPitcher(p, game)
+                });
+              }
+            }
+          });
+
+          awayPlayers.forEach(p => {
+            const normPName = normalizeText(p.name);
+            const isHot = hotRes.data[normPName];
+            if (isHot) {
+              const alreadyAdded = autoBoosts.some(ab => ab.playerId === p.id);
+              if (!alreadyAdded) {
+                autoBoosts.push({
+                  playerId: p.id,
+                  playerName: translatePlayerName(p.name),
+                  teamType: 'away',
+                  type: 'hot',
+                  jersey: p.number || undefined,
+                  position: p.position || undefined,
+                  isStarterPitcher: isStarterPitcher(p, game)
+                });
+              }
+            }
+          });
+        }
+
+        if (autoBoosts.length > 0) {
+          setActiveBoosts(prev => ({
+            ...prev,
+            [game.id]: [...(prev[game.id] || []), ...autoBoosts]
+          }));
+        }
+        setAutoInjuriesApplied(prev => ({ ...prev, [game.id]: true }));
+      }
+    } catch (err) {
+      console.error('Failed to fetch rosters and apply auto-boosts:', err);
+    } finally {
+      setLoadingRosters(prev => ({ ...prev, [game.id]: false }));
+    }
+  };
+
+  useEffect(() => {
+    if (games && games.length > 0) {
+      games.forEach(game => {
+        fetchRostersAndAutoBoost(game);
+      });
+    }
+  }, [games]);
+
+  const handleAddBoost = (teamType: 'home' | 'away', gameId: string) => {
     const game = games.find(g => g.id === gameId);
-    const roster = teamType === 'home' ? homeRoster : awayRoster;
-    const playerId = teamType === 'home' ? selectedHomePlayerId : selectedAwayPlayerId;
-    const boostType = teamType === 'home' ? selectedHomeBoostType : selectedAwayBoostType;
+    if (!game) return;
+    const rosterObj = gameRosters[gameId];
+    if (!rosterObj) return;
+    const roster = teamType === 'home' ? rosterObj.home : rosterObj.away;
+    const playerState = getSelectedPlayerState(gameId);
+    const playerId = teamType === 'home' ? playerState.homeId : playerState.awayId;
+    const boostType = teamType === 'home' ? playerState.homeType : playerState.awayType;
 
     if (!playerId) return;
     const player = roster.find(p => p.id === playerId);
@@ -1166,14 +1201,12 @@ export default function HomeClient() {
     const updated = [...filtered, newBoost];
     setActiveBoosts(prev => ({ ...prev, [gameId]: updated }));
     
-    // Reset player selection dropdown
-    if (teamType === 'home') setSelectedHomePlayerId('');
-    else setSelectedAwayPlayerId('');
+    // Reset player selection dropdown for this game
+    if (teamType === 'home') updateSelectedPlayerState(gameId, { homeId: '' });
+    else updateSelectedPlayerState(gameId, { awayId: '' });
   };
 
-  const handleRemoveBoost = (playerId: string, targetGameId?: string) => {
-    const gameId = targetGameId || selectedGameId;
-    if (!gameId) return;
+  const handleRemoveBoost = (playerId: string, gameId: string) => {
     const currentBoosts = activeBoosts[gameId] || [];
     const updated = currentBoosts.filter(b => b.playerId !== playerId);
     setActiveBoosts(prev => ({ ...prev, [gameId]: updated }));
@@ -1280,14 +1313,20 @@ export default function HomeClient() {
       }
     };
 
-    if (adjusted.models) {
+        if (adjusted.models) {
       applyShiftsToModel(adjusted.models.SportsAI);
       applyShiftsToModel(adjusted.models.EloRating);
       applyShiftsToModel(adjusted.models.MonteCarlo);
+      if (adjusted.models.PitcherBullpen) {
+        applyShiftsToModel(adjusted.models.PitcherBullpen);
+      }
+      if (adjusted.models.QuantML) {
+        applyShiftsToModel(adjusted.models.QuantML);
+      }
       applyShiftsToModel(adjusted.models.MetaModel);
 
       const activeModelKey = adjusted.activeModel || 'MetaModel';
-      const activeModel = adjusted.models[activeModelKey as 'SportsAI' | 'EloRating' | 'MonteCarlo' | 'MetaModel'];
+      const activeModel = adjusted.models[activeModelKey as 'SportsAI' | 'EloRating' | 'MonteCarlo' | 'PitcherBullpen' | 'QuantML' | 'MetaModel'];
       if (activeModel) {
         adjusted.winner = activeModel.winner;
         adjusted.confidence = activeModel.confidence;
@@ -1433,6 +1472,7 @@ export default function HomeClient() {
       SportsAI: { winnerCorrect: 34 + (hashSeed % 3), winnerTotal: 50, ouCorrect: 32 + (hashSeed % 3), ouTotal: 50 },
       EloRating: { winnerCorrect: 31 + (hashSeed % 3), winnerTotal: 50, ouCorrect: 30 + (hashSeed % 3), ouTotal: 50 },
       MonteCarlo: { winnerCorrect: 33 + (hashSeed % 3), winnerTotal: 50, ouCorrect: 33 + (hashSeed % 3), ouTotal: 50 },
+      QuantML: { winnerCorrect: 35 + (hashSeed % 3), winnerTotal: 50, ouCorrect: 33 + (hashSeed % 3), ouTotal: 50 },
     };
 
     const completedGames = games.filter(g => g.status === 'completed' && g.homeScore != null && g.awayScore != null);
@@ -1483,6 +1523,15 @@ export default function HomeClient() {
         if (mc.winner === actualWinner) stats.MonteCarlo.winnerCorrect++;
         stats.MonteCarlo.ouTotal++;
         if (mc.ouPick === actualOu) stats.MonteCarlo.ouCorrect++;
+      }
+
+      // QuantML
+      const quant = pred.models.QuantML;
+      if (quant && quant.confidence >= 60) {
+        stats.QuantML.winnerTotal++;
+        if (quant.winner === actualWinner) stats.QuantML.winnerCorrect++;
+        stats.QuantML.ouTotal++;
+        if (quant.ouPick === actualOu) stats.QuantML.ouCorrect++;
       }
     });
 
@@ -2183,15 +2232,17 @@ export default function HomeClient() {
                           {/* Model Tab Selector */}
                           <div className="flex justify-start mb-6 border-b border-white/5 pb-4">
                             <div className="inline-flex p-1 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm shadow-inner animate-fade-in">
-                              {[
+                                                            {[
                                 { id: 'MetaModel', name: '👑 Meta 堆疊元模型', desc: 'v1.0 集成優化' },
                                 { id: 'SportsAI', name: '🤖 SportsAI 迴歸', desc: 'v4.2 特徵權重' },
                                 { id: 'EloRating', name: '📈 Elo 戰力比對', desc: 'v1.8 戰力指數' },
-                                { id: 'MonteCarlo', name: '🎲 Monte Carlo', desc: 'v2.5 萬次模擬' }
+                                { id: 'MonteCarlo', name: '🎲 Monte Carlo', desc: 'v2.5 萬次模擬' },
+                                { id: 'PitcherBullpen', name: game.league === 'MLB' ? '⚾ 投打後援對位' : '🏀 先發板凳對位', desc: 'v1.0 深度對位' },
+                                { id: 'QuantML', name: '🔬 QuantML 量化', desc: 'XGB+Poisson' }
                               ].map((m) => (
                                 <button
                                   key={m.id}
-                                  onClick={() => setSelectedModelTab(m.id as 'SportsAI' | 'EloRating' | 'MonteCarlo' | 'MetaModel')}
+                                  onClick={() => setSelectedModelTab(m.id as 'SportsAI' | 'EloRating' | 'MonteCarlo' | 'PitcherBullpen' | 'QuantML' | 'MetaModel')}
                                   className={`flex flex-col items-center px-4 py-1.5 rounded-lg transition-all ${
                                     selectedModelTab === m.id 
                                       ? (m.id === 'MetaModel'
@@ -2216,146 +2267,288 @@ export default function HomeClient() {
                           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
                             
                             {/* Winner Forecast */}
-                            <div className="md:col-span-5 flex flex-col justify-center glass-panel-ai rounded-2xl p-6 border relative overflow-hidden shimmer">
-                              <span className="text-sm font-mono text-purple-300 mb-1.5 uppercase tracking-wider font-bold">AI 預測首選</span>
-                              
-                              <div className="flex items-baseline gap-3 my-2">
-                                <span className="text-4xl font-black text-white font-sans">
-                                  {activePred.winner === 'home' 
-                                    ? (game.homeTeam.nameCn || game.homeTeam.name) 
-                                    : (game.awayTeam.nameCn || game.awayTeam.name)} 
-                                </span>
-                                <span className="text-xl font-bold text-emerald-400 font-sans">勝出</span>
+                                                      {/* Predictions Comparison Grid: 直接分成無加成與有加成 */}
+                          <div className="md:col-span-12">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-2">
+                              {/* Left Column: 原始基準預測 (無加成) */}
+                              <div className="glass-panel-ai rounded-2xl p-6 border border-white/5 relative overflow-hidden shimmer">
+                                <div className="absolute top-4 right-4 flex items-center gap-1.5 text-[10px] text-gray-500 font-bold font-sans bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
+                                  原始基準預測 (無加成)
+                                </div>
+                                <span className="text-xs font-mono text-purple-300 mb-1.5 uppercase tracking-wider font-bold block">AI 預測首選</span>
+                                
+                                <div className="flex items-baseline gap-2.5 my-2">
+                                  <span className="text-3xl font-black text-white font-sans">
+                                    {baseActivePred?.winner === 'home' 
+                                      ? (game.homeTeam.nameCn || game.homeTeam.name) 
+                                      : (game.awayTeam.nameCn || game.awayTeam.name)} 
+                                  </span>
+                                  <span className="text-base font-bold text-gray-400 font-sans">勝出</span>
+                                </div>
+
+                                <div className="mt-4 space-y-3 font-sans">
+                                  <div className="flex justify-between text-xs font-mono">
+                                    <span className="text-gray-400">AI 決策置信度</span>
+                                    <span className="text-sm font-black text-gray-300 font-mono">{baseActivePred?.confidence}%</span>
+                                  </div>
+                                  <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                                    <div 
+                                      className="bg-gray-600 h-full rounded-full transition-all duration-500"
+                                      style={{ width: `${baseActivePred?.confidence}%` }}
+                                    />
+                                  </div>
+
+                                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex justify-between items-center text-xs font-mono">
+                                    <span className="text-gray-400">預估比分</span>
+                                    <span className="text-xs font-black text-gray-300">
+                                      客({game.awayTeam.code}) {baseActivePred?.awayExpectedScore} : {baseActivePred?.homeExpectedScore} 主({game.homeTeam.code})
+                                    </span>
+                                  </div>
+
+                                  <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex justify-between items-center text-xs font-mono">
+                                    <span className="text-gray-400">O/U 大小分推薦</span>
+                                    <span className="text-xs font-black text-gray-300">
+                                      推薦【{baseActivePred?.ouPick === 'Over' ? '大分' : '小分'}】(盤口 {baseActivePred?.ouLine})
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
 
-                              <div className="mt-4">
-                                <div className="flex justify-between text-sm mb-1.5 font-mono">
-                                  <span className="text-gray-300 font-bold">AI 決策置信度</span>
-                                  <span className="text-xl font-black text-purple-400 font-mono">{activePred.confidence}%</span>
+                              {/* Right Column: 沙盤加成預測 (有加成) */}
+                              <div className={`rounded-2xl p-6 border relative overflow-hidden transition-all duration-300 ${
+                                (activeBoosts[game.id] || []).length > 0
+                                  ? 'bg-gradient-to-r from-purple-500/10 via-blue-500/5 to-purple-500/10 border-purple-500/30 shadow-[0_0_15px_rgba(147,51,234,0.1)]'
+                                  : 'glass-panel-ai border-white/5'
+                              }`}>
+                                <div className="absolute top-4 right-4 flex items-center gap-1.5 text-[10px] font-bold font-sans bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                                  <span className={`w-1.5 h-1.5 rounded-full ${(activeBoosts[game.id] || []).length > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-gray-500'}`} />
+                                  <span className={(activeBoosts[game.id] || []).length > 0 ? 'text-emerald-400' : 'text-gray-500'}>
+                                    {(activeBoosts[game.id] || []).length > 0 ? `加成已生效 (共 ${(activeBoosts[game.id] || []).length} 項微調)` : '沙盤加成預測 (未微調)'}
+                                  </span>
                                 </div>
-                                <div className="w-full bg-white/5 h-3 rounded-full overflow-hidden">
-                                  <div 
-                                    className="bg-gradient-to-r from-purple-600 to-blue-500 h-full rounded-full transition-all duration-500"
-                                    style={{ width: `${activePred.confidence}%` }}
-                                  />
+                                <span className="text-xs font-mono text-purple-300 mb-1.5 uppercase tracking-wider font-bold block">加成後 AI 預測</span>
+                                
+                                <div className="flex items-baseline gap-2.5 my-2">
+                                  <span className="text-3xl font-black text-white font-sans">
+                                    {activePred.winner === 'home' 
+                                      ? (game.homeTeam.nameCn || game.homeTeam.name) 
+                                      : (game.awayTeam.nameCn || game.awayTeam.name)} 
+                                  </span>
+                                  <span className={`text-base font-bold font-sans ${(activeBoosts[game.id] || []).length > 0 ? 'text-purple-400 font-extrabold' : 'text-gray-400'}`}>勝出</span>
+                                </div>
+
+                                <div className="mt-4 space-y-3 font-sans">
+                                  <div className="flex justify-between text-xs font-mono">
+                                    <span className="text-gray-400">微調後置信度</span>
+                                    <span className={`text-sm font-black font-mono ${(activeBoosts[game.id] || []).length > 0 ? 'text-purple-400 font-extrabold' : 'text-gray-300'}`}>{activePred.confidence}%</span>
+                                  </div>
+                                  <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                                    <div 
+                                      className="bg-gradient-to-r from-purple-600 to-blue-500 h-full rounded-full transition-all duration-500"
+                                      style={{ width: `${activePred.confidence}%` }}
+                                    />
+                                  </div>
+
+                                  <div className={`border rounded-xl p-3 flex justify-between items-center text-xs font-mono transition-all ${
+                                    (activeBoosts[game.id] || []).length > 0 ? 'bg-purple-500/5 border-purple-500/20' : 'bg-white/5 border border-white/10'
+                                  }`}>
+                                    <span className="text-gray-400">微調後預估比分</span>
+                                    <span className={`text-xs font-black ${(activeBoosts[game.id] || []).length > 0 ? 'text-purple-200 font-black' : 'text-gray-300'}`}>
+                                      客({game.awayTeam.code}) {activePred.awayExpectedScore} : {activePred.homeExpectedScore} 主({game.homeTeam.code})
+                                    </span>
+                                  </div>
+
+                                  <div className={`border rounded-xl p-3 flex justify-between items-center text-xs font-mono transition-all ${
+                                    (activeBoosts[game.id] || []).length > 0 ? 'bg-purple-500/5 border-purple-500/20' : 'bg-white/5 border border-white/10'
+                                  }`}>
+                                    <span className="text-gray-400">微調後 O/U 推薦</span>
+                                    <span className={`text-xs font-black ${(activeBoosts[game.id] || []).length > 0 ? 'text-purple-200 font-black' : 'text-gray-300'}`}>
+                                      推薦【{activePred.ouPick === 'Over' ? '大分' : '小分'}】(盤口 {activePred.ouLine})
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
+                            </div>
+                          </div>
 
-                              <div className="mt-4 pt-4 border-t border-white/5 space-y-3 font-sans">
-                                <div className="text-xs font-mono text-purple-300 font-bold uppercase tracking-wider flex items-center justify-between">
-                                  <span>📊 預測比分對照 (無加成 vs 球員微調)</span>
-                                </div>
+                          {/* Key Player Boost Sandbox (沙盤微調面板) */}
+                          <div className="md:col-span-5 flex flex-col justify-between glass-panel-ai rounded-2xl p-6 border border-white/5 relative overflow-hidden shimmer space-y-4">
+                            <div>
+                              <h3 className="text-sm font-black text-purple-300 uppercase tracking-wider font-sans mb-3 flex items-center gap-1.5">
+                                <span>⚡ 主力球員狀態微調 (沙盤)</span>
+                              </h3>
 
-                                {/* 1. Unadjusted Baseline Score (沒加成的) */}
-                                <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="px-2.5 py-1 rounded bg-gray-500/20 text-gray-300 text-xs font-mono font-bold border border-white/10">
-                                      ⚪ 原始模型基準 (未加成)
-                                    </span>
-                                  </div>
-                                  <div className="text-base font-black font-mono text-gray-300">
-                                    客({game.awayTeam.code}) {baseActivePred?.awayExpectedScore} : {baseActivePred?.homeExpectedScore} 主({game.homeTeam.code})
-                                    <span className="text-xs text-gray-400 font-normal ml-2">
-                                      (總分 {Math.round((baseActivePred?.homeExpectedScore || 0) + (baseActivePred?.awayExpectedScore || 0))} 分)
-                                    </span>
-                                  </div>
-                                </div>
+                              <div className="space-y-4">
+                                {/* Home team column */}
+                                <div className="space-y-2 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                                  <h4 className="text-[11px] font-black text-white flex items-center gap-1.5 font-sans">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    {game.homeTeam.nameCn || game.homeTeam.name} (主隊)
+                                  </h4>
 
-                                {/* 2. Player Adjusted Score (有球員加成與扣減的) */}
-                                <div className={`border rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1 transition-all ${
-                                  (activeBoosts[game.id] || []).length > 0
-                                    ? 'bg-gradient-to-r from-purple-500/20 via-blue-500/10 to-purple-500/20 border-purple-500/40 text-purple-200 shadow-md'
-                                    : 'bg-white/[0.02] border-white/5 text-gray-400'
-                                }`}>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className={`px-2.5 py-1 rounded text-xs font-mono font-black ${
-                                      (activeBoosts[game.id] || []).length > 0 ? 'bg-purple-500/30 text-purple-200 border border-purple-500/40 animate-pulse' : 'bg-gray-500/10 text-gray-400'
-                                    }`}>
-                                      {(activeBoosts[game.id] || []).length > 0 ? '⚡ 球員狀態微調後 (加成/扣減)' : '⚡ 球員狀態微調後'}
-                                    </span>
-                                  </div>
-                                  <div className="text-lg font-black font-mono text-white">
-                                    客({game.awayTeam.code}) {activePred.awayExpectedScore} : {activePred.homeExpectedScore} 主({game.homeTeam.code})
-                                    <span className="text-sm text-purple-300 font-bold ml-2">
-                                      (總分 {Math.round(activePred.homeExpectedScore + activePred.awayExpectedScore)} 分)
-                                    </span>
-                                  </div>
-                                </div>
-
-                                {/* 3. Itemized Player Impact List */}
-                                {(activeBoosts[game.id] || []).length > 0 ? (
-                                  <div className="bg-white/[0.02] border border-white/10 rounded-xl p-3 space-y-2 font-sans mt-2">
-                                    <div className="text-xs font-black text-gray-300 flex items-center justify-between border-b border-white/5 pb-1.5">
-                                      <span>⚖️ 球員狀況加成與扣減明細標示：</span>
-                                      <span className="text-[11px] font-mono text-purple-400">共 {(activeBoosts[game.id] || []).length} 項微調</span>
-                                    </div>
-                                    <div className="flex flex-col gap-1.5">
-                                      {(activeBoosts[game.id] || []).map(b => {
-                                        const isNBA = game.league === 'NBA';
-                                        const impactText = b.type === 'hot' 
-                                          ? `🔥 狀態爆發 (+5% 勝率, 得分 +${isNBA ? '3.0' : '0.6'}分)`
-                                          : b.type === 'cold'
-                                            ? `🧊 手感低潮 (-3% 勝率, 得分 -${isNBA ? '2.0' : '0.4'}分)`
-                                            : b.type === 'injured'
-                                              ? `🩹 主力缺陣 (-5% 勝率, 得分 -${isNBA ? '3.5' : '0.7'}分)`
-                                              : `⚡ 傷病回歸 (+3% 勝率, 得分 +${isNBA ? '1.5' : '0.3'}分)`;
-                                        
-                                        const badgeStyle = b.type === 'hot' 
-                                          ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' 
-                                          : b.type === 'cold'
-                                            ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
-                                            : b.type === 'injured'
-                                              ? 'bg-red-500/15 text-red-300 border-red-500/30'
-                                              : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
-
+                                  <div className="flex flex-col gap-2">
+                                    <select
+                                      value={getSelectedPlayerState(game.id).homeId}
+                                      onChange={(e) => updateSelectedPlayerState(game.id, { homeId: e.target.value })}
+                                      className="w-full bg-[#0b0f19] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-bold text-gray-200 focus:outline-none focus:border-purple-500/50"
+                                    >
+                                      <option value="">-- 選擇主力球員 --</option>
+                                      {(gameRosters[game.id]?.home || []).map(p => {
+                                        const normP = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
+                                        const injury = injuryReports[normP];
+                                        const hot = hotPlayers[normP];
                                         return (
-                                          <div key={b.playerId} className={`flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg border ${badgeStyle}`}>
-                                            <span className="font-bold flex items-center gap-1.5">
-                                              <span>{b.teamType === 'home' ? '🏠 主隊' : '🚌 客隊'}</span>
-                                              <span className="text-white font-sans">{b.playerName}</span>
-                                            </span>
-                                            <span className="font-mono font-black text-[11px]">{impactText}</span>
-                                          </div>
+                                          <option key={p.id} value={p.id}>
+                                            {p.position === 'SP' || p.starter ? '⚾ ' : ''}{translatePlayerName(p.name)} {p.number !== null ? `#${p.number}` : ''} ({p.position}){injury ? ` [傷-${injury.status}]` : ''}{hot ? ` [火-${hot.reason}]` : ''}
+                                          </option>
                                         );
                                       })}
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="text-[10px] text-gray-500 font-mono text-center pt-1">
-                                    💡 目前預測未套用球員加成或扣減。點擊右上角【球員狀態微調】可設定爆發、低潮或缺陣球員！
-                                  </div>
-                                )}
+                                    </select>
 
-                                {game.league === 'MLB' && activePred.mlbTotalScoreProbs && (
-                                  <div className="flex flex-col gap-1 mt-2 font-mono">
-                                    <span className="text-[9px] text-gray-500 block">Poisson 機率分佈:</span>
-                                    {activePred.mlbTotalScoreProbs.map((p, idx) => (
-                                      <div key={idx} className="flex items-center justify-between bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded text-[10px] font-black text-purple-300">
-                                        <span>🎯 {p.runs} 分</span>
-                                        <span className="text-emerald-400 font-bold">{p.probability}%</span>
-                                      </div>
-                                    ))}
+                                    <select
+                                      value={getSelectedPlayerState(game.id).homeType}
+                                      onChange={(e) => updateSelectedPlayerState(game.id, { homeType: e.target.value as any })}
+                                      className="w-full bg-[#0b0f19] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-bold text-gray-200 focus:outline-none focus:border-purple-500/50"
+                                    >
+                                      <option value="hot">🔥 狀態爆發 (+5% 勝率, 得分加成)</option>
+                                      <option value="return">⚡ 傷病回歸 (+3% 勝率, 得分加成)</option>
+                                      <option value="cold">🧊 手感低潮 (-3% 勝率, 得分扣減)</option>
+                                      <option value="injured">🩹 主力缺陣 (-5% 勝率, 得分扣減)</option>
+                                    </select>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAddBoost('home', game.id)}
+                                      disabled={!getSelectedPlayerState(game.id).homeId}
+                                      className="w-full py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-black text-[11px] transition-all disabled:opacity-50 disabled:cursor-not-allowed font-sans"
+                                    >
+                                      添加主隊球員加成
+                                    </button>
                                   </div>
+                                </div>
+
+                                {/* Away team column */}
+                                <div className="space-y-2 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                                  <h4 className="text-[11px] font-black text-white flex items-center gap-1.5 font-sans">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                    {game.awayTeam.nameCn || game.awayTeam.name} (客隊)
+                                  </h4>
+
+                                  <div className="flex flex-col gap-2">
+                                    <select
+                                      value={getSelectedPlayerState(game.id).awayId}
+                                      onChange={(e) => updateSelectedPlayerState(game.id, { awayId: e.target.value })}
+                                      className="w-full bg-[#0b0f19] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-bold text-gray-200 focus:outline-none focus:border-purple-500/50"
+                                    >
+                                      <option value="">-- 選擇主力球員 --</option>
+                                      {(gameRosters[game.id]?.away || []).map(p => {
+                                        const normP = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
+                                        const injury = injuryReports[normP];
+                                        const hot = hotPlayers[normP];
+                                        return (
+                                          <option key={p.id} value={p.id}>
+                                            {p.position === 'SP' || p.starter ? '⚾ ' : ''}{translatePlayerName(p.name)} {p.number !== null ? `#${p.number}` : ''} ({p.position}){injury ? ` [傷-${injury.status}]` : ''}{hot ? ` [火-${hot.reason}]` : ''}
+                                          </option>
+                                        );
+                                      })}
+                                    </select>
+
+                                    <select
+                                      value={getSelectedPlayerState(game.id).awayType}
+                                      onChange={(e) => updateSelectedPlayerState(game.id, { awayType: e.target.value as any })}
+                                      className="w-full bg-[#0b0f19] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-bold text-gray-200 focus:outline-none focus:border-purple-500/50"
+                                    >
+                                      <option value="hot">🔥 狀態爆發 (+5% 勝率, 得分加成)</option>
+                                      <option value="return">⚡ 傷病回歸 (+3% 勝率, 得分加成)</option>
+                                      <option value="cold">🧊 手感低潮 (-3% 勝率, 得分扣減)</option>
+                                      <option value="injured">🩹 主力缺陣 (-5% 勝率, 得分扣減)</option>
+                                    </select>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAddBoost('away', game.id)}
+                                      disabled={!getSelectedPlayerState(game.id).awayId}
+                                      className="w-full py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-black text-[11px] transition-all disabled:opacity-50 disabled:cursor-not-allowed font-sans"
+                                    >
+                                      添加客隊球員加成
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Active boosts display */}
+                            <div className="space-y-2 pt-2 border-t border-white/5">
+                              <div className="flex justify-between items-center">
+                                <h4 className="text-[10px] font-black text-gray-400">已啟用的主力加成狀態</h4>
+                                {(activeBoosts[game.id] || []).length > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setActiveBoosts(prev => ({ ...prev, [game.id]: [] }))}
+                                    className="text-[9px] text-gray-500 hover:text-red-400 font-bold transition-colors"
+                                  >
+                                    🧹 一鍵清除
+                                  </button>
                                 )}
                               </div>
+                              {(activeBoosts[game.id] || []).length === 0 ? (
+                                <div className="text-center py-2.5 rounded-lg bg-white/[0.01] border border-white/5 text-[10px] text-gray-600 font-bold">
+                                  目未套用任何主力加成。
+                                </div>
+                              ) : (
+                                <div className="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto">
+                                  {(activeBoosts[game.id] || []).map(b => (
+                                    <div
+                                      key={b.playerId}
+                                      className={`flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-black transition-all ${
+                                        b.type === 'hot'
+                                          ? 'bg-orange-500/10 text-orange-400 border-orange-500/25 animate-pulse'
+                                          : b.type === 'return'
+                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
+                                            : b.type === 'cold'
+                                              ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/25'
+                                              : 'bg-red-500/10 text-red-400 border-red-500/25'
+                                      }`}
+                                    >
+                                      <span>{b.teamType === 'home' ? '🏠' : '🚌'}</span>
+                                      <span>{b.playerName}</span>
+                                      <span className="opacity-75">
+                                        ({b.type === 'hot' ? '爆發' : b.type === 'return' ? '回歸' : b.type === 'cold' ? '低潮' : '缺陣'})
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveBoost(b.playerId, game.id)}
+                                        className="hover:text-white transition-colors ml-0.5"
+                                        title="移除加成"
+                                      >
+                                        <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
 
-                              {/* 跨模型平均總分共識平均值 */}
+                            {/* Consensus / Poisson / Accuracy Review if applicable */}
+                            <div className="pt-2 border-t border-white/5 space-y-2">
                               {consensusAverage > 0 && (
-                                <div className="mt-4 pt-3.5 border-t border-white/5 flex items-center justify-between bg-pink-500/[0.03] border border-pink-500/15 rounded-2xl px-4 py-2.5 animate-fade-in shadow-inner">
-                                  <span className="text-xs font-black text-pink-400 tracking-wider flex items-center gap-1.5 font-sans">
+                                <div className="bg-pink-500/[0.03] border border-pink-500/15 rounded-xl px-3 py-2 shadow-inner">
+                                  <span className="text-[10px] font-black text-pink-400 tracking-wider flex items-center gap-1 font-sans mb-1">
                                     <span className="w-1.5 h-1.5 rounded-full bg-pink-500 animate-pulse shrink-0" />
-                                    👑 跨模型綜合總分共識平均值
+                                    👑 跨模型綜合總分共識
                                   </span>
-                                  <span className="text-base font-black text-pink-300 font-mono flex items-center gap-2">
-                                    {consensusAverage.toFixed(1)} 分
-                                    <span className="text-[10px] font-sans text-pink-400 bg-pink-500/10 px-2 py-0.5 rounded border border-pink-500/20 font-bold">
-                                      共識{consensusAverage > activePred.ouLine ? '大分' : '小分'} (盤口 {activePred.ouLine})
+                                  <span className="text-xs font-black text-pink-300 font-mono flex items-center justify-between">
+                                    <span>{consensusAverage.toFixed(1)} 分</span>
+                                    <span className="text-[9px] font-sans text-pink-400 bg-pink-500/10 px-1.5 py-0.5 rounded border border-pink-500/20 font-bold">
+                                      共識{consensusAverage > activePred.ouLine ? '大' : '小'} (盤口 {activePred.ouLine})
                                     </span>
                                   </span>
                                 </div>
                               )}
 
-                              {/* 完賽比分精準度回顧與偏差分析 */}
                               {((game.homeScore !== null && game.homeScore !== undefined) && (game.awayScore !== null && game.awayScore !== undefined)) && (() => {
                                 const actualTotal = (game.homeScore ?? 0) + (game.awayScore ?? 0);
                                 const predictedTotal = Math.round(activePred.homeExpectedScore + activePred.awayExpectedScore);
@@ -2363,56 +2556,32 @@ export default function HomeClient() {
                                 const isHit = scoreDiff <= 1.5;
                                 
                                 return (
-                                  <div className="mt-4 pt-4 border-t border-white/5 space-y-3 font-sans">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-xs text-gray-400 font-bold">實際總得分：</span>
-                                      <span className="text-sm font-black font-mono text-white">
-                                        {actualTotal} 分
-                                      </span>
+                                  <div className="space-y-1 text-[11px] font-sans">
+                                    <div className="flex items-center justify-between text-gray-400">
+                                      <span>實際總得分：</span>
+                                      <span className="font-mono font-bold text-white">{actualTotal} 分</span>
                                     </div>
-                                    
                                     <div className="flex items-center justify-between">
-                                      <span className="text-xs text-gray-400 font-bold">總得分預測結果：</span>
+                                      <span className="text-gray-400">預測結果：</span>
                                       {isHit ? (
-                                        <span className="text-xs font-black px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                          🎯 精準命中 (誤差 {scoreDiff} 分)
-                                        </span>
+                                        <span className="text-emerald-400 font-black">🎯 精準命中 (誤差 {scoreDiff} 分)</span>
                                       ) : (
-                                        <span className={`text-xs font-black px-2 py-0.5 rounded ${
-                                          scoreDiff >= 3 
-                                            ? 'bg-red-500/10 text-red-400 border border-red-500/20' 
-                                            : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
-                                        }`}>
+                                        <span className={scoreDiff >= 3 ? 'text-red-400 font-bold' : 'text-yellow-400 font-bold'}>
                                           {scoreDiff >= 3 ? '⚠️ 偏差較大' : '📊 接近命中'} (誤差 {scoreDiff} 分)
                                         </span>
                                       )}
                                     </div>
-
-                                    {/* 誤差大於等於 3 分自動原因分析 */}
-                                    {scoreDiff >= 3 && (() => {
-                                      const reasons = getScoreErrorReasons(game, activePred);
-                                      return (
-                                        <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-3 space-y-2 mt-2">
-                                          <div className="flex items-center gap-1.5 text-red-400 text-xs font-bold">
-                                            <span>⚠️ AI 誤差深度診斷原因：</span>
-                                          </div>
-                                          <ul className="list-disc list-inside space-y-1 text-[11px] text-gray-400 font-semibold leading-relaxed">
-                                            {reasons.map((r, rIdx) => (
-                                              <li key={rIdx}>{r}</li>
-                                            ))}
-                                          </ul>
-                                        </div>
-                                      );
-                                    })()}
                                   </div>
                                 );
                               })()}
-
-                              <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center text-xs font-mono text-gray-500 font-bold">
-                                <span>精準度演算模型:</span>
-                                <span className="text-gray-300 font-bold font-mono text-sm">{activePred.modelVersion}</span>
+                              
+                              <div className="flex justify-between items-center text-[10px] font-mono text-gray-500 pt-1">
+                                <span>演算模型:</span>
+                                <span className="text-gray-400 font-bold">{activePred.modelVersion}</span>
                               </div>
                             </div>
+
+                          </div>
 
                             {/* 特殊標註區塊 */}
                             {pred?.annotations && pred.annotations.length > 0 && (
@@ -2641,181 +2810,7 @@ export default function HomeClient() {
                               )}
 
                               {/* 🌟 AI 主力球員加成與狀態微調沙盤 (熱門比賽預測板內部) */}
-                              <div className="md:col-span-12 mt-6 pt-6 border-t border-white/5">
-                                <div className="bg-purple-950/20 border border-purple-500/20 rounded-2xl p-5 md:p-6 relative overflow-hidden">
-                                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xl">🌟</span>
-                                      <div>
-                                        <h4 className="text-sm font-black text-purple-300 tracking-wider font-sans">
-                                          AI 主力球員加成與狀態微調沙盤
-                                        </h4>
-                                        <p className="text-[10px] text-gray-400 font-sans mt-0.5 font-medium">
-                                          可手動微調本場兩隊主力球員（含先發投手 ⚾ 及打者 ⚾，打者加分與低潮上限各 2 位），即時動態重算預估勝率與比分。
-                                        </p>
-                                      </div>
-                                    </div>
-                                    {activeBoosts[game.id] && activeBoosts[game.id].length > 0 && (
-                                      <button
-                                        type="button"
-                                        onClick={() => setActiveBoosts(prev => ({ ...prev, [game.id]: [] }))}
-                                        className="text-[10px] text-gray-400 hover:text-red-400 font-bold font-sans bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 transition-colors shrink-0"
-                                      >
-                                        🧹 清除本場加成
-                                      </button>
-                                    )}
-                                  </div>
-
-                                  {/* Roster & Boost Selection Controls */}
-                                  {loadingRoster ? (
-                                    <div className="flex items-center justify-center py-4 text-xs text-gray-400 gap-2 font-bold font-mono">
-                                      <svg className="animate-spin h-4 w-4 text-purple-400" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                      </svg>
-                                      載入陣容數據中...
-                                    </div>
-                                  ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                      {/* Away Team Selection */}
-                                      <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3.5 space-y-2.5">
-                                        <div className="flex justify-between items-center text-xs font-black text-white font-sans">
-                                          <span>🚌 {game.awayTeam.nameCn || game.awayTeam.name} (客隊)</span>
-                                          <span className="text-[9px] text-gray-400 font-mono">
-                                            爆發打者: {activeBoosts[game.id]?.filter(b => b.teamType === 'away' && b.type === 'hot' && !isPitcherPos(b.position)).length || 0}/2
-                                          </span>
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                          <select
-                                            value={selectedAwayPlayerId}
-                                            onChange={(e) => setSelectedAwayPlayerId(e.target.value)}
-                                            className="bg-[#0b0f19] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-bold text-gray-200 focus:outline-none focus:border-purple-500 font-sans"
-                                          >
-                                            <option value="">-- 選擇客隊主力球員 --</option>
-                                            {awayRoster.map(p => {
-                                              const isSP = isStarterPitcher(p, game);
-                                              const isP = isPitcherPos(p.position);
-                                              const roleBadge = isSP ? '⚾ [先發投手]' : (isP ? '🧢 [投手]' : '⚾ [打者]');
-                                              const normP = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
-                                              const injury = injuryReports[normP];
-                                              const hot = hotPlayers[normP];
-                                              return (
-                                                <option key={p.id} value={p.id}>
-                                                  {roleBadge} {translatePlayerName(p.name)} {p.number !== null ? `#${p.number}` : ''} ({p.position}){injury ? ` [傷-${injury.status}]` : ''}{hot ? ` [火-${hot.reason}]` : ''}
-                                                </option>
-                                              );
-                                            })}
-                                          </select>
-                                          <div className="flex gap-2">
-                                            <select
-                                              value={selectedAwayBoostType}
-                                              onChange={(e) => setSelectedAwayBoostType(e.target.value as any)}
-                                              className="bg-[#0b0f19] border border-white/10 rounded-lg px-2 py-1.5 text-[11px] font-bold text-gray-200 focus:outline-none focus:border-purple-500 flex-1 font-sans"
-                                            >
-                                              <option value="hot">🔥 狀態爆發 (+5% 勝率, 得分加成)</option>
-                                              <option value="cold">🧊 手感低潮 (-5% 勝率, 得分扣減)</option>
-                                              <option value="return">⚡ 傷病回歸 (+3% 勝率, 得分加成)</option>
-                                              <option value="injured">🩹 主力缺陣 (-5% 勝率, 得分扣減)</option>
-                                            </select>
-                                            <button
-                                              type="button"
-                                              onClick={() => handleAddBoost('away', game.id)}
-                                              disabled={!selectedAwayPlayerId}
-                                              className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-black text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0 font-sans"
-                                            >
-                                              + 套用
-                                            </button>
-                                          </div>
-                                        </div>
-                                      </div>
-
-                                      {/* Home Team Selection */}
-                                      <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3.5 space-y-2.5">
-                                        <div className="flex justify-between items-center text-xs font-black text-white font-sans">
-                                          <span>🏠 {game.homeTeam.nameCn || game.homeTeam.name} (主隊)</span>
-                                          <span className="text-[9px] text-gray-400 font-mono">
-                                            爆發打者: {activeBoosts[game.id]?.filter(b => b.teamType === 'home' && b.type === 'hot' && !isPitcherPos(b.position)).length || 0}/2
-                                          </span>
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                          <select
-                                            value={selectedHomePlayerId}
-                                            onChange={(e) => setSelectedHomePlayerId(e.target.value)}
-                                            className="bg-[#0b0f19] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-bold text-gray-200 focus:outline-none focus:border-purple-500 font-sans"
-                                          >
-                                            <option value="">-- 選擇主隊主力球員 --</option>
-                                            {homeRoster.map(p => {
-                                              const isSP = isStarterPitcher(p, game);
-                                              const isP = isPitcherPos(p.position);
-                                              const roleBadge = isSP ? '⚾ [先發投手]' : (isP ? '🧢 [投手]' : '⚾ [打者]');
-                                              const normP = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
-                                              const injury = injuryReports[normP];
-                                              const hot = hotPlayers[normP];
-                                              return (
-                                                <option key={p.id} value={p.id}>
-                                                  {roleBadge} {translatePlayerName(p.name)} {p.number !== null ? `#${p.number}` : ''} ({p.position}){injury ? ` [傷-${injury.status}]` : ''}{hot ? ` [火-${hot.reason}]` : ''}
-                                                </option>
-                                              );
-                                            })}
-                                          </select>
-                                          <div className="flex gap-2">
-                                            <select
-                                              value={selectedHomeBoostType}
-                                              onChange={(e) => setSelectedHomeBoostType(e.target.value as any)}
-                                              className="bg-[#0b0f19] border border-white/10 rounded-lg px-2 py-1.5 text-[11px] font-bold text-gray-200 focus:outline-none focus:border-purple-500 flex-1 font-sans"
-                                            >
-                                              <option value="hot">🔥 狀態爆發 (+5% 勝率, 得分加成)</option>
-                                              <option value="cold">🧊 手感低潮 (-5% 勝率, 得分扣減)</option>
-                                              <option value="return">⚡ 傷病回歸 (+3% 勝率, 得分加成)</option>
-                                              <option value="injured">🩹 主力缺陣 (-5% 勝率, 得分扣減)</option>
-                                            </select>
-                                            <button
-                                              type="button"
-                                              onClick={() => handleAddBoost('home', game.id)}
-                                              disabled={!selectedHomePlayerId}
-                                              className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-black text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0 font-sans"
-                                            >
-                                              + 套用
-                                            </button>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* Active Boost Badges Display */}
-                                  {activeBoosts[game.id] && activeBoosts[game.id].length > 0 && (
-                                    <div className="mt-3 pt-3 border-t border-white/5 flex flex-wrap gap-2">
-                                      {activeBoosts[game.id].map(b => (
-                                        <div
-                                          key={b.playerId}
-                                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-black font-sans ${
-                                            b.isStarterPitcher ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 animate-pulse' :
-                                            b.type === 'hot' ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' :
-                                            b.type === 'cold' ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30' :
-                                            b.type === 'return' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' :
-                                            'bg-red-500/10 text-red-300 border-red-500/30'
-                                          }`}
-                                        >
-                                          <span>{b.teamType === 'home' ? '🏠' : '🚌'}</span>
-                                          <span>{b.isStarterPitcher ? '⚾ 先發投手: ' : ''}{b.playerName}</span>
-                                          <span className="opacity-75">
-                                            ({b.type === 'hot' ? '爆發+5%' : b.type === 'cold' ? '低潮-5%' : b.type === 'return' ? '回歸+3%' : '缺陣-5%'})
-                                          </span>
-                                          <button
-                                            type="button"
-                                            onClick={() => handleRemoveBoost(b.playerId, game.id)}
-                                            className="hover:text-white transition-colors ml-1 font-bold"
-                                            title="移除"
-                                          >
-                                            ✕
-                                          </button>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
+                              
 
 
 
@@ -3893,7 +3888,8 @@ export default function HomeClient() {
                       { name: '👑 Meta 堆疊元模型', key: 'MetaModel' as const, color: 'from-pink-500 to-rose-500' },
                       { name: '🤖 SportsAI 迴歸', key: 'SportsAI' as const, color: 'from-purple-500 to-indigo-500' },
                       { name: '📈 Elo 戰力比對', key: 'EloRating' as const, color: 'from-orange-500 to-red-500' },
-                      { name: '🎲 Monte Carlo 模擬', key: 'MonteCarlo' as const, color: 'from-cyan-500 to-blue-500' }
+                      { name: '🎲 Monte Carlo 模擬', key: 'MonteCarlo' as const, color: 'from-cyan-500 to-blue-500' },
+                      { name: '🔬 QuantML 量化模型', key: 'QuantML' as const, color: 'from-emerald-500 to-teal-500' }
                     ].map((model) => {
                       const data = backtest[model.key];
                       const winnerAcc = data.winnerTotal > 0 ? (data.winnerCorrect / data.winnerTotal) * 100 : 0;
@@ -3945,209 +3941,7 @@ export default function HomeClient() {
 
 
 
-            {/* Custom scenario engine - replaced with Key Player Boost Sandbox */}
-            <div id="custom-predictor" className="glass-panel rounded-3xl p-6 md:p-8 border border-white/5 relative">
-              <h3 className="text-lg font-black text-white mb-2 flex items-center gap-2 font-sans">
-                <CpuIcon className="w-5 h-5 text-blue-400" />
-                🌟 AI 主力球員加成調整沙盤
-              </h3>
-              
-              <p className="text-xs text-gray-400 leading-relaxed mb-6 font-sans font-semibold">
-                選擇下方今日賽事並點擊「選定沙盤加成」按鈕，手動微調主客隊核心/明星球員的出戰狀態（如狀態爆發、健康回歸、主力缺陣），即可即時模擬並動態重算該場賽事的預估勝率與期望比分。
-              </p>
-
-              {!selectedGameId ? (
-                <div className="text-center py-8 px-4 border border-dashed border-white/10 rounded-2xl text-xs text-gray-500 font-sans font-bold">
-                  💡 請在上方賽事卡片中，點擊任意一場賽事之【選定沙盤加成】按鈕，即可在此載入該賽事之主力陣容進行加成演算。
-                </div>
-              ) : (
-                <div className="space-y-6 font-sans">
-                  {(() => {
-                    const game = games.find(g => g.id === selectedGameId);
-                    if (!game) return null;
-                    const gameBoosts = activeBoosts[selectedGameId] || [];
-
-                    return (
-                      <>
-                        {/* Game info header */}
-                        <div className="flex justify-between items-center bg-white/5 px-4 py-2.5 rounded-xl border border-white/5">
-                          <span className="text-xs font-black text-purple-400">當前對位賽事</span>
-                          <span className="text-xs font-mono font-bold text-white">
-                            {game.awayTeam.nameCn || game.awayTeam.name} @ {game.homeTeam.nameCn || game.homeTeam.name}
-                          </span>
-                        </div>
-
-                        {loadingRoster || loadingInjuries || loadingHotPlayers ? (
-                          <div className="flex items-center justify-center py-6 text-xs text-gray-400 gap-2 font-bold font-mono">
-                            <svg className="animate-spin h-4 w-4 text-purple-400" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                            </svg>
-                            {loadingRoster ? '正在讀取球隊主力名單...' : '正在同步即時數據 (傷兵/表現)...'}
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Home team column */}
-                            <div className="space-y-3.5 p-4 rounded-2xl bg-white/[0.02] border border-white/5">
-                              <h4 className="text-xs font-black text-white flex items-center gap-1.5 font-sans">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                {game.homeTeam.nameCn || game.homeTeam.name} (主隊)
-                              </h4>
-
-                              <div className="flex flex-col gap-2.5">
-                                <select
-                                  value={selectedHomePlayerId}
-                                  onChange={(e) => setSelectedHomePlayerId(e.target.value)}
-                                  className="w-full bg-[#0b0f19] border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-gray-200 focus:outline-none focus:border-purple-500/50"
-                                >
-                                  <option value="">-- 選擇主力球員 --</option>
-                                  {homeRoster.map(p => {
-                                    const normP = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
-                                    const injury = injuryReports[normP];
-                                    const hot = hotPlayers[normP];
-                                    return (
-                                      <option key={p.id} value={p.id}>
-                                        {translatePlayerName(p.name)} {p.number !== null ? `#${p.number}` : ''} ({p.position}){injury ? ` [傷-${injury.status}]` : ''}{hot ? ` [火-${hot.reason}]` : ''}
-                                      </option>
-                                    );
-                                  })}
-                                </select>
-
-                                <select
-                                  value={selectedHomeBoostType}
-                                  onChange={(e) => setSelectedHomeBoostType(e.target.value as any)}
-                                  className="w-full bg-[#0b0f19] border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-gray-200 focus:outline-none focus:border-purple-500/50"
-                                >
-                                  <option value="hot">🔥 狀態爆發 (+5% 勝率, 得分加成)</option>
-                                  <option value="return">⚡ 傷病回歸 (+3% 勝率, 得分加成)</option>
-                                  <option value="injured">🩹 主力缺陣 (-5% 勝率, 得分扣減)</option>
-                                </select>
-
-                                <button
-                                  type="button"
-                                  onClick={() => handleAddBoost('home')}
-                                  disabled={!selectedHomePlayerId}
-                                  className="w-full py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed font-sans"
-                                >
-                                  添加主隊球員加成
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Away team column */}
-                            <div className="space-y-3.5 p-4 rounded-2xl bg-white/[0.02] border border-white/5">
-                              <h4 className="text-xs font-black text-white flex items-center gap-1.5 font-sans">
-                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                                {game.awayTeam.nameCn || game.awayTeam.name} (客隊)
-                              </h4>
-
-                              <div className="flex flex-col gap-2.5">
-                                <select
-                                  value={selectedAwayPlayerId}
-                                  onChange={(e) => setSelectedAwayPlayerId(e.target.value)}
-                                  className="w-full bg-[#0b0f19] border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-gray-200 focus:outline-none focus:border-purple-500/50"
-                                >
-                                  <option value="">-- 選擇主力球員 --</option>
-                                  {awayRoster.map(p => {
-                                    const normP = p.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
-                                    const injury = injuryReports[normP];
-                                    const hot = hotPlayers[normP];
-                                    return (
-                                      <option key={p.id} value={p.id}>
-                                        {translatePlayerName(p.name)} {p.number !== null ? `#${p.number}` : ''} ({p.position}){injury ? ` [傷-${injury.status}]` : ''}{hot ? ` [火-${hot.reason}]` : ''}
-                                      </option>
-                                    );
-                                  })}
-                                </select>
-
-                                <select
-                                  value={selectedAwayBoostType}
-                                  onChange={(e) => setSelectedAwayBoostType(e.target.value as any)}
-                                  className="w-full bg-[#0b0f19] border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-gray-200 focus:outline-none focus:border-purple-500/50"
-                                >
-                                  <option value="hot">🔥 狀態爆發 (+5% 勝率, 得分加成)</option>
-                                  <option value="return">⚡ 傷病回歸 (+3% 勝率, 得分加成)</option>
-                                  <option value="injured">🩹 主力缺陣 (-5% 勝率, 得分扣減)</option>
-                                </select>
-
-                                <button
-                                  type="button"
-                                  onClick={() => handleAddBoost('away')}
-                                  disabled={!selectedAwayPlayerId}
-                                  className="w-full py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed font-sans"
-                                >
-                                  添加客隊球員加成
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Active boosts display */}
-                        <div className="space-y-2.5 pt-2">
-                          <div className="flex justify-between items-center">
-                            <h4 className="text-xs font-black text-gray-400">已啟用的主力加成狀態</h4>
-                            {gameBoosts.length > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => setActiveBoosts(prev => ({ ...prev, [selectedGameId]: [] }))}
-                                className="text-[10px] text-gray-500 hover:text-red-400 font-bold transition-colors"
-                              >
-                                🧹 一鍵清除
-                              </button>
-                            )}
-                          </div>
-                          {gameBoosts.length === 0 ? (
-                            <div className="text-center py-4 rounded-xl bg-white/[0.01] border border-white/5 text-[11px] text-gray-600 font-bold">
-                              目前未套用任何主力加成，下方數據呈現 AI 預設報告值。
-                            </div>
-                          ) : (
-                            <div className="flex flex-wrap gap-2.5">
-                              {gameBoosts.map(b => (
-                                <div
-                                  key={b.playerId}
-                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-black transition-all ${
-                                    b.type === 'hot'
-                                      ? 'bg-orange-500/10 text-orange-400 border-orange-500/25 animate-pulse'
-                                      : b.type === 'return'
-                                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
-                                        : 'bg-red-500/10 text-red-400 border-red-500/25'
-                                  }`}
-                                >
-                                  <span>{b.teamType === 'home' ? '🏠' : '🚌'}</span>
-                                  <span>
-                                    {b.playerName} {b.jersey !== undefined ? `#${b.jersey}` : ''}
-                                  </span>
-                                  <span className="opacity-75">
-                                    ({b.type === 'hot' ? '狀態爆發' : b.type === 'return' ? '傷病回歸' : '主力缺陣'})
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveBoost(b.playerId)}
-                                    className="hover:text-white transition-colors ml-1"
-                                    title="移除加成"
-                                  >
-                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        
-                        {gameBoosts.length > 0 && (
-                          <div className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-3.5 py-2 rounded-xl border border-emerald-500/20 font-bold animate-pulse">
-                            🚀 主力球員加成已套用！下方賽事列表與詳細分析報告中的預期勝率、比分與大/小分預估已即時動態重算更新。
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-                </div>
-              )}
-            </div>
+            
 
           </div>
         </div>

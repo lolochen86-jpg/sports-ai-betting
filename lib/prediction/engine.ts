@@ -1,4 +1,6 @@
 import type { GameWithTeams, League } from '@/types/sports';
+import { calculatePitcherBullpenScore } from './pitcher-bullpen-model';
+import { calculateQuantMLPrediction } from './quant-ml-model';
 import { extractRecentStats, fetchH2HRecord, detectFatigue, fetchStartingPitcher } from './features';
 import { getMetaModelWeights } from './weights';
 import { getParkFactor, type ParkFactorInfo } from './park-factors';
@@ -63,6 +65,8 @@ export interface PredictionResult {
     SportsAI: ModelPrediction;
     EloRating: ModelPrediction;
     MonteCarlo: ModelPrediction;
+    PitcherBullpen: ModelPrediction;
+    QuantML: ModelPrediction;
     MetaModel: ModelPrediction;
   };
   pitchers?: {
@@ -574,20 +578,66 @@ export async function generatePrediction(
     ? `${sportsLoserName} 陣中有主力遭遇輕微拉傷困擾，賽前出戰機率為 70%，戰力調度受限；${sportsWinnerName} 主力全員健康待命。`
     : `${sportsWinnerName} 陣容調度深度充足，牛棚/替補席戰力充沛；${sportsLoserName} 連續背靠背客戰，體能消耗恐影響末段防守強度。`;
 
-  // ─── 6.5. Run MODEL 4: Stacking Meta-Model 集成堆疊元模型 (v1.0) ───
+  const pitchers = league === 'MLB' ? await fetchStartingPitcher(game.id) : { home: null, away: null };
+
+  // ─── 6.6. Run MODEL 5: Pitcher & Bullpen Matchup Model ───
+  const pbResult = calculatePitcherBullpenScore(
+    game,
+    league,
+    homeRecent,
+    awayRecent,
+    pitchers.home,
+    pitchers.away,
+    homeDepthInfo,
+    awayDepthInfo,
+    parkFactorInfo
+  );
+
+  // ─── 6.7. Run MODEL 5.5: QuantML Model ───
+  const quantResult = await calculateQuantMLPrediction(
+    game,
+    league,
+    homeRecent,
+    awayRecent,
+    pitchers.home,
+    pitchers.away
+  );
+
+  const quantWinner = quantResult.homeProb >= 0.50 ? 'home' : 'away';
+  const quantConf = Number((quantWinner === 'home' ? quantResult.homeProb : quantResult.awayProb).toFixed(3)) * 100;
+  const quantConfClamped = Math.max(50, Math.min(95, quantConf));
+  const quantOuPick = (quantResult.homeExpectedScore + quantResult.awayExpectedScore) > sportsResult.ouLine ? 'Over' : 'Under';
+  const quantProbs = league === 'MLB' 
+    ? calculateMlbTotalScoreProbs(quantResult.homeExpectedScore + quantResult.awayExpectedScore) 
+    : undefined;
+
+  const pbWinner = pbResult.homeExpectedScore >= pbResult.awayExpectedScore ? 'home' : 'away';
+  const pbConf = pbWinner === 'home' 
+    ? Math.round(50 + (pbResult.homeExpectedScore - pbResult.awayExpectedScore) * (league === 'NBA' ? 0.8 : 8.0))
+    : Math.round(50 + (pbResult.awayExpectedScore - pbResult.homeExpectedScore) * (league === 'NBA' ? 0.8 : 8.0));
+  const pbConfClamped = Math.max(50, Math.min(95, pbConf));
+
+  const pbOuPick = (pbResult.homeExpectedScore + pbResult.awayExpectedScore) > sportsResult.ouLine ? 'Over' : 'Under';
+  const pbProbs = league === 'MLB'
+    ? calculateMlbTotalScoreProbs(pbResult.homeExpectedScore + pbResult.awayExpectedScore)
+    : undefined;
+
+  
+// ─── 6.5. Run MODEL 4: Stacking Meta-Model 集成堆疊元模型 (v1.0) ───
   const weights = getMetaModelWeights();
   const getMetaHomeProb = () => {
     const pSports = sportsWinner === 'home' ? sportsConf : 100 - sportsConf;
     const pElo = eloWinner === 'home' ? eloConf : 100 - eloConf;
     const pMc = mcWinner === 'home' ? mcConf : 100 - mcConf;
-    return weights.SportsAI * pSports + weights.EloRating * pElo + weights.MonteCarlo * pMc;
+    const pQuant = quantResult.homeProb * 100;
+    return weights.SportsAI * pSports + weights.EloRating * pElo + weights.MonteCarlo * pMc + (weights.QuantML ?? 0) * pQuant;
   };
   const metaHomeProbVal = getMetaHomeProb();
   const metaWinner = metaHomeProbVal >= 50 ? 'home' : 'away';
   const metaConf = Number((metaWinner === 'home' ? metaHomeProbVal : 100 - metaHomeProbVal).toFixed(1));
 
-  let metaHomeExpectedScore = Number((weights.SportsAI * sportsResult.homeExpectedScore + weights.EloRating * eloResult.homeExpectedScore + weights.MonteCarlo * mcResult.homeExpectedScore).toFixed(1));
-  let metaAwayExpectedScore = Number((weights.SportsAI * sportsResult.awayExpectedScore + weights.EloRating * eloResult.awayExpectedScore + weights.MonteCarlo * mcResult.awayExpectedScore).toFixed(1));
+  let metaHomeExpectedScore = Number((weights.SportsAI * sportsResult.homeExpectedScore + weights.EloRating * eloResult.homeExpectedScore + weights.MonteCarlo * mcResult.homeExpectedScore + (weights.QuantML ?? 0) * quantResult.homeExpectedScore).toFixed(1));
+  let metaAwayExpectedScore = Number((weights.SportsAI * sportsResult.awayExpectedScore + weights.EloRating * eloResult.awayExpectedScore + weights.MonteCarlo * mcResult.awayExpectedScore + (weights.QuantML ?? 0) * quantResult.awayExpectedScore).toFixed(1));
   
   // Enforce consistency: predicted winner must have the higher expected score
   if (metaWinner === 'home' && metaAwayExpectedScore > metaHomeExpectedScore) {
@@ -618,8 +668,6 @@ export async function generatePrediction(
   } else {
     metaReasoning.push(`大小分集成共識：本場三核融合之預估總得分為 ${(metaHomeExpectedScore + metaAwayExpectedScore).toFixed(1)} 分（預期比分 客隊 ${metaAwayExpectedScore} 比 主隊 ${metaHomeExpectedScore}），對比 O/U 基準線 ${metaOuLine}，元模型深度推薦【${metaOuPick === 'Over' ? '大分' : '小分'}】。`);
   }
-
-  const pitchers = league === 'MLB' ? await fetchStartingPitcher(game.id) : { home: null, away: null };
 
   // ─── 7. Construct Result including Stacking Meta-Ensemble ───
   return {
@@ -677,6 +725,34 @@ export async function generatePrediction(
         ouPick: mcResult.ouPick,
         mlbTotalScoreProbs: mcProbs,
         highestScoringPeriod: calculatePeriodPrediction(mcResult.homeExpectedScore, mcResult.awayExpectedScore, game.id, league, 'MonteCarlo'),
+      },
+      PitcherBullpen: {
+        name: league === 'MLB' ? '⚾ 投打與後援牛棚對位模型 (v1.0)' : '🏀 先發防守與板凳深度對位模型 (v1.0)',
+        winner: pbWinner,
+        confidence: pbConfClamped,
+        modelVersion: 'PitcherBullpen-v1.0',
+        reasoning: pbResult.reasoning,
+        homeExpectedScore: pbResult.homeExpectedScore,
+        awayExpectedScore: pbResult.awayExpectedScore,
+        predictedTotal: Math.round(pbResult.homeExpectedScore + pbResult.awayExpectedScore),
+        ouLine: sportsResult.ouLine,
+        ouPick: pbOuPick,
+        mlbTotalScoreProbs: pbProbs,
+        highestScoringPeriod: calculatePeriodPrediction(pbResult.homeExpectedScore, pbResult.awayExpectedScore, game.id, league, 'PitcherBullpen'),
+      },
+      QuantML: {
+        name: '🔬 QuantML 量化機器學習模型 (v1.0)',
+        winner: quantWinner,
+        confidence: quantConfClamped,
+        modelVersion: quantResult.isRealMl ? 'QuantML-XGBoost-Poisson-v1.0' : 'QuantML-Poisson-Lite-v1.0',
+        reasoning: quantResult.reasoning,
+        homeExpectedScore: quantResult.homeExpectedScore,
+        awayExpectedScore: quantResult.awayExpectedScore,
+        predictedTotal: Math.round(quantResult.homeExpectedScore + quantResult.awayExpectedScore),
+        ouLine: sportsResult.ouLine,
+        ouPick: quantOuPick,
+        mlbTotalScoreProbs: quantProbs,
+        highestScoringPeriod: calculatePeriodPrediction(quantResult.homeExpectedScore, quantResult.awayExpectedScore, game.id, league, 'QuantML'),
       },
       MetaModel: {
         name: '👑 Meta 堆疊元模型 (v1.0)',
@@ -985,20 +1061,63 @@ export async function generatePredictionV2(
     injuryImpact = `陣容與體能評估：兩隊均無背靠背賽程干擾，體能儲備在合理區間。${homeName} 與 ${awayName} 主力陣容戰力完整，本場回歸純粹的戰術對位與即時攻防狀態。`;
   }
 
+  // ─── 5.5. Run MODEL 5: Pitcher & Bullpen Matchup Model ───
+  const pbResultV2 = calculatePitcherBullpenScore(
+    game,
+    league,
+    homeRecent,
+    awayRecent,
+    pitchers.home,
+    pitchers.away,
+    homeDepthInfo,
+    awayDepthInfo,
+    parkFactorInfo
+  );
+
+  // ─── 5.6. Run MODEL 5.5: QuantML Model ───
+  const quantResultV2 = await calculateQuantMLPrediction(
+    game,
+    league,
+    homeRecent,
+    awayRecent,
+    pitchers.home,
+    pitchers.away
+  );
+
+  const quantWinnerV2 = quantResultV2.homeProb >= 0.50 ? 'home' : 'away';
+  const quantConfV2 = Number((quantWinnerV2 === 'home' ? quantResultV2.homeProb : quantResultV2.awayProb).toFixed(3)) * 100;
+  const quantConfClampedV2 = Math.max(50, Math.min(95, quantConfV2));
+  const quantOuPickV2 = (quantResultV2.homeExpectedScore + quantResultV2.awayExpectedScore) > sportsResult.ouLine ? 'Over' : 'Under';
+  const quantProbsV2 = league === 'MLB' 
+    ? calculateMlbTotalScoreProbs(quantResultV2.homeExpectedScore + quantResultV2.awayExpectedScore) 
+    : undefined;
+
+  const pbWinnerV2 = pbResultV2.homeExpectedScore >= pbResultV2.awayExpectedScore ? 'home' : 'away';
+  const pbConfV2 = pbWinnerV2 === 'home' 
+    ? Math.round(50 + (pbResultV2.homeExpectedScore - pbResultV2.awayExpectedScore) * (league === 'NBA' ? 0.8 : 8.0))
+    : Math.round(50 + (pbResultV2.awayExpectedScore - pbResultV2.homeExpectedScore) * (league === 'NBA' ? 0.8 : 8.0));
+  const pbConfClampedV2 = Math.max(50, Math.min(95, pbConfV2));
+
+  const pbOuPickV2 = (pbResultV2.homeExpectedScore + pbResultV2.awayExpectedScore) > sportsResult.ouLine ? 'Over' : 'Under';
+  const pbProbsV2 = league === 'MLB'
+    ? calculateMlbTotalScoreProbs(pbResultV2.homeExpectedScore + pbResultV2.awayExpectedScore)
+    : undefined;
+
   // ─── 6. Run MODEL 4: Stacking Meta-Model 集成堆疊元模型 (v2.0) ───
   const weightsV2 = getMetaModelWeights();
   const getMetaHomeProb = () => {
     const pSports = sportsWinner === 'home' ? sportsConf : 100 - sportsConf;
     const pElo = eloWinner === 'home' ? eloConf : 100 - eloConf;
     const pMc = mcWinner === 'home' ? mcConf : 100 - mcConf;
-    return weightsV2.SportsAI * pSports + weightsV2.EloRating * pElo + weightsV2.MonteCarlo * pMc;
+    const pQuant = quantResultV2.homeProb * 100;
+    return weightsV2.SportsAI * pSports + weightsV2.EloRating * pElo + weightsV2.MonteCarlo * pMc + (weightsV2.QuantML ?? 0) * pQuant;
   };
   const metaHomeProbVal = getMetaHomeProb();
   const metaWinner = metaHomeProbVal >= 50 ? 'home' : 'away';
   const metaConf = Number((metaWinner === 'home' ? metaHomeProbVal : 100 - metaHomeProbVal).toFixed(1));
 
-  let metaHomeExpectedScore = Number((weightsV2.SportsAI * sportsResult.homeExpectedScore + weightsV2.EloRating * eloResult.homeExpectedScore + weightsV2.MonteCarlo * mcResult.homeExpectedScore).toFixed(1));
-  let metaAwayExpectedScore = Number((weightsV2.SportsAI * sportsResult.awayExpectedScore + weightsV2.EloRating * eloResult.awayExpectedScore + weightsV2.MonteCarlo * mcResult.awayExpectedScore).toFixed(1));
+  let metaHomeExpectedScore = Number((weightsV2.SportsAI * sportsResult.homeExpectedScore + weightsV2.EloRating * eloResult.homeExpectedScore + weightsV2.MonteCarlo * mcResult.homeExpectedScore + (weightsV2.QuantML ?? 0) * quantResultV2.homeExpectedScore).toFixed(1));
+  let metaAwayExpectedScore = Number((weightsV2.SportsAI * sportsResult.awayExpectedScore + weightsV2.EloRating * eloResult.awayExpectedScore + weightsV2.MonteCarlo * mcResult.awayExpectedScore + (weightsV2.QuantML ?? 0) * quantResultV2.awayExpectedScore).toFixed(1));
   
   // Enforce consistency: predicted winner must have the higher expected score
   if (metaWinner === 'home' && metaAwayExpectedScore > metaHomeExpectedScore) {
@@ -1085,6 +1204,34 @@ export async function generatePredictionV2(
         ouPick: mcResult.ouPick,
         mlbTotalScoreProbs: mcProbs,
         highestScoringPeriod: calculatePeriodPrediction(mcResult.homeExpectedScore, mcResult.awayExpectedScore, game.id, league, 'MonteCarlo'),
+      },
+      PitcherBullpen: {
+        name: league === 'MLB' ? '⚾ 投打與後援牛棚對位模型 (v2.0)' : '🏀 先發防守與板凳深度對位模型 (v2.0)',
+        winner: pbWinnerV2,
+        confidence: pbConfClampedV2,
+        modelVersion: 'PitcherBullpen-v2.0',
+        reasoning: pbResultV2.reasoning,
+        homeExpectedScore: pbResultV2.homeExpectedScore,
+        awayExpectedScore: pbResultV2.awayExpectedScore,
+        predictedTotal: Math.round(pbResultV2.homeExpectedScore + pbResultV2.awayExpectedScore),
+        ouLine: sportsResult.ouLine,
+        ouPick: pbOuPickV2,
+        mlbTotalScoreProbs: pbProbsV2,
+        highestScoringPeriod: calculatePeriodPrediction(pbResultV2.homeExpectedScore, pbResultV2.awayExpectedScore, game.id, league, 'PitcherBullpen'),
+      },
+      QuantML: {
+        name: '🔬 QuantML 量化機器學習模型 (v2.0)',
+        winner: quantWinnerV2,
+        confidence: quantConfClampedV2,
+        modelVersion: quantResultV2.isRealMl ? 'QuantML-XGBoost-Poisson-v2.0' : 'QuantML-Poisson-Lite-v2.0',
+        reasoning: quantResultV2.reasoning,
+        homeExpectedScore: quantResultV2.homeExpectedScore,
+        awayExpectedScore: quantResultV2.awayExpectedScore,
+        predictedTotal: Math.round(quantResultV2.homeExpectedScore + quantResultV2.awayExpectedScore),
+        ouLine: sportsResult.ouLine,
+        ouPick: quantOuPickV2,
+        mlbTotalScoreProbs: quantProbsV2,
+        highestScoringPeriod: calculatePeriodPrediction(quantResultV2.homeExpectedScore, quantResultV2.awayExpectedScore, game.id, league, 'QuantML'),
       },
       MetaModel: {
         name: '👑 Meta 堆疊元模型 (v2.0)',
