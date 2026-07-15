@@ -272,7 +272,27 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
     } : { home: null, away: null };
 
     // Calculate QuantML prediction
-    const quantResult = calculateQuantMLPredictionSync(g.homeCode, g.awayCode, g.league, homeStats, awayStats, pitchers.home, pitchers.away);
+    const hash = getHash(g.id + dateStr);
+    let tempF = 72.0;
+    let humidityPct = 50.0;
+    if (g.league === 'MLB') {
+      if (hash % 3 === 0) {
+        const tempC = 18 + (hash % 6);
+        tempF = tempC * 1.8 + 32;
+        humidityPct = 50 + (hash % 20);
+      }
+    }
+    const quantResult = calculateQuantMLPredictionSync(
+      g.homeCode,
+      g.awayCode,
+      g.league,
+      homeStats,
+      awayStats,
+      pitchers.home,
+      pitchers.away,
+      tempF,
+      humidityPct
+    );
     const quantWinner = quantResult.homeProb >= 0.50 ? 'home' : 'away';
     const quantConf = Number((quantWinner === 'home' ? quantResult.homeProb : quantResult.awayProb).toFixed(3)) * 100;
     const quantT = realLine !== undefined ? realLine : sportsResult.ouLine; // Use real line if available
