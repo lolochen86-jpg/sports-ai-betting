@@ -1,0 +1,27 @@
+[
+  {
+    "game_id": "pin_1632503633",
+    "sport": "MLB",
+    "game_date": "2026-07-14",
+    "home_team_abbr": "NAT",
+    "away_team_abbr": "AME",
+    "home_team_name": "National League",
+    "away_team_name": "American League",
+    "source": "pinnacle_direct",
+    "timestamp": "2026-07-14T00:24:58.117564+08:00",
+    "home_odds_raw": 1.7246,
+    "away_odds_raw": 2.23,
+    "spread": -1.5,
+    "spread_home_odds_raw": 2.51,
+    "spread_away_odds_raw": 1.5714,
+    "total_line": 7.5,
+    "over_odds_raw": 1.8547,
+    "under_odds_raw": 2.01,
+    "home_odds": 1.687,
+    "away_odds": 2.181,
+    "spread_home_odds": 2.455,
+    "spread_away_odds": 1.537,
+    "over_odds": 1.814,
+    "under_odds": 1.966
+  }
+]
