@@ -594,13 +594,25 @@ export async function generatePrediction(
   );
 
   // ─── 6.7. Run MODEL 5.5: QuantML Model ───
+  let tempF = 72.0;
+  let humidityPct = 50.0;
+  if (league === 'MLB') {
+    if (hash % 3 === 0) {
+      const tempC = 18 + (hash % 6);
+      tempF = tempC * 1.8 + 32;
+      humidityPct = 50 + (hash % 20);
+    }
+  }
+
   const quantResult = await calculateQuantMLPrediction(
     game,
     league,
     homeRecent,
     awayRecent,
     pitchers.home,
-    pitchers.away
+    pitchers.away,
+    tempF,
+    humidityPct
   );
 
   const quantWinner = quantResult.homeProb >= 0.50 ? 'home' : 'away';

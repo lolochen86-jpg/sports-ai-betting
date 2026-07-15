@@ -24,7 +24,9 @@ export async function calculateQuantMLPrediction(
   homeRecent: TeamRecentStats,
   awayRecent: TeamRecentStats,
   homePitcher: PitcherInfo | null,
-  awayPitcher: PitcherInfo | null
+  awayPitcher: PitcherInfo | null,
+  tempF?: number,
+  humidityPct?: number
 ): Promise<QuantMLResult> {
   // 1. Try Python API first
   const apiResult = await fetchQuantPredictions(game, league);
@@ -40,7 +42,9 @@ export async function calculateQuantMLPrediction(
     homeRecent,
     awayRecent,
     homePitcher,
-    awayPitcher
+    awayPitcher,
+    tempF,
+    humidityPct
   );
 
   const reasoning = [
@@ -65,7 +69,9 @@ export function calculateQuantMLPredictionSync(
   homeRecent: TeamRecentStats,
   awayRecent: TeamRecentStats,
   homePitcher: PitcherInfo | null,
-  awayPitcher: PitcherInfo | null
+  awayPitcher: PitcherInfo | null,
+  tempF?: number,
+  humidityPct?: number
 ): {
   homeExpectedScore: number;
   awayExpectedScore: number;
@@ -86,12 +92,12 @@ export function calculateQuantMLPredictionSync(
 
     // Fetch Elevation
     const elevationFt = MLB_ELEVATION_FT[homeCode] ?? 100;
-    const tempF = 72.0; // standard temperature
-    const humidityPct = 50.0;
+    const currentTemp = tempF ?? 72.0;
+    const currentHumidity = humidityPct ?? 50.0;
     const windSpeedMph = 5.0;
 
     // A. ADI calculation
-    const adiResult = calculateAdi(tempF, elevationFt, humidityPct);
+    const adiResult = calculateAdi(currentTemp, elevationFt, currentHumidity);
     const adi = adiResult.adi;
     const hrFactor = adiResult.hrFactor;
 
@@ -163,7 +169,7 @@ export function calculateQuantMLPredictionSync(
 
       adi: adi,
       hr_factor: hrFactor,
-      temperature_f: tempF,
+      temperature_f: currentTemp,
       elevation_ft: elevationFt,
       wind_speed_mph: windSpeedMph
     };
