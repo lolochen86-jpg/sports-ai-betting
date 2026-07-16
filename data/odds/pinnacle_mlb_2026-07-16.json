@@ -1,0 +1,27 @@
+[
+  {
+    "game_id": "pin_1632429849",
+    "sport": "MLB",
+    "game_date": "2026-07-16",
+    "home_team_abbr": "PHI",
+    "away_team_abbr": "NYM",
+    "home_team_name": "Philadelphia Phillies",
+    "away_team_name": "New York Mets",
+    "source": "pinnacle_direct",
+    "timestamp": "2026-07-16T23:29:31.603188+08:00",
+    "home_odds_raw": 1.7874,
+    "away_odds_raw": 2.17,
+    "spread": -1.5,
+    "spread_home_odds_raw": 2.53,
+    "spread_away_odds_raw": 1.5882,
+    "total_line": 9.5,
+    "over_odds_raw": 1.9615,
+    "under_odds_raw": 1.9259,
+    "home_odds": 1.748,
+    "away_odds": 2.122,
+    "spread_home_odds": 2.474,
+    "spread_away_odds": 1.553,
+    "over_odds": 1.918,
+    "under_odds": 1.884
+  }
+]

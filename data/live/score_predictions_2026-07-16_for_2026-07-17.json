@@ -1,0 +1,99 @@
+{
+  "report_date": "2026-07-16",
+  "target_date": "2026-07-17",
+  "timezone": "Asia/Taipei",
+  "generated_at_tw": "2026-07-16T23:39:32+08:00",
+  "source_note": "目前僅有隔天賽程，比分以聯盟平均與主場修正預估",
+  "strategies": [
+    {
+      "slug": "conservative",
+      "name": "穩健型 Conservative",
+      "games": [
+        {
+          "sport": "MLB",
+          "game_id": "823440",
+          "matchup": "NYM@PHI",
+          "matchup_zh": "大都會@費城人",
+          "home_team": "PHI",
+          "away_team": "NYM",
+          "home_team_zh": "費城人",
+          "away_team_zh": "大都會",
+          "home_win_prob": 0.5,
+          "tw_time": "07/17 07:10",
+          "venue": "Citizens Bank Park",
+          "data_quality": "schedule_only",
+          "home_starter": "TBD",
+          "away_starter": "Christian Scott",
+          "pred_home_score": 5,
+          "pred_away_score": 4,
+          "predicted_score": "NYM 4 - PHI 5",
+          "predicted_score_zh": "大都會 4 - 費城人 5",
+          "predicted_winner": "PHI",
+          "predicted_winner_zh": "費城人",
+          "confidence": "低"
+        }
+      ],
+      "total_games": 1
+    },
+    {
+      "slug": "aggressive",
+      "name": "激進型 Aggressive",
+      "games": [
+        {
+          "sport": "MLB",
+          "game_id": "823440",
+          "matchup": "NYM@PHI",
+          "matchup_zh": "大都會@費城人",
+          "home_team": "PHI",
+          "away_team": "NYM",
+          "home_team_zh": "費城人",
+          "away_team_zh": "大都會",
+          "home_win_prob": 0.5,
+          "tw_time": "07/17 07:10",
+          "venue": "Citizens Bank Park",
+          "data_quality": "schedule_only",
+          "home_starter": "TBD",
+          "away_starter": "Christian Scott",
+          "pred_home_score": 5,
+          "pred_away_score": 4,
+          "predicted_score": "NYM 4 - PHI 5",
+          "predicted_score_zh": "大都會 4 - 費城人 5",
+          "predicted_winner": "PHI",
+          "predicted_winner_zh": "費城人",
+          "confidence": "低"
+        }
+      ],
+      "total_games": 1
+    },
+    {
+      "slug": "underdog",
+      "name": "冷門獵人 Underdog",
+      "games": [
+        {
+          "sport": "MLB",
+          "game_id": "823440",
+          "matchup": "NYM@PHI",
+          "matchup_zh": "大都會@費城人",
+          "home_team": "PHI",
+          "away_team": "NYM",
+          "home_team_zh": "費城人",
+          "away_team_zh": "大都會",
+          "home_win_prob": 0.5,
+          "tw_time": "07/17 07:10",
+          "venue": "Citizens Bank Park",
+          "data_quality": "schedule_only",
+          "home_starter": "TBD",
+          "away_starter": "Christian Scott",
+          "pred_home_score": 4,
+          "pred_away_score": 5,
+          "predicted_score": "NYM 5 - PHI 4",
+          "predicted_score_zh": "大都會 5 - 費城人 4",
+          "predicted_winner": "NYM",
+          "predicted_winner_zh": "大都會",
+          "confidence": "中"
+        }
+      ],
+      "total_games": 1
+    }
+  ]
+}
