@@ -406,6 +406,16 @@
       "wins": 0,
       "losses": 0,
       "voids": 0
+    },
+    {
+      "date": "2026-07-15",
+      "open": 2304.0,
+      "close": 2304.0,
+      "pnl": 0.0,
+      "bets": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0
     }
   ],
   "strategy": "aggressive"
