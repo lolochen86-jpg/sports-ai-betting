@@ -20,7 +20,7 @@ function corsJson(data: any, init?: ResponseInit) {
   Object.entries(CORS_HEADERS).forEach(([key, val]) => {
     mergedHeaders.set(key, val);
   });
-  return corsJson(data, {
+  return NextResponse.json(data, {
     ...init,
     headers: mergedHeaders,
   });
