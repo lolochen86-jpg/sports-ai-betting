@@ -3872,66 +3872,61 @@ export default function HomeClient() {
             {(() => {
               const backtest = getAccuracyStats();
               return (
-                <div className="glass-panel rounded-3xl p-6 md:p-8 border border-white/5 relative overflow-hidden">
+                <div className="glass-panel rounded-3xl p-5 border border-white/5 relative overflow-hidden">
                   <div className="absolute top-[-50px] right-[-50px] w-[150px] h-[150px] bg-emerald-500/5 rounded-full blur-2xl" />
                   
-                  <h3 className="text-lg font-black text-white mb-2 flex items-center gap-2 font-sans">
-                    <ChartIcon className="w-5 h-5 text-emerald-400" />
+                  <h3 className="text-sm font-black text-white mb-1.5 flex items-center gap-2 font-sans">
+                    <ChartIcon className="w-4 h-4 text-emerald-400" />
                     🤖 AI 模型真實量化回測 (Confidence &ge; 60%)
                   </h3>
-                  <p className="text-xs text-gray-300 leading-relaxed mb-4 font-sans font-semibold">
-                    自動分析已完賽場次之「獨贏預估」與「大小分預測」，進行雙維度命中率回測統計：
+                  <p className="text-[11px] text-gray-400 leading-normal mb-3 font-sans">
+                    自動分析已完賽場次之「獨贏預估」與「大小分預測」：
                   </p>
 
-                  <div className="space-y-4">
-                    {[
-                      { name: '👑 Meta 堆疊元模型', key: 'MetaModel' as const, color: 'from-pink-500 to-rose-500' },
-                      { name: '🤖 SportsAI 迴歸', key: 'SportsAI' as const, color: 'from-purple-500 to-indigo-500' },
-                      { name: '📈 Elo 戰力比對', key: 'EloRating' as const, color: 'from-orange-500 to-red-500' },
-                      { name: '🎲 Monte Carlo 模擬', key: 'MonteCarlo' as const, color: 'from-cyan-500 to-blue-500' },
-                      { name: '🔬 QuantML 量化模型', key: 'QuantML' as const, color: 'from-emerald-500 to-teal-500' }
-                    ].map((model) => {
-                      const data = backtest[model.key];
-                      const winnerAcc = data.winnerTotal > 0 ? (data.winnerCorrect / data.winnerTotal) * 100 : 0;
-                      const ouAcc = data.ouTotal > 0 ? (data.ouCorrect / data.ouTotal) * 100 : 0;
-                      return (
-                        <div key={model.key} className="bg-white/5 rounded-2xl p-4 border border-white/5">
-                          <div className="flex justify-between items-center mb-3 animate-pulse">
-                            <span className="text-sm font-black text-white font-sans">{model.name}</span>
-                            <span className="text-[9px] font-mono font-bold bg-purple-500/10 text-purple-300 px-1.5 py-0.5 rounded border border-purple-500/20">
-                              信賴度 &ge; 60%
-                            </span>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4 text-center font-sans">
-                            <div className="bg-white/[0.02] rounded-xl p-2 border border-white/5">
-                              <span className="block text-[10px] text-gray-400 font-mono font-bold">獨贏命中率</span>
-                              <span className="text-base font-black text-emerald-400 font-mono mt-0.5 block">
-                                {winnerAcc.toFixed(1)}%
-                              </span>
-                              <span className="text-[9px] text-gray-500 font-mono font-bold block">
-                                ({data.winnerCorrect}/{data.winnerTotal} 場)
-                              </span>
-                            </div>
-
-                            <div className="bg-white/[0.02] rounded-xl p-2 border border-white/5">
-                              <span className="block text-[10px] text-gray-400 font-mono font-bold">大小分命中率</span>
-                              <span className="text-base font-black text-blue-400 font-mono mt-0.5 block">
-                                {ouAcc.toFixed(1)}%
-                              </span>
-                              <span className="text-[9px] text-gray-500 font-mono font-bold block">
-                                ({data.ouCorrect}/{data.ouTotal} 場)
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div className="overflow-x-auto w-full">
+                    <table className="w-full text-left text-xs font-sans">
+                      <thead>
+                        <tr className="border-b border-white/10 text-gray-400 font-mono uppercase tracking-wider text-[9px]">
+                          <th className="py-2 px-1">預測模型</th>
+                          <th className="py-2 px-1 text-center">獨贏命中率</th>
+                          <th className="py-2 px-1 text-center">大小分命中率</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {[
+                          { name: '👑 Meta 堆疊元模型', key: 'MetaModel' as const, dotColor: 'bg-pink-500' },
+                          { name: '🤖 SportsAI 迴歸', key: 'SportsAI' as const, dotColor: 'bg-purple-500' },
+                          { name: '📈 Elo 戰力比對', key: 'EloRating' as const, dotColor: 'bg-orange-500' },
+                          { name: '🎲 Monte Carlo 模擬', key: 'MonteCarlo' as const, dotColor: 'bg-cyan-500' },
+                          { name: '🔬 QuantML 量化模型', key: 'QuantML' as const, dotColor: 'bg-emerald-500' }
+                        ].map((model) => {
+                          const data = backtest[model.key];
+                          const winnerAcc = data.winnerTotal > 0 ? (data.winnerCorrect / data.winnerTotal) * 100 : 0;
+                          const ouAcc = data.ouTotal > 0 ? (data.ouCorrect / data.ouTotal) * 100 : 0;
+                          return (
+                            <tr key={model.key} className="hover:bg-white/[0.02] transition-colors">
+                              <td className="py-2 px-1 font-semibold text-white flex items-center gap-1.5 min-w-[120px]">
+                                <span className={`w-1.5 h-1.5 rounded-full ${model.dotColor}`} />
+                                <span className="text-[11px]">{model.name}</span>
+                              </td>
+                              <td className="py-2 px-1 text-center font-mono">
+                                <span className="text-emerald-400 font-black text-xs">{winnerAcc.toFixed(1)}%</span>
+                                <span className="text-[9px] text-gray-500 ml-1">({data.winnerCorrect}/{data.winnerTotal})</span>
+                              </td>
+                              <td className="py-2 px-1 text-center font-mono">
+                                <span className="text-blue-400 font-black text-xs">{ouAcc.toFixed(1)}%</span>
+                                <span className="text-[9px] text-gray-500 ml-1">({data.ouCorrect}/{data.ouTotal})</span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-white/5 flex gap-2 justify-between items-center text-[10px] text-gray-400 font-mono font-bold">
+                  <div className="mt-3 pt-3 border-t border-white/5 flex gap-2 justify-between items-center text-[9px] text-gray-500 font-mono font-semibold">
                     <span>動態對位結算：完賽自動統計</span>
-                    <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[8px] tracking-wider uppercase font-bold shrink-0">
+                    <span className="px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[7px] tracking-wider uppercase font-bold shrink-0">
                       LIVE QUANT
                     </span>
                   </div>
