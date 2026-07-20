@@ -18,6 +18,7 @@ import {
 import type { H2HRecord, FatigueInfo, PitcherInfo } from './stats';
 import { fetchMLBRoster } from '../sports-api/mlb';
 import { fetchNBARoster } from '../sports-api/nba';
+import { prisma } from '@/lib/prisma';
 
 export interface PeriodDistributionItem {
   name: string;
@@ -395,8 +396,28 @@ export async function generatePrediction(
     extractRecentStats(awayId, league, game.id, game.gameDate),
   ]);
   
+  // Fetch real O/U line from sportsbook / Taiwan Lottery if available
+  let realOuLine: number | null = null;
+  try {
+    const oddsTaiwan = await prisma.oddsTaiwan.findFirst({
+      where: {
+        gameExternalId: String(game.id),
+        marketType: 'totals',
+      },
+    });
+    if (oddsTaiwan && oddsTaiwan.line !== null) {
+      realOuLine = oddsTaiwan.line;
+    }
+  } catch (err) {
+    console.warn(`[Prediction Engine] Failed to fetch real O/U line for game ${game.id}:`, err);
+  }
+
   // ─── 2. Run MODEL 1: SportsAI 特徵加權權重模型 (v4.2) ───
   const sportsResult = calculateWinProbability(homeRecent, awayRecent, game.id, league, game.homeTeam.record, game.awayTeam.record);
+  if (realOuLine !== null) {
+    sportsResult.ouLine = realOuLine;
+    sportsResult.ouPick = (sportsResult.homeExpectedScore + sportsResult.awayExpectedScore) > realOuLine ? 'Over' : 'Under';
+  }
   const sportsWinner = sportsResult.homeProbability >= sportsResult.awayProbability ? 'home' : 'away';
   const sportsConf = sportsWinner === 'home' ? sportsResult.homeProbability : sportsResult.awayProbability;
   
@@ -473,6 +494,10 @@ export async function generatePrediction(
 
   // ─── 3. Run MODEL 2: Elo Rating 戰力指數模型 (v1.8) ───
   const eloResult = calculateEloProbability(game.homeTeam.record, game.awayTeam.record, homeRecent, awayRecent, game.id, league);
+  if (realOuLine !== null) {
+    eloResult.ouLine = realOuLine;
+    eloResult.ouPick = (eloResult.homeExpectedScore + eloResult.awayExpectedScore) > realOuLine ? 'Over' : 'Under';
+  }
   const eloWinner = eloResult.homeProbability >= eloResult.awayProbability ? 'home' : 'away';
   const eloConf = eloWinner === 'home' ? eloResult.homeProbability : eloResult.awayProbability;
   
@@ -507,6 +532,10 @@ export async function generatePrediction(
 
   // ─── 4. Run MODEL 3: Monte Carlo 萬次隨機模擬模型 (v2.5) ───
   const mcResult = calculateMonteCarloProbability(homeRecent, awayRecent, game.id, league);
+  if (realOuLine !== null) {
+    mcResult.ouLine = realOuLine;
+    mcResult.ouPick = (mcResult.homeExpectedScore + mcResult.awayExpectedScore) > realOuLine ? 'Over' : 'Under';
+  }
   const mcWinner = mcResult.homeProbability >= mcResult.awayProbability ? 'home' : 'away';
   const mcConf = mcWinner === 'home' ? mcResult.homeProbability : mcResult.awayProbability;
   const mcWinnerName = mcWinner === 'home' ? homeName : awayName;
@@ -826,6 +855,22 @@ export async function generatePredictionV2(
     league === 'MLB' ? fetchStartingPitcher(game.id) : Promise.resolve({ home: null, away: null })
   ]);
   
+  // Fetch real O/U line from sportsbook / Taiwan Lottery if available
+  let realOuLine: number | null = null;
+  try {
+    const oddsTaiwan = await prisma.oddsTaiwan.findFirst({
+      where: {
+        gameExternalId: String(game.id),
+        marketType: 'totals',
+      },
+    });
+    if (oddsTaiwan && oddsTaiwan.line !== null) {
+      realOuLine = oddsTaiwan.line;
+    }
+  } catch (err) {
+    console.warn(`[Prediction Engine] Failed to fetch real O/U line for game ${game.id}:`, err);
+  }
+
   // ─── 2. Run MODEL 1: SportsAI 特徵加權權重模型 (v4.2 - V2 Enhanced) ───
   const sportsResult = calculateWinProbabilityV2(
     homeRecent,
@@ -846,6 +891,10 @@ export async function generatePredictionV2(
       awayDepthInfo
     }
   );
+  if (realOuLine !== null) {
+    sportsResult.ouLine = realOuLine;
+    sportsResult.ouPick = (sportsResult.homeExpectedScore + sportsResult.awayExpectedScore) > realOuLine ? 'Over' : 'Under';
+  }
   const sportsWinner = sportsResult.homeProbability >= sportsResult.awayProbability ? 'home' : 'away';
   const sportsConf = sportsWinner === 'home' ? sportsResult.homeProbability : sportsResult.awayProbability;
   
@@ -956,6 +1005,10 @@ export async function generatePredictionV2(
       awayFatigue
     }
   );
+  if (realOuLine !== null) {
+    eloResult.ouLine = realOuLine;
+    eloResult.ouPick = (eloResult.homeExpectedScore + eloResult.awayExpectedScore) > realOuLine ? 'Over' : 'Under';
+  }
   const eloWinner = eloResult.homeProbability >= eloResult.awayProbability ? 'home' : 'away';
   const eloConf = eloWinner === 'home' ? eloResult.homeProbability : eloResult.awayProbability;
   
@@ -1002,6 +1055,10 @@ export async function generatePredictionV2(
       awayDepthInfo
     }
   );
+  if (realOuLine !== null) {
+    mcResult.ouLine = realOuLine;
+    mcResult.ouPick = (mcResult.homeExpectedScore + mcResult.awayExpectedScore) > realOuLine ? 'Over' : 'Under';
+  }
   const mcWinner = mcResult.homeProbability >= mcResult.awayProbability ? 'home' : 'away';
   const mcConf = mcWinner === 'home' ? mcResult.homeProbability : mcResult.awayProbability;
   

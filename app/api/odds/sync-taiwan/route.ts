@@ -205,7 +205,7 @@ export async function GET(request: NextRequest) {
     const upsertedDetails: any[] = [];
 
     // 3. Match and upsert into database
-    const oddsMap: Record<string, { awayOdds: number; homeOdds: number }> = {};
+    const oddsMap: Record<string, { awayOdds: number; homeOdds: number; totalsLine?: number | null }> = {};
 
     for (const scraped of allScraped) {
       const matchKey = `${scraped.awayCode}_${scraped.homeCode}`;
@@ -221,10 +221,11 @@ export async function GET(request: NextRequest) {
       const gameDate = new Date(officialGame.gameDate);
 
       // Populate compatible oddsMap for frontend localState compatibility
-      if (scraped.awayOdds || scraped.homeOdds) {
+      if (scraped.awayOdds || scraped.homeOdds || scraped.totalsLine) {
         oddsMap[matchKey] = {
           awayOdds: scraped.awayOdds || 0,
-          homeOdds: scraped.homeOdds || 0
+          homeOdds: scraped.homeOdds || 0,
+          totalsLine: scraped.totalsLine || null
         };
       }
 
