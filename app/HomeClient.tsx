@@ -487,7 +487,10 @@ function calculatePeriodPrediction(
   }
 }
 
-function generateDynamicPrediction(game: GameWithTeams): PredictionDetails {
+function generateDynamicPrediction(
+  game: GameWithTeams,
+  manualOdds?: Record<string, { away: string; home: string; legLimit: number; totalsLine?: number }>
+): PredictionDetails {
   const hash = Array.from(game.id).reduce((acc, char) => acc + char.charCodeAt(0), 0);
   
   const homeName = game.homeTeam.nameCn || game.homeTeam.name;
@@ -525,9 +528,13 @@ function generateDynamicPrediction(game: GameWithTeams): PredictionDetails {
   [eloHomeScore, eloAwayScore] = enforceScoreConsistency(winner, eloHomeScore, eloAwayScore);
   [mcHomeScore, mcAwayScore] = enforceScoreConsistency(winner, mcHomeScore, mcAwayScore);
   
-  const ouLine = game.league === 'NBA' 
-    ? Math.round(sportsHomeScore + sportsAwayScore + (hash % 7) - 3) - 0.5
-    : Math.floor(sportsHomeScore + sportsAwayScore) + 0.5;
+  // Check if we have a manual/scraped totalsLine for this game
+  const localOdds = manualOdds?.[game.id];
+  const ouLine = (localOdds && localOdds.totalsLine)
+    ? localOdds.totalsLine
+    : (game.league === 'NBA' 
+        ? Math.round(sportsHomeScore + sportsAwayScore + (hash % 7) - 3) - 0.5
+        : Math.floor(sportsHomeScore + sportsAwayScore) + 0.5);
     
   const sportsOuPick = (sportsHomeScore + sportsAwayScore) > ouLine ? 'Over' : 'Under';
   const eloOuPick = (eloHomeScore + eloAwayScore) > ouLine ? 'Over' : 'Under';
@@ -745,7 +752,7 @@ export default function HomeClient() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   
   // Taiwan Sports Lottery Manual Odds and Leg Limits State
-  const [manualOdds, setManualOdds] = useState<Record<string, { away: string; home: string; legLimit: number }>>({});
+  const [manualOdds, setManualOdds] = useState<Record<string, { away: string; home: string; legLimit: number; totalsLine?: number }>>({});
   
   useEffect(() => {
     const saved = localStorage.getItem('taiwan_odds_manual');
@@ -795,11 +802,12 @@ export default function HomeClient() {
           const next = { ...prev };
           // 1. Save directly by matchKey (e.g. SD_LAD, NYM_ATL)
           Object.entries(scraped).forEach(([mKey, odds]: [string, any]) => {
-            if (odds && (odds.awayOdds || odds.homeOdds)) {
+            if (odds && (odds.awayOdds || odds.homeOdds || odds.totalsLine)) {
               next[mKey] = {
                 away: odds.awayOdds ? odds.awayOdds.toString() : '',
                 home: odds.homeOdds ? odds.homeOdds.toString() : '',
-                legLimit: 1
+                legLimit: 1,
+                totalsLine: odds.totalsLine || undefined
               };
             }
           });
@@ -812,7 +820,8 @@ export default function HomeClient() {
               next[game.id] = {
                 away: odds.awayOdds ? odds.awayOdds.toString() : (prev[game.id]?.away || ''),
                 home: odds.homeOdds ? odds.homeOdds.toString() : (prev[game.id]?.home || ''),
-                legLimit: prev[game.id]?.legLimit || 1
+                legLimit: prev[game.id]?.legLimit || 1,
+                totalsLine: odds.totalsLine || prev[game.id]?.totalsLine || undefined
               };
               syncCount++;
             }
@@ -1214,7 +1223,7 @@ export default function HomeClient() {
 
   // ─── Apply Player boosts dynamically to predictions ───
   const getAdjustedPrediction = (game: GameWithTeams): PredictionDetails | null => {
-    const basePred = predictions[game.id] || generateDynamicPrediction(game);
+    const basePred = predictions[game.id] || generateDynamicPrediction(game, manualOdds);
     if (!basePred) return null;
 
     const boosts = activeBoosts[game.id];
@@ -1478,14 +1487,12 @@ export default function HomeClient() {
     const completedGames = games.filter(g => g.status === 'completed' && g.homeScore != null && g.awayScore != null);
 
     completedGames.forEach(game => {
-      const pred = getAdjustedPrediction(game) || generateDynamicPrediction(game);
+      const pred = getAdjustedPrediction(game) || generateDynamicPrediction(game, manualOdds);
       if (!pred || !pred.models) return;
 
       const actualWinner = (game.homeScore ?? 0) > (game.awayScore ?? 0) ? 'home' : 'away';
       
-      const ouLine = game.league === 'NBA' 
-        ? Math.round(game.awayScore! + game.homeScore! + (Array.from(game.id).reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) % 7) - 3) - 0.5
-        : Math.floor(game.awayScore! + game.homeScore!) + 0.5;
+      const ouLine = pred.models.MetaModel.ouLine;
       const totalScore = (game.homeScore ?? 0) + (game.awayScore ?? 0);
       const actualOu = totalScore > ouLine ? 'Over' : 'Under';
 
@@ -1574,7 +1581,7 @@ export default function HomeClient() {
       }
     } catch (err) {
       console.warn('handleRunPrediction error, using fallback prediction:', err);
-      const fallbackPred = generateDynamicPrediction(game);
+      const fallbackPred = generateDynamicPrediction(game, manualOdds);
       setPredictions(prev => ({ ...prev, [gameId]: fallbackPred }));
       setPredictionsUnlocked(prev => ({ ...prev, [gameId]: true }));
       setSelectedGameId(gameId);
@@ -2012,7 +2019,7 @@ export default function HomeClient() {
                   const isUnlocked = true;
                   const isExpanded = !collapsedGames[game.id];
                   const isPredicting = predictingGameId === game.id;
-                  const basePred = predictions[game.id] || generateDynamicPrediction(game);
+                  const basePred = predictions[game.id] || generateDynamicPrediction(game, manualOdds);
                   const pred = getAdjustedPrediction(game);
                   const activePred = pred ? (pred.models?.[selectedModelTab] || pred) : null;
                   const baseActivePred = basePred ? (basePred.models?.[selectedModelTab] || basePred) : null;
@@ -3506,9 +3513,8 @@ export default function HomeClient() {
 
                               {(() => {
                                 const userOuPick = userPredictions[game.id].ou;
-                                const ouLine = game.league === 'NBA' 
-                                  ? Math.round(game.awayScore! + game.homeScore! + (Array.from(game.id).reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) % 7) - 3) - 0.5
-                                  : Math.floor(game.awayScore! + game.homeScore!) + 0.5;
+                                const pred = predictions[game.id] || generateDynamicPrediction(game, manualOdds);
+                                const ouLine = pred.models.MetaModel.ouLine;
                                 const totalScore = (game.homeScore ?? 0) + (game.awayScore ?? 0);
                                 const actualOu = totalScore > ouLine ? 'Over' : 'Under';
                                 const ouCorrect = userOuPick === actualOu;
