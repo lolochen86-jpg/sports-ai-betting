@@ -1921,8 +1921,8 @@ export default function HomeClient() {
         </div>
 
         {/* Prediction Cards Board */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-16">
-          <div className="lg:col-span-2 flex flex-col gap-6">
+        <div className="w-full mb-16">
+          <div className="w-full flex flex-col gap-6">
             <h2 className="text-3xl font-black flex items-center gap-2.5 text-white font-sans tracking-wide">
               <span className={`w-2 h-7 rounded bg-gradient-to-b ${activeLeague === 'NBA' ? 'from-orange-500 to-yellow-500' : 'from-cyan-400 to-blue-500'}`} />
               熱門比賽預測板 (今日推薦)
@@ -3865,84 +3865,10 @@ export default function HomeClient() {
             </div>
           </div>
 
-          {/* Right sidebar: AI Metrics and Custom Predictor */}
-          <div className="flex flex-col gap-8">
-            
-            {/* Real-time Quant Backtest widget */}
-            {(() => {
-              const backtest = getAccuracyStats();
-              return (
-                <div className="glass-panel rounded-3xl p-5 border border-white/5 relative overflow-hidden">
-                  <div className="absolute top-[-50px] right-[-50px] w-[150px] h-[150px] bg-emerald-500/5 rounded-full blur-2xl" />
-                  
-                  <h3 className="text-sm font-black text-white mb-1.5 flex items-center gap-2 font-sans">
-                    <ChartIcon className="w-4 h-4 text-emerald-400" />
-                    🤖 AI 模型真實量化回測 (Confidence &ge; 60%)
-                  </h3>
-                  <p className="text-[11px] text-gray-400 leading-normal mb-3 font-sans">
-                    自動分析已完賽場次之「獨贏預估」與「大小分預測」：
-                  </p>
-
-                  <div className="overflow-x-auto w-full">
-                    <table className="w-full text-left text-xs font-sans">
-                      <thead>
-                        <tr className="border-b border-white/10 text-gray-400 font-mono uppercase tracking-wider text-[9px]">
-                          <th className="py-2 px-1">預測模型</th>
-                          <th className="py-2 px-1 text-center">獨贏命中率</th>
-                          <th className="py-2 px-1 text-center">大小分命中率</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/5">
-                        {[
-                          { name: '👑 Meta 堆疊元模型', key: 'MetaModel' as const, dotColor: 'bg-pink-500' },
-                          { name: '🤖 SportsAI 迴歸', key: 'SportsAI' as const, dotColor: 'bg-purple-500' },
-                          { name: '📈 Elo 戰力比對', key: 'EloRating' as const, dotColor: 'bg-orange-500' },
-                          { name: '🎲 Monte Carlo 模擬', key: 'MonteCarlo' as const, dotColor: 'bg-cyan-500' },
-                          { name: '🔬 QuantML 量化模型', key: 'QuantML' as const, dotColor: 'bg-emerald-500' }
-                        ].map((model) => {
-                          const data = backtest[model.key];
-                          const winnerAcc = data.winnerTotal > 0 ? (data.winnerCorrect / data.winnerTotal) * 100 : 0;
-                          const ouAcc = data.ouTotal > 0 ? (data.ouCorrect / data.ouTotal) * 100 : 0;
-                          return (
-                            <tr key={model.key} className="hover:bg-white/[0.02] transition-colors">
-                              <td className="py-2 px-1 font-semibold text-white flex items-center gap-1.5 min-w-[120px]">
-                                <span className={`w-1.5 h-1.5 rounded-full ${model.dotColor}`} />
-                                <span className="text-[11px]">{model.name}</span>
-                              </td>
-                              <td className="py-2 px-1 text-center font-mono">
-                                <span className="text-emerald-400 font-black text-xs">{winnerAcc.toFixed(1)}%</span>
-                                <span className="text-[9px] text-gray-500 ml-1">({data.winnerCorrect}/{data.winnerTotal})</span>
-                              </td>
-                              <td className="py-2 px-1 text-center font-mono">
-                                <span className="text-blue-400 font-black text-xs">{ouAcc.toFixed(1)}%</span>
-                                <span className="text-[9px] text-gray-500 ml-1">({data.ouCorrect}/{data.ouTotal})</span>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="mt-3 pt-3 border-t border-white/5 flex gap-2 justify-between items-center text-[9px] text-gray-500 font-mono font-semibold">
-                    <span>動態對位結算：完賽自動統計</span>
-                    <span className="px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[7px] tracking-wider uppercase font-bold shrink-0">
-                      LIVE QUANT
-                    </span>
-                  </div>
-                </div>
-              );
-            })()}
-
-
-
-            
-
-          </div>
         </div>
       </main>
 
-      {/* 4. Auth Modal (Interactive Signin/Register) */}
+            {/* 4. Auth Modal (Interactive Signin/Register) */}
       {authModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
           <div className="w-full max-w-md bg-[#0b0f19] border border-white/10 rounded-3xl p-6 md:p-8 relative shadow-2xl shadow-purple-500/10">
