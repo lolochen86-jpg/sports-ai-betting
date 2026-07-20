@@ -146,3 +146,146 @@ export async function fetchMLBRoster(teamId: string): Promise<PlayerInfo[]> {
   apiCache.set(cacheKey, players, CacheTTL.PLAYERS);
   return players;
 }
+
+// ─── Player Season Stats ───
+
+export interface PlayerSeasonStats {
+  playerId: string;
+  name: string;
+  position: string;
+  teamCode: string;
+  season: number;
+  // Batting
+  battingAvg?: number;
+  ops?: number;
+  homeRuns?: number;
+  rbis?: number;
+  stolenBases?: number;
+  // Pitching
+  era?: number;
+  whip?: number;
+  wins?: number;
+  losses?: number;
+  strikeouts?: number;
+  saves?: number;
+  inningsPitched?: number;
+  gamesStarted?: number;
+}
+
+export async function fetchMLBPlayerStats(playerId: string, season?: number): Promise<PlayerSeasonStats | null> {
+  const s = season || new Date().getFullYear();
+  const cacheKey = `mlb:stats:${playerId}:${s}`;
+  const cached = apiCache.get<PlayerSeasonStats>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    // First, get player info
+    const personRes = await fetch(`${MLB_BASE}/people/${playerId}?hydrate=stats(group=[hitting,pitching],type=season,season=${s})`, {
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    });
+    if (!personRes.ok) return null;
+
+    const personJson = await personRes.json();
+    const person = personJson.people?.[0];
+    if (!person) return null;
+
+    const result: PlayerSeasonStats = {
+      playerId,
+      name: person.fullName ?? '',
+      position: person.primaryPosition?.abbreviation ?? '',
+      teamCode: '',
+      season: s,
+    };
+
+    // Parse stats groups
+    for (const statGroup of person.stats ?? []) {
+      const group = statGroup.group?.displayName;
+      const splits = statGroup.splits ?? [];
+      if (!splits.length) continue;
+      const stat = splits[0].stat;
+
+      if (group === 'hitting') {
+        result.battingAvg = parseFloat(stat.avg ?? '0');
+        result.ops = parseFloat(stat.ops ?? '0');
+        result.homeRuns = parseInt(stat.homeRuns ?? '0', 10);
+        result.rbis = parseInt(stat.rbi ?? '0', 10);
+        result.stolenBases = parseInt(stat.stolenBases ?? '0', 10);
+      }
+
+      if (group === 'pitching') {
+        result.era = parseFloat(stat.era ?? '0');
+        result.whip = parseFloat(stat.whip ?? '0');
+        result.wins = parseInt(stat.wins ?? '0', 10);
+        result.losses = parseInt(stat.losses ?? '0', 10);
+        result.strikeouts = parseInt(stat.strikeOuts ?? '0', 10);
+        result.saves = parseInt(stat.saves ?? '0', 10);
+        result.gamesStarted = parseInt(stat.gamesStarted ?? '0', 10);
+        const ipStr = stat.inningsPitched ?? '0';
+        const parts = ipStr.split('.');
+        result.inningsPitched = parseInt(parts[0] || '0', 10) + (parseInt(parts[1] || '0', 10) / 3);
+      }
+    }
+
+    apiCache.set(cacheKey, result, CacheTTL.PLAYERS);
+    return result;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Probable Pitchers for Today ───
+
+export interface ProbablePitcherSummary {
+  gamePk: string;
+  homeTeamCode: string;
+  awayTeamCode: string;
+  homePitcher?: { id: string; name: string; era?: number; whip?: number; record?: string };
+  awayPitcher?: { id: string; name: string; era?: number; whip?: number; record?: string };
+}
+
+export async function fetchMLBProbablePitchers(date?: string): Promise<ProbablePitcherSummary[]> {
+  const d = date || new Date().toISOString().split('T')[0];
+  const cacheKey = `mlb:probable:${d}`;
+  const cached = apiCache.get<ProbablePitcherSummary[]>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const res = await fetch(
+      `${MLB_BASE}/schedule?sportId=1&date=${d}&hydrate=probablePitcher(note),team`,
+      { headers: { 'User-Agent': 'Mozilla/5.0' }, cache: 'no-store' }
+    );
+    if (!res.ok) return [];
+
+    const json = await res.json();
+    const results: ProbablePitcherSummary[] = [];
+
+    for (const dateEntry of json.dates ?? []) {
+      for (const game of dateEntry.games ?? []) {
+        const homeTeam = game.teams?.home?.team;
+        const awayTeam = game.teams?.away?.team;
+        const hp = game.teams?.home?.probablePitcher;
+        const ap = game.teams?.away?.probablePitcher;
+
+        results.push({
+          gamePk: String(game.gamePk),
+          homeTeamCode: homeTeam?.abbreviation ?? '',
+          awayTeamCode: awayTeam?.abbreviation ?? '',
+          homePitcher: hp ? {
+            id: String(hp.id),
+            name: hp.fullName ?? 'TBD',
+            era: hp.pitchHand ? undefined : undefined, // stats loaded separately
+          } : undefined,
+          awayPitcher: ap ? {
+            id: String(ap.id),
+            name: ap.fullName ?? 'TBD',
+          } : undefined,
+        });
+      }
+    }
+
+    apiCache.set(cacheKey, results, 1800); // 30min cache
+    return results;
+  } catch {
+    return [];
+  }
+}

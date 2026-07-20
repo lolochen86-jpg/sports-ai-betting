@@ -564,6 +564,7 @@ export async function detectFatigue(
 }
 
 // ─── Starting Pitcher Fetcher (MLB only) ───
+// Enhanced: checks Prisma DB for synced pitcher data first, then falls back to MLB API.
 
 export async function fetchStartingPitcher(
   gameId: string
@@ -575,6 +576,47 @@ export async function fetchStartingPitcher(
   const defaultResult = { home: null, away: null };
 
   try {
+    // 1. Try to get pitcher data from Prisma cache (populated by /api/mlb/sync)
+    const today = new Date().toISOString().split('T')[0];
+    let dbPitchers: any[] | null = null;
+    try {
+      const { prisma } = await import('@/lib/prisma');
+      const cachedData = await prisma.apiCache.findUnique({
+        where: { key: `mlb:pitchers:${today}` }
+      });
+      if (cachedData) {
+        dbPitchers = JSON.parse(cachedData.data);
+      }
+    } catch {
+      // DB not available, fall through to API
+    }
+
+    // 2. If we have synced data, use it
+    if (dbPitchers) {
+      const gameData = dbPitchers.find((p: any) => String(p.gamePk) === String(gameId));
+      if (gameData) {
+        const makePitcherInfo = (starter: any): PitcherInfo | null => {
+          if (!starter) return null;
+          const era = starter.stats?.era ?? 4.0;
+          const whip = starter.stats?.whip;
+          const advantageFactor = Number((4.0 / (era || 4.0)).toFixed(2));
+          return {
+            name: starter.name ?? 'Unknown',
+            era,
+            whip: whip ?? undefined,
+            advantageFactor,
+          };
+        };
+        const result = {
+          home: makePitcherInfo(gameData.homeStarter),
+          away: makePitcherInfo(gameData.awayStarter),
+        };
+        apiCache.set(cacheKey, result, CACHE_TTL_FEATURES);
+        return result;
+      }
+    }
+
+    // 3. Fallback: fetch from MLB API directly
     const url = `https://statsapi.mlb.com/api/v1/schedule?gamePk=${gameId}&hydrate=probablePitcher(note)`;
     const res = await fetch(url, { next: { revalidate: CACHE_TTL_FEATURES } });
     if (!res.ok) throw new Error(`MLB pitcher fetch failed: ${res.status}`);
@@ -592,22 +634,42 @@ export async function fetchStartingPitcher(
       let era = 4.0;
       let whip: number | undefined = undefined;
       if (pitcherId) {
+        // Try DB player stat first
         try {
-          const statsUrl = `https://statsapi.mlb.com/api/v1/people/${pitcherId}/stats?stats=statsSingleSeason&group=pitching`;
-          const statsRes = await fetch(statsUrl, { next: { revalidate: CACHE_TTL_FEATURES } });
-          if (statsRes.ok) {
-            const statsJson = await statsRes.json();
-            const fetchedEra = statsJson.stats?.[0]?.splits?.[0]?.stat?.era;
-            const fetchedWhip = statsJson.stats?.[0]?.splits?.[0]?.stat?.whip;
-            if (fetchedEra !== undefined) {
-              era = Number(fetchedEra);
-            }
-            if (fetchedWhip !== undefined) {
-              whip = Number(fetchedWhip);
+          const { prisma } = await import('@/lib/prisma');
+          const dbPlayer = await prisma.player.findFirst({ where: { name } });
+          if (dbPlayer) {
+            const season = new Date().getFullYear();
+            const stat = await prisma.playerStat.findFirst({
+              where: { playerId: dbPlayer.id, season }
+            });
+            if (stat?.era) {
+              era = stat.era;
             }
           }
-        } catch (e) {
-          console.warn(`Failed to fetch stats for pitcher ${pitcherId} (${name}):`, e);
+        } catch {
+          // DB not available
+        }
+
+        // If still default, try API
+        if (era === 4.0) {
+          try {
+            const statsUrl = `https://statsapi.mlb.com/api/v1/people/${pitcherId}/stats?stats=statsSingleSeason&group=pitching`;
+            const statsRes = await fetch(statsUrl, { next: { revalidate: CACHE_TTL_FEATURES } });
+            if (statsRes.ok) {
+              const statsJson = await statsRes.json();
+              const fetchedEra = statsJson.stats?.[0]?.splits?.[0]?.stat?.era;
+              const fetchedWhip = statsJson.stats?.[0]?.splits?.[0]?.stat?.whip;
+              if (fetchedEra !== undefined) {
+                era = Number(fetchedEra);
+              }
+              if (fetchedWhip !== undefined) {
+                whip = Number(fetchedWhip);
+              }
+            }
+          } catch (e) {
+            console.warn(`Failed to fetch stats for pitcher ${pitcherId} (${name}):`, e);
+          }
         }
       }
       const eraVal = era || 4.0;
@@ -629,3 +691,4 @@ export async function fetchStartingPitcher(
     return defaultResult;
   }
 }
+
