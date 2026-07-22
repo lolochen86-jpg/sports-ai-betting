@@ -413,11 +413,7 @@ export async function generatePrediction(
   }
 
   // ─── 2. Run MODEL 1: SportsAI 特徵加權權重模型 (v4.2) ───
-  const sportsResult = calculateWinProbability(homeRecent, awayRecent, game.id, league, game.homeTeam.record, game.awayTeam.record);
-  if (realOuLine !== null) {
-    sportsResult.ouLine = realOuLine;
-    sportsResult.ouPick = (sportsResult.homeExpectedScore + sportsResult.awayExpectedScore) > realOuLine ? 'Over' : 'Under';
-  }
+  const sportsResult = calculateWinProbability(homeRecent, awayRecent, game.id, league, game.homeTeam.record, game.awayTeam.record, realOuLine ?? undefined);
   const sportsWinner = sportsResult.homeProbability >= sportsResult.awayProbability ? 'home' : 'away';
   const sportsConf = sportsWinner === 'home' ? sportsResult.homeProbability : sportsResult.awayProbability;
   
@@ -493,11 +489,7 @@ export async function generatePrediction(
   }
 
   // ─── 3. Run MODEL 2: Elo Rating 戰力指數模型 (v1.8) ───
-  const eloResult = calculateEloProbability(game.homeTeam.record, game.awayTeam.record, homeRecent, awayRecent, game.id, league);
-  if (realOuLine !== null) {
-    eloResult.ouLine = realOuLine;
-    eloResult.ouPick = (eloResult.homeExpectedScore + eloResult.awayExpectedScore) > realOuLine ? 'Over' : 'Under';
-  }
+  const eloResult = calculateEloProbability(game.homeTeam.record, game.awayTeam.record, homeRecent, awayRecent, game.id, league, realOuLine ?? undefined);
   const eloWinner = eloResult.homeProbability >= eloResult.awayProbability ? 'home' : 'away';
   const eloConf = eloWinner === 'home' ? eloResult.homeProbability : eloResult.awayProbability;
   
@@ -531,11 +523,7 @@ export async function generatePrediction(
   }
 
   // ─── 4. Run MODEL 3: Monte Carlo 萬次隨機模擬模型 (v2.5) ───
-  const mcResult = calculateMonteCarloProbability(homeRecent, awayRecent, game.id, league);
-  if (realOuLine !== null) {
-    mcResult.ouLine = realOuLine;
-    mcResult.ouPick = (mcResult.homeExpectedScore + mcResult.awayExpectedScore) > realOuLine ? 'Over' : 'Under';
-  }
+  const mcResult = calculateMonteCarloProbability(homeRecent, awayRecent, game.id, league, realOuLine ?? undefined);
   const mcWinner = mcResult.homeProbability >= mcResult.awayProbability ? 'home' : 'away';
   const mcConf = mcWinner === 'home' ? mcResult.homeProbability : mcResult.awayProbability;
   const mcWinnerName = mcWinner === 'home' ? homeName : awayName;
@@ -619,7 +607,8 @@ export async function generatePrediction(
     pitchers.away,
     homeDepthInfo,
     awayDepthInfo,
-    parkFactorInfo
+    parkFactorInfo,
+    realOuLine ?? undefined
   );
 
   // ─── 6.7. Run MODEL 5.5: QuantML Model ───
