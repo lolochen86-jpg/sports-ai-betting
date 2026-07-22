@@ -76,28 +76,35 @@ export const K_PITCHER = 2.0;
  * - >8.0 runs: excess at 30%
  */
 export function sanitizeMlbScore(score: number): number {
-  if (score <= 5.0) return score;
-  if (score <= 8.0) return 5.0 + (score - 5.0) * 0.60;
-  return 5.0 + 3.0 * 0.60 + (score - 8.0) * 0.30;
+  if (score <= 4.5) return score;
+  if (score <= 7.0) return 4.5 + (score - 4.5) * 0.60;
+  return 4.5 + 2.5 * 0.60 + (score - 7.0) * 0.30;
 }
 
 /**
- * Applies MLB totals limit: if combined predicted total exceeds 15,
- * shrink the excess by 75% and redistribute proportionally.
+ * Applies MLB totals limit & calibration:
+ * Calibrates predicted total runs against targetOuLine (盤口 O/U Line),
+ * ensuring score projections sit realistically near the sportsbook market line.
  */
 export function applyMlbTotalsLimits(
   homeExp: number,
-  awayExp: number
+  awayExp: number,
+  targetOuLine?: number
 ): { home: number; away: number } {
   let h = sanitizeMlbScore(homeExp);
   let a = sanitizeMlbScore(awayExp);
-  const total = h + a;
-  if (total > 15.0) {
-    const shrunk = 15.0 + (total - 15.0) * 0.25;
-    const ratio = shrunk / total;
-    h = h * ratio;
-    a = a * ratio;
-  }
+  const rawTotal = h + a;
+  if (rawTotal <= 0) return { home: 4.2, away: 4.0 };
+
+  const baseline = (targetOuLine && targetOuLine > 0) ? targetOuLine : 8.5;
+  const diff = rawTotal - baseline;
+  
+  // Calibrate total score so it sits within a realistic margin (within ±2.2 runs) of the market line
+  const calibratedTotal = baseline + Math.max(-2.2, Math.min(2.2, diff * 0.40));
+  const ratio = calibratedTotal / rawTotal;
+
+  h = h * ratio;
+  a = a * ratio;
   return { home: Number(h.toFixed(1)), away: Number(a.toFixed(1)) };
 }
 
@@ -216,8 +223,12 @@ export function calculateOverUnderLine(
   averageHomePoints: number,
   averageAwayPoints: number,
   gameId: string,
-  league: League
+  league: League,
+  customOuLine?: number
 ): number {
+  if (customOuLine !== undefined && customOuLine > 0) {
+    return customOuLine;
+  }
   const hash = Array.from(gameId).reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const base = averageHomePoints + averageAwayPoints;
   if (league === 'NBA') {
@@ -226,8 +237,9 @@ export function calculateOverUnderLine(
     return Math.round(base + offset) - 0.5;
   } else {
     // MLB: Expected sum around 7.5 - 10.5
+    const normalizedBase = Math.min(Math.max(base, 7.5), 10.5);
     const offset = ((hash % 7) - 3) * 0.5; // -1.5 to +1.5 runs shift
-    const line = Math.round(base) + offset;
+    const line = Math.round(normalizedBase) + offset;
     return Math.floor(line) + 0.5;
   }
 }
@@ -292,7 +304,8 @@ export function calculateWinProbability(
   gameId: string,
   league: League,
   homeRecordStr?: string,
-  awayRecordStr?: string
+  awayRecordStr?: string,
+  customOuLine?: number
 ): PredictionDetailStats {
   let finalHomeProb = 0.5;
   let finalAwayProb = 0.5;
@@ -345,10 +358,12 @@ export function calculateWinProbability(
   const homeExp = homeStats.averagePointsScored + shift + homeFluct.scoreAdj;
   const awayExp = awayStats.averagePointsScored - shift + awayFluct.scoreAdj;
   
+  const ouLine = calculateOverUnderLine(homeStats.averagePointsScored, awayStats.averagePointsScored, gameId, league, customOuLine);
+  
   let homeExpectedScore: number;
   let awayExpectedScore: number;
   if (league === 'MLB') {
-    const clamped = applyMlbTotalsLimits(Math.max(1, homeExp), Math.max(1, awayExp));
+    const clamped = applyMlbTotalsLimits(Math.max(1, homeExp), Math.max(1, awayExp), ouLine);
     homeExpectedScore = clamped.home;
     awayExpectedScore = clamped.away;
   } else {
@@ -364,7 +379,6 @@ export function calculateWinProbability(
     [homeExpectedScore, awayExpectedScore] = [awayExpectedScore, homeExpectedScore];
   }
   
-  const ouLine = calculateOverUnderLine(homeStats.averagePointsScored, awayStats.averagePointsScored, gameId, league);
   const ouPick = (homeExpectedScore + awayExpectedScore) > ouLine ? 'Over' : 'Under';
   
   return {
@@ -387,7 +401,8 @@ export function calculateEloProbability(
   homeStats: TeamRecentStats,
   awayStats: TeamRecentStats,
   gameId: string,
-  league: League
+  league: League,
+  customOuLine?: number
 ): PredictionDetailStats {
   const homeRec = parseRecord(homeRecordStr);
   const awayRec = parseRecord(awayRecordStr);
@@ -428,10 +443,12 @@ export function calculateEloProbability(
   const homeExp = homeStats.averagePointsScored + shift + homeFluct.scoreAdj;
   const awayExp = awayStats.averagePointsScored - shift + awayFluct.scoreAdj;
 
+  const ouLine = calculateOverUnderLine(homeStats.averagePointsScored, awayStats.averagePointsScored, gameId, league, customOuLine);
+
   let homeExpectedScore: number;
   let awayExpectedScore: number;
   if (league === 'MLB') {
-    const clamped = applyMlbTotalsLimits(Math.max(1, homeExp), Math.max(1, awayExp));
+    const clamped = applyMlbTotalsLimits(Math.max(1, homeExp), Math.max(1, awayExp), ouLine);
     homeExpectedScore = clamped.home;
     awayExpectedScore = clamped.away;
   } else {
@@ -447,7 +464,6 @@ export function calculateEloProbability(
     [homeExpectedScore, awayExpectedScore] = [awayExpectedScore, homeExpectedScore];
   }
   
-  const ouLine = calculateOverUnderLine(homeStats.averagePointsScored, awayStats.averagePointsScored, gameId, league);
   const ouPick = (homeExpectedScore + awayExpectedScore) > ouLine ? 'Over' : 'Under';
 
   return {
@@ -468,7 +484,8 @@ export function calculateMonteCarloProbability(
   homeStats: TeamRecentStats,
   awayStats: TeamRecentStats,
   gameId: string,
-  league: League
+  league: League,
+  customOuLine?: number
 ): PredictionDetailStats {
   const sims = 10000;
   let homeWins = 0;
@@ -522,11 +539,13 @@ export function calculateMonteCarloProbability(
     finalAwayProb = 1 - minProb;
   }
 
+  const ouLine = calculateOverUnderLine(homeStats.averagePointsScored, awayStats.averagePointsScored, gameId, league, customOuLine);
+
   // Obtain expected scores from the average of 10,000 simulation runs
   let homeExpectedScore: number;
   let awayExpectedScore: number;
   if (league === 'MLB') {
-    const clamped = applyMlbTotalsLimits(Math.max(1, totalHomeScore / sims), Math.max(1, totalAwayScore / sims));
+    const clamped = applyMlbTotalsLimits(Math.max(1, totalHomeScore / sims), Math.max(1, totalAwayScore / sims), ouLine);
     homeExpectedScore = clamped.home;
     awayExpectedScore = clamped.away;
   } else {
@@ -542,7 +561,6 @@ export function calculateMonteCarloProbability(
     [homeExpectedScore, awayExpectedScore] = [awayExpectedScore, homeExpectedScore];
   }
   
-  const ouLine = calculateOverUnderLine(homeStats.averagePointsScored, awayStats.averagePointsScored, gameId, league);
   const ouPick = (homeExpectedScore + awayExpectedScore) > ouLine ? 'Over' : 'Under';
 
   return {
@@ -685,6 +703,7 @@ export function calculateWinProbabilityV2(
     restTravel?: RestDaysInfo | null;
     homeDepthInfo?: TeamDepthInfo | null;
     awayDepthInfo?: TeamDepthInfo | null;
+    customOuLine?: number;
   }
 ): PredictionDetailStats {
   let finalHomeProb = 0.5;
@@ -835,10 +854,12 @@ export function calculateWinProbabilityV2(
     }
   }
 
+  const ouLine = calculateOverUnderLine(homeBaseScore, awayBaseScore, gameId, league, extras?.customOuLine);
+
   let homeExpectedScore: number;
   let awayExpectedScore: number;
   if (league === 'MLB') {
-    const clamped = applyMlbTotalsLimits(Math.max(1, homeExp), Math.max(1, awayExp));
+    const clamped = applyMlbTotalsLimits(Math.max(1, homeExp), Math.max(1, awayExp), ouLine);
     homeExpectedScore = clamped.home;
     awayExpectedScore = clamped.away;
   } else {
@@ -853,7 +874,6 @@ export function calculateWinProbabilityV2(
     [homeExpectedScore, awayExpectedScore] = [awayExpectedScore, homeExpectedScore];
   }
 
-  const ouLine = calculateOverUnderLine(homeBaseScore, awayBaseScore, gameId, league);
   const ouPick = (homeExpectedScore + awayExpectedScore) > ouLine ? 'Over' : 'Under';
 
   return {
@@ -950,10 +970,12 @@ export function calculateEloProbabilityV2(
   if (extras?.awayFatigue?.fatigueLevel === 'heavy') awayExp -= (league === 'NBA' ? 3.0 : 0.6);
   else if (extras?.awayFatigue?.fatigueLevel === 'mild') awayExp -= (league === 'NBA' ? 1.5 : 0.3);
 
+  const ouLine = calculateOverUnderLine(homeBaseScore, awayBaseScore, gameId, league);
+
   let homeExpectedScore: number;
   let awayExpectedScore: number;
   if (league === 'MLB') {
-    const clamped = applyMlbTotalsLimits(Math.max(1, homeExp), Math.max(1, awayExp));
+    const clamped = applyMlbTotalsLimits(Math.max(1, homeExp), Math.max(1, awayExp), ouLine);
     homeExpectedScore = clamped.home;
     awayExpectedScore = clamped.away;
   } else {
@@ -969,7 +991,6 @@ export function calculateEloProbabilityV2(
     [homeExpectedScore, awayExpectedScore] = [awayExpectedScore, homeExpectedScore];
   }
   
-  const ouLine = calculateOverUnderLine(homeBaseScore, awayBaseScore, gameId, league);
   const ouPick = (homeExpectedScore + awayExpectedScore) > ouLine ? 'Over' : 'Under';
 
   return {
@@ -1154,11 +1175,13 @@ export function calculateMonteCarloProbabilityV2(
     finalAwayProb = 1 - minProb;
   }
 
+  const ouLine = calculateOverUnderLine(homeMean, awayMean, gameId, league);
+
   // Obtain expected scores from the average of 10,000 simulation runs
   let homeExpectedScore: number;
   let awayExpectedScore: number;
   if (league === 'MLB') {
-    const clamped = applyMlbTotalsLimits(Math.max(1, totalHomeScore / sims), Math.max(1, totalAwayScore / sims));
+    const clamped = applyMlbTotalsLimits(Math.max(1, totalHomeScore / sims), Math.max(1, totalAwayScore / sims), ouLine);
     homeExpectedScore = clamped.home;
     awayExpectedScore = clamped.away;
   } else {
@@ -1174,7 +1197,6 @@ export function calculateMonteCarloProbabilityV2(
     [homeExpectedScore, awayExpectedScore] = [awayExpectedScore, homeExpectedScore];
   }
   
-  const ouLine = calculateOverUnderLine(homeMean, awayMean, gameId, league);
   const ouPick = (homeExpectedScore + awayExpectedScore) > ouLine ? 'Over' : 'Under';
 
   return {

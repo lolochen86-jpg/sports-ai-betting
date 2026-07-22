@@ -22,7 +22,8 @@ export function calculatePitcherBullpenScore(
   awayPitcher: PitcherInfo | null,
   homeDepth: TeamDepthInfo | null,
   awayDepth: TeamDepthInfo | null,
-  parkFactor: ParkFactorInfo | null
+  parkFactor: ParkFactorInfo | null,
+  ouLine?: number
 ): MatchupScoreResult {
   const reasoning: string[] = [];
   let homeExpectedScore = 0;
@@ -113,7 +114,7 @@ export function calculatePitcherBullpenScore(
     }
 
     // Non-linear saturation and totals limits
-    const clamped = applyMlbTotalsLimits(rawHome, rawAway);
+    const clamped = applyMlbTotalsLimits(rawHome, rawAway, ouLine);
     homeExpectedScore = Number(clamped.home.toFixed(1));
     awayExpectedScore = Number(clamped.away.toFixed(1));
     
