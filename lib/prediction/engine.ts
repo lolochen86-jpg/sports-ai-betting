@@ -13,7 +13,8 @@ import {
   calculateWinProbabilityV2,
   calculateEloProbabilityV2,
   calculateMonteCarloProbabilityV2,
-  parseRecord
+  parseRecord,
+  applyMlbTotalsLimits
 } from './stats';
 import type { H2HRecord, FatigueInfo, PitcherInfo } from './stats';
 import { fetchMLBRoster } from '../sports-api/mlb';
@@ -633,6 +634,13 @@ export async function generatePrediction(
     humidityPct
   );
 
+  // Calibrate QuantML expected scores against the market O/U line
+  if (league === 'MLB' && realOuLine) {
+    const clamped = applyMlbTotalsLimits(quantResult.homeExpectedScore, quantResult.awayExpectedScore, realOuLine);
+    quantResult.homeExpectedScore = clamped.home;
+    quantResult.awayExpectedScore = clamped.away;
+  }
+
   const quantWinner = quantResult.homeProb >= 0.50 ? 'home' : 'away';
   const quantConf = Number((quantWinner === 'home' ? quantResult.homeProb : quantResult.awayProb).toFixed(3)) * 100;
   const quantConfClamped = Math.max(50, Math.min(95, quantConf));
@@ -1141,6 +1149,13 @@ export async function generatePredictionV2(
     pitchers.home,
     pitchers.away
   );
+
+  // Calibrate V2 QuantML expected scores against the market O/U line
+  if (league === 'MLB' && realOuLine) {
+    const clampedV2 = applyMlbTotalsLimits(quantResultV2.homeExpectedScore, quantResultV2.awayExpectedScore, realOuLine);
+    quantResultV2.homeExpectedScore = clampedV2.home;
+    quantResultV2.awayExpectedScore = clampedV2.away;
+  }
 
   const quantWinnerV2 = quantResultV2.homeProb >= 0.50 ? 'home' : 'away';
   const quantConfV2 = Number((quantWinnerV2 === 'home' ? quantResultV2.homeProb : quantResultV2.awayProb).toFixed(3)) * 100;
