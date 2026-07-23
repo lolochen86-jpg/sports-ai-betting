@@ -31,6 +31,7 @@ import {
 } from '@/lib/betting/bettingSettings';
 import OddsCard from '@/components/OddsCard';
 import SmartParlayCard from '@/components/SmartParlayCard';
+import { ModelChessSpectrum } from '@/components/ModelChessSpectrum';
 import type { Bookmaker } from '@/lib/odds/types';
 
 // SVG Icons
@@ -2236,6 +2237,16 @@ export default function HomeClient() {
                       {isExpanded && isUnlocked && pred && activePred && (
                         <div className="border-t border-white/5 bg-white/[0.02] p-6 md:p-8">
                           
+                          {/* Model Chess Spectrum Scale */}
+                          {pred.models && (
+                            <ModelChessSpectrum
+                              game={game}
+                              models={pred.models}
+                              selectedModelTab={selectedModelTab}
+                              onSelectModel={(modelId) => setSelectedModelTab(modelId as any)}
+                            />
+                          )}
+
                           {/* Model Tab Selector */}
                           <div className="flex justify-start mb-6 border-b border-white/5 pb-4">
                             <div className="inline-flex p-1 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm shadow-inner animate-fade-in">
