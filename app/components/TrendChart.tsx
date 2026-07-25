@@ -28,13 +28,17 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
   const [dataVersion, setDataVersion] = useState(0); // 用於觸發 useMemo 重算
   
   // Model visibility toggles
-  const [visibleModels, setVisibleModels] = useState({
-    SportsAI: true,
-    EloRating: true,
-    MonteCarlo: true,
-    MetaModel: true,
+  const [visibleModels, setVisibleModels] = useState<Record<string, boolean>>({
+    BoostedMeta: true,
     MetaModelV2: true,
-    QuantML: true
+    MetaModel: true,
+    QuantML: true,
+    SportsAIV2: false,
+    SportsAI: false,
+    EloRatingV2: false,
+    EloRating: false,
+    MonteCarloV2: false,
+    MonteCarlo: false
   });
   
   // Interactive Hovering & Selecting States
@@ -365,14 +369,15 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
   };
 
   // Generate Path Strings for SVG
-  const generatePaths = (modelKey: 'SportsAI' | 'EloRating' | 'MonteCarlo' | 'MetaModel' | 'MetaModelV2' | 'QuantML') => {
+  const generatePaths = (modelKey: 'SportsAI' | 'SportsAIV2' | 'EloRating' | 'EloRatingV2' | 'MonteCarlo' | 'MonteCarloV2' | 'MetaModel' | 'MetaModelV2' | 'BoostedMeta' | 'QuantML') => {
     if (chartData.length === 0) return { strokePath: '', areaPath: '' };
     
     let strokePath = '';
     let areaPath = '';
     
     chartData.forEach((d, idx) => {
-      const acc = d[modelKey][chartType];
+      const modelObj = (d as any)[modelKey] || d.SportsAI;
+      const acc = modelObj[chartType] ?? 0;
       const x = getX(idx);
       const y = getY(acc);
       
@@ -393,10 +398,14 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
   };
 
   const sportsPaths = useMemo(() => generatePaths('SportsAI'), [chartData, chartType]);
+  const sportsV2Paths = useMemo(() => generatePaths('SportsAIV2'), [chartData, chartType]);
   const eloPaths = useMemo(() => generatePaths('EloRating'), [chartData, chartType]);
+  const eloV2Paths = useMemo(() => generatePaths('EloRatingV2'), [chartData, chartType]);
   const mcPaths = useMemo(() => generatePaths('MonteCarlo'), [chartData, chartType]);
+  const mcV2Paths = useMemo(() => generatePaths('MonteCarloV2'), [chartData, chartType]);
   const metaPaths = useMemo(() => generatePaths('MetaModel'), [chartData, chartType]);
   const metaV2Paths = useMemo(() => generatePaths('MetaModelV2'), [chartData, chartType]);
+  const boostedPaths = useMemo(() => generatePaths('BoostedMeta'), [chartData, chartType]);
   const quantPaths = useMemo(() => generatePaths('QuantML'), [chartData, chartType]);
 
   // Handle SVG Mouse Move to calculate hover index
@@ -532,31 +541,97 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
       {/* ─── Chart Display Area ─── */}
       <div className="relative w-full glass-panel rounded-3xl p-4 md:p-6 border border-white/5 shadow-2xl flex flex-col items-center">
         
+        {/* Preset Modes Bar */}
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-3 w-full">
+          <span className="text-xs font-mono font-bold text-gray-400 mr-1">對照預設:</span>
+          <button
+            onClick={() => setVisibleModels({
+              BoostedMeta: true,
+              MetaModelV2: true,
+              MetaModel: true,
+              QuantML: true,
+              SportsAIV2: false,
+              SportsAI: false,
+              EloRatingV2: false,
+              EloRating: false,
+              MonteCarloV2: false,
+              MonteCarlo: false
+            })}
+            className="px-3 py-1 rounded-lg text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 transition-all"
+          >
+            ⚡ 權重加成對照 (Boosted vs Baseline)
+          </button>
+
+          <button
+            onClick={() => setVisibleModels({
+              BoostedMeta: false,
+              MetaModelV2: true,
+              MetaModel: true,
+              QuantML: false,
+              SportsAIV2: true,
+              SportsAI: true,
+              EloRatingV2: true,
+              EloRating: true,
+              MonteCarloV2: true,
+              MonteCarlo: true
+            })}
+            className="px-3 py-1 rounded-lg text-xs font-black bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-all"
+          >
+            🔬 V1 vs V2 全面對照 (V1 vs V2 Comparison)
+          </button>
+
+          <button
+            onClick={() => setVisibleModels({
+              BoostedMeta: true,
+              MetaModelV2: true,
+              MetaModel: true,
+              QuantML: true,
+              SportsAIV2: true,
+              SportsAI: false,
+              EloRatingV2: true,
+              EloRating: false,
+              MonteCarloV2: true,
+              MonteCarlo: false
+            })}
+            className="px-3 py-1 rounded-lg text-xs font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 transition-all"
+          >
+            👑 V2 全模型核心走勢
+          </button>
+        </div>
+
         {/* Model Toggles / Legend */}
-        <div className="flex flex-wrap items-center justify-center gap-6 mb-4 w-full">
+        <div className="flex flex-wrap items-center justify-center gap-3 mb-4 w-full">
           {[
+            { id: 'BoostedMeta' as const, name: '⚡ 權重加成後 AI 預測 (Boosted)', color: 'border-rose-400 text-rose-300 bg-rose-500/20' },
             { id: 'MetaModelV2' as const, name: '👑 Meta 2.0 增強元模型 (v2.0)', color: 'border-amber-500 text-amber-400 bg-amber-500/10' },
-            { id: 'QuantML' as const, name: '🔬 QuantML 量化物理模型 (v1.0)', color: 'border-emerald-500 text-emerald-400 bg-emerald-500/10' },
-            { id: 'MetaModel' as const, name: '👑 Meta 堆疊元模型 (v1.0)', color: 'border-pink-500 text-pink-400 bg-pink-500/10' },
-            { id: 'SportsAI' as const, name: 'SportsAI 迴歸 (v4.2)', color: 'border-purple-500 text-purple-400 bg-purple-500/10' },
-            { id: 'EloRating' as const, name: 'Elo 戰力比對 (v1.8)', color: 'border-orange-500 text-orange-400 bg-orange-500/10' },
-            { id: 'MonteCarlo' as const, name: 'Monte Carlo 模擬 (v2.5)', color: 'border-cyan-400 text-cyan-400 bg-cyan-400/10' }
+            { id: 'MetaModel' as const, name: '👑 Meta 1.0 基準元模型 (v1.0)', color: 'border-pink-500 text-pink-400 bg-pink-500/10' },
+            { id: 'QuantML' as const, name: '🔬 QuantML 量化物理模型 (v2.0)', color: 'border-emerald-500 text-emerald-400 bg-emerald-500/10' },
+            { id: 'SportsAIV2' as const, name: '🤖 SportsAI V2 (v4.2-V2)', color: 'border-purple-400 text-purple-300 bg-purple-500/20' },
+            { id: 'SportsAI' as const, name: '🤖 SportsAI V1 (v4.2-V1)', color: 'border-purple-600 text-purple-400 bg-purple-900/20' },
+            { id: 'EloRatingV2' as const, name: '📈 Elo V2 (v1.8-V2)', color: 'border-orange-400 text-orange-300 bg-orange-500/20' },
+            { id: 'EloRating' as const, name: '📈 Elo V1 (v1.8-V1)', color: 'border-orange-600 text-orange-400 bg-orange-900/20' },
+            { id: 'MonteCarloV2' as const, name: '🎲 Monte Carlo V2 (v2.5-V2)', color: 'border-cyan-400 text-cyan-300 bg-cyan-500/20' },
+            { id: 'MonteCarlo' as const, name: '🎲 Monte Carlo V1 (v2.5-V1)', color: 'border-cyan-600 text-cyan-500 bg-cyan-900/20' }
           ].map((model) => (
             <button
               key={model.id}
               onClick={() => setVisibleModels(prev => ({ ...prev, [model.id]: !prev[model.id] }))}
-              className={`px-3.5 py-1.5 rounded-full border text-[11px] font-black tracking-wide transition-all duration-300 flex items-center gap-2 ${
+              className={`px-3 py-1 rounded-full border text-[11px] font-black tracking-wide transition-all duration-300 flex items-center gap-1.5 ${
                 visibleModels[model.id]
-                  ? model.color + ' border-opacity-50'
+                  ? model.color + ' border-opacity-50 shadow-sm'
                   : 'bg-white/5 text-gray-500 border-white/5 border-opacity-10 line-through'
               }`}
             >
               <span className={`w-2 h-2 rounded-full shrink-0 ${
                 !visibleModels[model.id] ? 'bg-gray-700' : (
-                  model.id === 'MetaModelV2' ? 'bg-amber-500' : (
-                    model.id === 'QuantML' ? 'bg-emerald-500' : (
+                  model.id === 'BoostedMeta' ? 'bg-rose-400 animate-pulse' : (
+                    model.id === 'MetaModelV2' ? 'bg-amber-500' : (
                       model.id === 'MetaModel' ? 'bg-pink-500' : (
-                        model.id === 'SportsAI' ? 'bg-purple-500' : (model.id === 'EloRating' ? 'bg-orange-500' : 'bg-cyan-400')
+                        model.id === 'QuantML' ? 'bg-emerald-500' : (
+                          model.id.includes('SportsAI') ? 'bg-purple-500' : (
+                            model.id.includes('EloRating') ? 'bg-orange-500' : 'bg-cyan-400'
+                          )
+                        )
                       )
                     )
                   )
@@ -730,6 +805,9 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
             />
 
             {/* ─── 2. Colored Area Fills under lines ─── */}
+            {visibleModels.BoostedMeta && boostedPaths.areaPath && (
+              <path d={boostedPaths.areaPath} fill="url(#metaV2Grad)" />
+            )}
             {visibleModels.MetaModelV2 && metaV2Paths.areaPath && (
               <path d={metaV2Paths.areaPath} fill="url(#metaV2Grad)" />
             )}
@@ -739,17 +817,23 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
             {visibleModels.MetaModel && metaPaths.areaPath && (
               <path d={metaPaths.areaPath} fill="url(#metaGrad)" />
             )}
-            {visibleModels.MonteCarlo && mcPaths.areaPath && (
-              <path d={mcPaths.areaPath} fill="url(#mcGrad)" />
-            )}
-            {visibleModels.EloRating && eloPaths.areaPath && (
-              <path d={eloPaths.areaPath} fill="url(#eloGrad)" />
-            )}
-            {visibleModels.SportsAI && sportsPaths.areaPath && (
-              <path d={sportsPaths.areaPath} fill="url(#sportsGrad)" />
-            )}
 
             {/* ─── 3. Main Accuracy Curves ─── */}
+            {/* Boosted Meta Model Curve (Gold/Rose Highlight) */}
+            {visibleModels.BoostedMeta && boostedPaths.strokePath && (
+              <path 
+                d={boostedPaths.strokePath} 
+                fill="none" 
+                stroke="#fb7185" 
+                strokeWidth="4" 
+                strokeDasharray="6 2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="url(#glow-metaV2)"
+              />
+            )}
+
+            {/* MetaModelV2 */}
             {visibleModels.MetaModelV2 && metaV2Paths.strokePath && (
               <path 
                 d={metaV2Paths.strokePath} 
@@ -761,6 +845,8 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                 filter="url(#glow-metaV2)"
               />
             )}
+
+            {/* QuantML */}
             {visibleModels.QuantML && quantPaths.strokePath && (
               <path 
                 d={quantPaths.strokePath} 
@@ -773,6 +859,7 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
               />
             )}
             
+            {/* MetaModel V1 */}
             {visibleModels.MetaModel && metaPaths.strokePath && (
               <path 
                 d={metaPaths.strokePath} 
@@ -784,40 +871,73 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                 filter="url(#glow-meta)"
               />
             )}
-            
-            {visibleModels.MonteCarlo && mcPaths.strokePath && (
+
+            {/* SportsAI V2 & V1 */}
+            {visibleModels.SportsAIV2 && sportsV2Paths.strokePath && (
               <path 
-                d={mcPaths.strokePath} 
+                d={sportsV2Paths.strokePath} 
                 fill="none" 
-                stroke="#06b6d4" 
-                strokeWidth="2.5" 
+                stroke="#c084fc" 
+                strokeWidth="3" 
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                filter="url(#glow-mc)"
               />
             )}
-            
-            {visibleModels.EloRating && eloPaths.strokePath && (
-              <path 
-                d={eloPaths.strokePath} 
-                fill="none" 
-                stroke="#f97316" 
-                strokeWidth="2.5" 
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                filter="url(#glow-elo)"
-              />
-            )}
-            
             {visibleModels.SportsAI && sportsPaths.strokePath && (
               <path 
                 d={sportsPaths.strokePath} 
                 fill="none" 
-                stroke="#a855f7" 
+                stroke="#7e22ce" 
+                strokeWidth="2" 
+                strokeDasharray="4 3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            )}
+
+            {/* EloRating V2 & V1 */}
+            {visibleModels.EloRatingV2 && eloV2Paths.strokePath && (
+              <path 
+                d={eloV2Paths.strokePath} 
+                fill="none" 
+                stroke="#fb923c" 
                 strokeWidth="3" 
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                filter="url(#glow-sports)"
+              />
+            )}
+            {visibleModels.EloRating && eloPaths.strokePath && (
+              <path 
+                d={eloPaths.strokePath} 
+                fill="none" 
+                stroke="#c2410c" 
+                strokeWidth="2" 
+                strokeDasharray="4 3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            )}
+            
+            {/* MonteCarlo V2 & V1 */}
+            {visibleModels.MonteCarloV2 && mcV2Paths.strokePath && (
+              <path 
+                d={mcV2Paths.strokePath} 
+                fill="none" 
+                stroke="#38bdf8" 
+                strokeWidth="3" 
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            )}
+            {visibleModels.MonteCarlo && mcPaths.strokePath && (
+              <path 
+                d={mcPaths.strokePath} 
+                fill="none" 
+                stroke="#0284c7" 
+                strokeWidth="2" 
+                strokeDasharray="4 3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             )}
 
