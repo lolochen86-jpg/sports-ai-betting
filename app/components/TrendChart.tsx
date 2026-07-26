@@ -147,7 +147,13 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
       
       let totalNewGamesCount = 0;
       let hasMore = true;
-      let currentAfter = getLatestLoadedDate();
+
+      // 往前倒退 2 天，確保近期完賽日期的所有場次（含跨時區晚場與補賽）都能完全補齊與重抓
+      const latestDateStr = getLatestLoadedDate();
+      const latestD = new Date(latestDateStr);
+      latestD.setDate(latestD.getDate() - 2);
+      let currentAfter = latestD.toISOString().split('T')[0];
+
       let iteration = 0;
       const maxIterations = 6; // 安全次數上限限制，避免意外的無窮迴圈
 
@@ -171,10 +177,13 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
             if (cached) existingDynamic = JSON.parse(cached);
           } catch { /* ignore */ }
           
-          // 合併去重
-          const existingIds = new Set(existingDynamic.map(g => g.id));
-          const newGames = json.data.filter((g: RawHistoricalGame) => !existingIds.has(g.id));
-          const merged = [...existingDynamic, ...newGames];
+          // 使用 Map 以 id 為 Key 合併去重並更新最新比分與賽事資料
+          const gameMap = new Map<string, RawHistoricalGame>();
+          existingDynamic.forEach(g => gameMap.set(g.id, g));
+          json.data.forEach((g: RawHistoricalGame) => gameMap.set(g.id, g));
+          
+          const newGamesCount = json.data.filter((g: RawHistoricalGame) => !existingDynamic.some(e => e.id === g.id)).length;
+          const merged = Array.from(gameMap.values());
           
           // 寫入 localStorage 持久化
           try {
@@ -184,7 +193,7 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
           // 注入回測引擎
           setDynamicGames(merged);
           setDataVersion(v => v + 1);
-          totalNewGamesCount += newGames.length;
+          totalNewGamesCount += newGamesCount;
 
           // 更新下一次抓取的 after 日期為當前最新抓到的日期
           const fetchedDates = json.data.map((g: RawHistoricalGame) => g.date).sort();
