@@ -45,8 +45,10 @@ export function calculatePitcherBullpenScore(
       // Pitcher advantage factor: >1 is good for pitcher (bad for batters)
       const advantage = awayPitcher.advantageFactor > 0 ? awayPitcher.advantageFactor : (1.0 / spQualityFactor);
       
+      const pName = awayPitcher.nameCn ? `${awayPitcher.nameCn} (${awayPitcher.name})` : awayPitcher.name;
+      const recentNote = awayPitcher.recentFormSummary ? `，${awayPitcher.recentFormSummary}` : '';
       homeVsStarter = homeVsStarter / advantage;
-      reasoning.push(`🏠 主隊打線前段局數對決客隊先發投手 ${awayPitcher.name} (ERA ${awayPitcher.era.toFixed(2)})，受投手壓制力影響，預估得 ${homeVsStarter.toFixed(2)} 分。`);
+      reasoning.push(`🏠 主隊打線前段局數對決客隊先發投手 ${pName} (ERA ${awayPitcher.era.toFixed(2)}${recentNote})，受投手壓制力影響，預估得 ${homeVsStarter.toFixed(2)} 分。`);
     } else {
       reasoning.push(`🏠 主隊打線對決客隊先發投手 (未定/TBD)，維持基礎期望值。`);
     }
@@ -59,8 +61,10 @@ export function calculatePitcherBullpenScore(
       
       const advantage = homePitcher.advantageFactor > 0 ? homePitcher.advantageFactor : (1.0 / spQualityFactor);
       
+      const pName = homePitcher.nameCn ? `${homePitcher.nameCn} (${homePitcher.name})` : homePitcher.name;
+      const recentNote = homePitcher.recentFormSummary ? `，${homePitcher.recentFormSummary}` : '';
       awayVsStarter = awayVsStarter / advantage;
-      reasoning.push(`🚌 客隊打線前段局數對決主隊先發投手 ${homePitcher.name} (ERA ${homePitcher.era.toFixed(2)})，受投手壓制力影響，預估得 ${awayVsStarter.toFixed(2)} 分。`);
+      reasoning.push(`🚌 客隊打線前段局數對決主隊先發投手 ${pName} (ERA ${homePitcher.era.toFixed(2)}${recentNote})，受投手壓制力影響，預估得 ${awayVsStarter.toFixed(2)} 分。`);
     } else {
       reasoning.push(`🚌 客隊打線對決主隊先發投手 (未定/TBD)，維持基礎期望值。`);
     }

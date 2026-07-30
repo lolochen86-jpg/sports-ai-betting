@@ -95,6 +95,7 @@ const UserIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
 import type { ParkFactorInfo } from '@/lib/prediction/park-factors';
 import type { RestDaysInfo } from '@/lib/prediction/rest-travel';
 import type { TeamDepthInfo } from '@/lib/prediction/depth-quality';
+import type { PitcherInfo } from '@/lib/prediction/stats';
 
 interface PeriodDistributionItem {
   name: string;
@@ -146,8 +147,8 @@ interface PredictionDetails {
     MetaModel: ModelPrediction;
   };
   pitchers?: {
-    home: { name: string; era: number; advantageFactor: number } | null;
-    away: { name: string; era: number; advantageFactor: number } | null;
+    home: PitcherInfo | null;
+    away: PitcherInfo | null;
   } | null;
   annotations?: string[];
 }
@@ -2792,37 +2793,111 @@ export default function HomeClient() {
                               )}
 
                               {game.league === 'MLB' && pred.pitchers && (pred.pitchers.home || pred.pitchers.away) && (
-                                <div className="bg-cyan-500/5 border border-cyan-500/10 rounded-2xl p-4 flex flex-col gap-3">
-                                  <span className="text-[11px] font-mono text-cyan-400 block font-bold uppercase tracking-wider">
-                                    ⚾ MLB 先發投手對位與防禦率 (ERA)
-                                  </span>
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3">
-                                      <span className="text-[10px] text-gray-500 font-bold block mb-1">客隊先發 (Away)</span>
-                                      {pred.pitchers.away ? (
-                                        <div>
-                                          <span className="text-sm font-black text-white block">{translatePlayerName(pred.pitchers.away.name)}</span>
-                                          <span className="text-xs font-mono text-cyan-300 font-bold block mt-1">
-                                            ERA: {pred.pitchers.away.era.toFixed(2)} | 優勢: {pred.pitchers.away.advantageFactor}x
-                                          </span>
+                                <div className="bg-cyan-500/[0.03] border border-cyan-500/20 rounded-2xl p-5 flex flex-col gap-4 shadow-lg backdrop-blur-md">
+                                  <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                                    <span className="text-xs font-mono text-cyan-400 block font-black uppercase tracking-wider flex items-center gap-2">
+                                      <span className="text-base">⚾</span>
+                                      MLB 先發投手資料庫與近況追蹤 (Starting Pitchers & Recent Form)
+                                    </span>
+                                    <span className="text-[10px] font-mono text-gray-400 bg-white/5 px-2 py-0.5 rounded border border-white/10 font-bold">
+                                      即時數據已對位
+                                    </span>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {[
+                                      { title: '客隊先發 (Away Pitcher)', teamCode: game.awayTeam.code, pitcher: pred.pitchers.away, isHome: false },
+                                      { title: '主隊先發 (Home Pitcher)', teamCode: game.homeTeam.code, pitcher: pred.pitchers.home, isHome: true }
+                                    ].map((item, idx) => {
+                                      const p = item.pitcher;
+                                      if (!p) {
+                                        return (
+                                          <div key={idx} className="bg-white/[0.02] border border-white/5 rounded-xl p-4 text-center">
+                                            <span className="text-xs text-gray-500 font-bold block">{item.title}</span>
+                                            <span className="text-xs text-gray-400 font-bold mt-2 block">先發投手未定 (TBD)</span>
+                                          </div>
+                                        );
+                                      }
+
+                                      const nameCn = p.nameCn || translatePlayerName(p.name);
+                                      const handText = p.pitchHand === 'L' ? '左投 (LHP)' : '右投 (RHP)';
+                                      
+                                      let statusBadge = { bg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30', icon: '⚡', label: '狀態穩定' };
+                                      if (p.statusLabel === 'hot') {
+                                        statusBadge = { bg: 'bg-orange-500/15 text-orange-300 border-orange-500/40 animate-pulse', icon: '🔥', label: '近況火熱' };
+                                      } else if (p.statusLabel === 'cold') {
+                                        statusBadge = { bg: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40', icon: '🧊', label: '近況低迷' };
+                                      } else if (p.statusLabel === 'warning') {
+                                        statusBadge = { bg: 'bg-rose-500/15 text-rose-300 border-rose-500/40', icon: '⚠️', label: '高防禦線' };
+                                      }
+
+                                      return (
+                                        <div key={idx} className="bg-white/[0.02] hover:bg-white/[0.04] border border-white/10 rounded-xl p-4 flex flex-col justify-between gap-3 transition-colors">
+                                          <div className="flex items-start justify-between border-b border-white/5 pb-2">
+                                            <div>
+                                              <span className="text-[10px] text-gray-400 font-bold block">{item.title}</span>
+                                              <div className="flex items-center gap-2 mt-0.5">
+                                                <span className="text-sm font-black text-white tracking-wide">{nameCn}</span>
+                                                <span className="text-[11px] font-mono text-gray-400 font-bold">({p.name})</span>
+                                              </div>
+                                              <span className="text-[10px] font-mono text-gray-500 font-bold block mt-0.5">
+                                                {handText} {p.record ? `| 戰績 ${p.record}` : ''}
+                                              </span>
+                                            </div>
+                                            <span className={`px-2 py-1 rounded-lg text-[10px] font-black border flex items-center gap-1 ${statusBadge.bg}`}>
+                                              <span>{statusBadge.icon}</span>
+                                              <span>{statusBadge.label}</span>
+                                            </span>
+                                          </div>
+
+                                          <div className="grid grid-cols-3 gap-2 py-1 text-center bg-black/20 rounded-lg p-2 font-mono">
+                                            <div className="flex flex-col">
+                                              <span className="text-[9px] text-gray-500 font-bold">賽季 ERA</span>
+                                              <span className={`text-xs font-black ${p.era <= 3.50 ? 'text-emerald-400' : p.era <= 4.30 ? 'text-amber-300' : 'text-rose-400'}`}>
+                                                {p.era.toFixed(2)}
+                                              </span>
+                                            </div>
+                                            <div className="flex flex-col border-x border-white/5">
+                                              <span className="text-[9px] text-gray-500 font-bold">WHIP (上壘率)</span>
+                                              <span className="text-xs font-black text-cyan-300">
+                                                {p.whip ? p.whip.toFixed(2) : '1.25'}
+                                              </span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                              <span className="text-[9px] text-gray-500 font-bold">壓制因子</span>
+                                              <span className="text-xs font-black text-purple-300">
+                                                {p.advantageFactor.toFixed(2)}x
+                                              </span>
+                                            </div>
+                                          </div>
+
+                                          {p.recentFormSummary && (
+                                            <div className="space-y-1.5 pt-1">
+                                              <div className="flex justify-between items-center text-[10px] font-sans font-bold">
+                                                <span className="text-gray-400 flex items-center gap-1">
+                                                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                                                  近況指數 (Recent Form):
+                                                </span>
+                                                <span className="text-cyan-300 font-mono font-black">{p.recentFormSummary}</span>
+                                              </div>
+
+                                              {p.recentForm && p.recentForm.length > 0 && (
+                                                <div className="flex flex-wrap gap-1">
+                                                  {p.recentForm.map((rf, rfIdx) => (
+                                                    <span
+                                                      key={rfIdx}
+                                                      className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[9.5px] font-mono text-gray-300 font-bold"
+                                                    >
+                                                      {rf}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              )}
+                                            </div>
+                                          )}
                                         </div>
-                                      ) : (
-                                        <span className="text-xs text-gray-500 font-bold">先發未定 (TBD)</span>
-                                      )}
-                                    </div>
-                                    <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3">
-                                      <span className="text-[10px] text-gray-500 font-bold block mb-1">主隊先發 (Home)</span>
-                                      {pred.pitchers.home ? (
-                                        <div>
-                                          <span className="text-sm font-black text-white block">{translatePlayerName(pred.pitchers.home.name)}</span>
-                                          <span className="text-xs font-mono text-cyan-300 font-bold block mt-1">
-                                            ERA: {pred.pitchers.home.era.toFixed(2)} | 優勢: {pred.pitchers.home.advantageFactor}x
-                                          </span>
-                                        </div>
-                                      ) : (
-                                        <span className="text-xs text-gray-500 font-bold">先發未定 (TBD)</span>
-                                      )}
-                                    </div>
+                                      );
+                                    })}
                                   </div>
                                 </div>
                               )}

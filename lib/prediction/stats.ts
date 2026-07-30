@@ -43,9 +43,17 @@ export interface FatigueInfo {
 
 export interface PitcherInfo {
   name: string;
-  era: number;
-  whip?: number;
-  advantageFactor: number; // >1 = pitcher advantage (opponent scores less), <1 = pitcher disadvantage
+  nameCn?: string;            // 中文翻譯姓名 (例: 大谷翔平)
+  era: number;                // 賽季 ERA
+  whip?: number;              // 賽季 WHIP (每局被上壘率)
+  record?: string;            // 賽季勝敗紀錄 (例: 11勝 3敗)
+  strikeouts?: number;        // 賽季奪三振數
+  recentEra?: number;         // 近況 ERA (近 3~5 場)
+  recentFormSummary?: string; // 近況摘要 (例: 近3場 2勝0敗 ERA 1.85, 近況火熱)
+  recentForm?: string[];      // 近幾場先發細節 (例: ['6.0局 1失分 (W)', '7.0局 2失分 (W)'])
+  pitchHand?: 'L' | 'R';      // 投球手 (L=左投, R=右投)
+  advantageFactor: number;   // 投手優勢因子 (>1 代表投手優勢/壓制力強)
+  statusLabel?: 'hot' | 'stable' | 'cold' | 'warning'; // 狀態標籤
 }
 
 export interface PredictionDetailStats {

@@ -1216,24 +1216,38 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                   </div>
 
                   {game.league === 'MLB' && game.pitchers && (game.pitchers.home || game.pitchers.away) && (
-                    <div className="grid grid-cols-2 gap-4 bg-white/[0.01] border border-white/5 rounded-2xl p-3 text-xs">
-                      <div className="flex flex-col">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white/[0.01] border border-white/5 rounded-2xl p-3 text-xs">
+                      <div className="flex flex-col gap-0.5">
                         <span className="text-[10px] text-gray-500 font-bold block">客隊先發投手 (Away Pitcher):</span>
                         {game.pitchers.away ? (
                           <div className="mt-0.5">
-                            <span className="font-black text-gray-200">{translatePlayerName(game.pitchers.away.name)}</span>
-                            <span className="text-cyan-400 font-mono font-bold ml-1.5">(ERA: {game.pitchers.away.era.toFixed(2)} | 優勢: {game.pitchers.away.advantageFactor}x)</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-black text-gray-200">{game.pitchers.away.nameCn || translatePlayerName(game.pitchers.away.name)}</span>
+                              <span className="text-cyan-400 font-mono font-bold text-[11px]">(ERA {game.pitchers.away.era.toFixed(2)} | WHIP {game.pitchers.away.whip ? game.pitchers.away.whip.toFixed(2) : '1.25'})</span>
+                            </div>
+                            {game.pitchers.away.recentFormSummary && (
+                              <span className="text-[10px] font-mono text-cyan-300/80 font-bold block mt-0.5">
+                                {game.pitchers.away.recentFormSummary}
+                              </span>
+                            )}
                           </div>
                         ) : (
                           <span className="text-gray-500">先發未定 (TBD)</span>
                         )}
                       </div>
-                      <div className="flex flex-col">
+                      <div className="flex flex-col gap-0.5">
                         <span className="text-[10px] text-gray-500 font-bold block">主隊先發投手 (Home Pitcher):</span>
                         {game.pitchers.home ? (
                           <div className="mt-0.5">
-                            <span className="font-black text-gray-200">{translatePlayerName(game.pitchers.home.name)}</span>
-                            <span className="text-cyan-400 font-mono font-bold ml-1.5">(ERA: {game.pitchers.home.era.toFixed(2)} | 優勢: {game.pitchers.home.advantageFactor}x)</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-black text-gray-200">{game.pitchers.home.nameCn || translatePlayerName(game.pitchers.home.name)}</span>
+                              <span className="text-cyan-400 font-mono font-bold text-[11px]">(ERA {game.pitchers.home.era.toFixed(2)} | WHIP {game.pitchers.home.whip ? game.pitchers.home.whip.toFixed(2) : '1.25'})</span>
+                            </div>
+                            {game.pitchers.home.recentFormSummary && (
+                              <span className="text-[10px] font-mono text-cyan-300/80 font-bold block mt-0.5">
+                                {game.pitchers.home.recentFormSummary}
+                              </span>
+                            )}
                           </div>
                         ) : (
                           <span className="text-gray-500">先發未定 (TBD)</span>
