@@ -108,6 +108,7 @@ export interface GameBacktestDetail {
     away: { name: string; era: number; advantageFactor: number } | null;
   } | null;
   errorAnalysis?: { reasons: string[]; severity: 'perfect' | 'success' | 'warning' | 'critical'; scoreDiff: number } | null;
+  hasTaiwanLine: boolean; // 是否有台灣運彩盤口（無盤口的場次大小分不計入回測統計）
 }
 
 // ─── Raw game entry format (matches real_historical_games.json) ───
@@ -204,28 +205,30 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
 
     
     // Lookup real Taiwan Odds Totals Line from global injected map
-    const realLine = dbTaiwanOddsLines[`${g.id}_totals`] || dbTaiwanOddsLines[g.id];
+    const realLine: number | undefined = dbTaiwanOddsLines[`${g.id}_totals`] || dbTaiwanOddsLines[g.id] || undefined;
+    // 若無台灣運彩盤口 → 該場大小分不計入回測統計（hasLine = false）
+    const hasLine = realLine !== undefined && realLine !== null && realLine > 0;
     
     const sportsWinner = sportsResult.homeProbability >= sportsResult.awayProbability ? 'home' : 'away';
     const sportsConf = sportsWinner === 'home' ? sportsResult.homeProbability : sportsResult.awayProbability;
-    const sportsT = realLine !== undefined ? realLine : sportsResult.ouLine; // Use real line if available
+    const sportsT = hasLine ? realLine : sportsResult.ouLine; // 顯示用，無盤口時用模型線僅作參考
     const sportsOuPick = (sportsResult.homeExpectedScore + sportsResult.awayExpectedScore) > sportsT ? 'Over' : 'Under';
     const sportsWinnerCorrect = sportsWinner === actualWinner;
-    const sportsOuCorrect = (sportsOuPick === 'Over' && actualTotal > sportsT) || (sportsOuPick === 'Under' && actualTotal < sportsT);
+    const sportsOuCorrect = hasLine ? ((sportsOuPick === 'Over' && actualTotal > sportsT) || (sportsOuPick === 'Under' && actualTotal < sportsT)) : false;
     
     const eloWinner = eloResult.homeProbability >= eloResult.awayProbability ? 'home' : 'away';
     const eloConf = eloWinner === 'home' ? eloResult.homeProbability : eloResult.awayProbability;
-    const eloT = realLine !== undefined ? realLine : eloResult.ouLine; // Use real line if available
+    const eloT = hasLine ? realLine : eloResult.ouLine;
     const eloOuPick = (eloResult.homeExpectedScore + eloResult.awayExpectedScore) > eloT ? 'Over' : 'Under';
     const eloWinnerCorrect = eloWinner === actualWinner;
-    const eloOuCorrect = (eloOuPick === 'Over' && actualTotal > eloT) || (eloOuPick === 'Under' && actualTotal < eloT);
+    const eloOuCorrect = hasLine ? ((eloOuPick === 'Over' && actualTotal > eloT) || (eloOuPick === 'Under' && actualTotal < eloT)) : false;
     
     const mcWinner = mcResult.homeProbability >= mcResult.awayProbability ? 'home' : 'away';
     const mcConf = mcWinner === 'home' ? mcResult.homeProbability : mcResult.awayProbability;
-    const mcT = realLine !== undefined ? realLine : mcResult.ouLine; // Use real line if available
+    const mcT = hasLine ? realLine : mcResult.ouLine;
     const mcOuPick = (mcResult.homeExpectedScore + mcResult.awayExpectedScore) > mcT ? 'Over' : 'Under';
     const mcWinnerCorrect = mcWinner === actualWinner;
-    const mcOuCorrect = (mcOuPick === 'Over' && actualTotal > mcT) || (mcOuPick === 'Under' && actualTotal < mcT);
+    const mcOuCorrect = hasLine ? ((mcOuPick === 'Over' && actualTotal > mcT) || (mcOuPick === 'Under' && actualTotal < mcT)) : false;
 
     // Stacking Meta Model V1 calculations
     const pSports = sportsWinner === 'home' ? sportsConf : 100 - sportsConf;
@@ -237,10 +240,10 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
 
     const metaHomeExpected = weights.SportsAI * sportsResult.homeExpectedScore + weights.EloRating * eloResult.homeExpectedScore + weights.MonteCarlo * mcResult.homeExpectedScore;
     const metaAwayExpected = weights.SportsAI * sportsResult.awayExpectedScore + weights.EloRating * eloResult.awayExpectedScore + weights.MonteCarlo * mcResult.awayExpectedScore;
-    const metaT = realLine !== undefined ? realLine : sportsResult.ouLine; // Use real line if available
+    const metaT = hasLine ? realLine : sportsResult.ouLine;
     const metaOuPick = (metaHomeExpected + metaAwayExpected) > metaT ? 'Over' : 'Under';
     const metaWinnerCorrect = metaWinner === actualWinner;
-    const metaOuCorrect = (metaOuPick === 'Over' && actualTotal > metaT) || (metaOuPick === 'Under' && actualTotal < metaT);
+    const metaOuCorrect = hasLine ? ((metaOuPick === 'Over' && actualTotal > metaT) || (metaOuPick === 'Under' && actualTotal < metaT)) : false;
 
     // ─── V2 Enhanced Model calculation ───
     const splitsHomeStats: TeamRecentStats = {
@@ -323,10 +326,10 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
     );
     const quantWinner = quantResult.homeProb >= 0.50 ? 'home' : 'away';
     const quantConf = Number((quantWinner === 'home' ? quantResult.homeProb : quantResult.awayProb).toFixed(3)) * 100;
-    const quantT = realLine !== undefined ? realLine : sportsResult.ouLine; // Use real line if available
+    const quantT = hasLine ? realLine : sportsResult.ouLine;
     const quantOuPick = (quantResult.homeExpectedScore + quantResult.awayExpectedScore) > quantT ? 'Over' : 'Under';
     const quantWinnerCorrect = quantWinner === actualWinner;
-    const quantOuCorrect = (quantOuPick === 'Over' && actualTotal > quantT) || (quantOuPick === 'Under' && actualTotal < quantT);
+    const quantOuCorrect = hasLine ? ((quantOuPick === 'Over' && actualTotal > quantT) || (quantOuPick === 'Under' && actualTotal < quantT)) : false;
     const quantTotal = Math.round(quantResult.homeExpectedScore + quantResult.awayExpectedScore);
     const quantTotalCorrect = Math.abs(actualTotal - quantTotal) <= 1.5;
 
@@ -381,29 +384,29 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
 
     const metaHomeExpectedV2 = weights.SportsAI * sportsResultV2.homeExpectedScore + weights.EloRating * eloResultV2.homeExpectedScore + weights.MonteCarlo * mcResultV2.homeExpectedScore;
     const metaAwayExpectedV2 = weights.SportsAI * sportsResultV2.awayExpectedScore + weights.EloRating * eloResultV2.awayExpectedScore + weights.MonteCarlo * mcResultV2.awayExpectedScore;
-    const metaTV2 = realLine !== undefined ? realLine : sportsResultV2.ouLine;
+    const metaTV2 = hasLine ? realLine : sportsResultV2.ouLine;
     const metaOuPickV2 = (metaHomeExpectedV2 + metaAwayExpectedV2) > metaTV2 ? 'Over' : 'Under';
     const metaWinnerCorrectV2 = metaWinnerV2 === actualWinner;
-    const metaOuCorrectV2 = (metaOuPickV2 === 'Over' && actualTotal > metaTV2) || (metaOuPickV2 === 'Under' && actualTotal < metaTV2);
+    const metaOuCorrectV2 = hasLine ? ((metaOuPickV2 === 'Over' && actualTotal > metaTV2) || (metaOuPickV2 === 'Under' && actualTotal < metaTV2)) : false;
 
-    const sportsTV2 = realLine !== undefined ? realLine : sportsResultV2.ouLine;
+    const sportsTV2 = hasLine ? realLine : sportsResultV2.ouLine;
     const sportsOuPickV2 = (sportsResultV2.homeExpectedScore + sportsResultV2.awayExpectedScore) > sportsTV2 ? 'Over' : 'Under';
     const sportsWinnerCorrectV2 = sportsWinnerV2 === actualWinner;
-    const sportsOuCorrectV2 = (sportsOuPickV2 === 'Over' && actualTotal > sportsTV2) || (sportsOuPickV2 === 'Under' && actualTotal < sportsTV2);
+    const sportsOuCorrectV2 = hasLine ? ((sportsOuPickV2 === 'Over' && actualTotal > sportsTV2) || (sportsOuPickV2 === 'Under' && actualTotal < sportsTV2)) : false;
     const sportsTotalV2 = Math.round(sportsResultV2.homeExpectedScore + sportsResultV2.awayExpectedScore);
     const sportsTotalCorrectV2 = Math.abs(actualTotal - sportsTotalV2) <= 1.5;
 
-    const eloTV2 = realLine !== undefined ? realLine : eloResultV2.ouLine;
+    const eloTV2 = hasLine ? realLine : eloResultV2.ouLine;
     const eloOuPickV2 = (eloResultV2.homeExpectedScore + eloResultV2.awayExpectedScore) > eloTV2 ? 'Over' : 'Under';
     const eloWinnerCorrectV2 = eloWinnerV2 === actualWinner;
-    const eloOuCorrectV2 = (eloOuPickV2 === 'Over' && actualTotal > eloTV2) || (eloOuPickV2 === 'Under' && actualTotal < eloTV2);
+    const eloOuCorrectV2 = hasLine ? ((eloOuPickV2 === 'Over' && actualTotal > eloTV2) || (eloOuPickV2 === 'Under' && actualTotal < eloTV2)) : false;
     const eloTotalV2 = Math.round(eloResultV2.homeExpectedScore + eloResultV2.awayExpectedScore);
     const eloTotalCorrectV2 = Math.abs(actualTotal - eloTotalV2) <= 1.5;
 
-    const mcTV2 = realLine !== undefined ? realLine : mcResultV2.ouLine;
+    const mcTV2 = hasLine ? realLine : mcResultV2.ouLine;
     const mcOuPickV2 = (mcResultV2.homeExpectedScore + mcResultV2.awayExpectedScore) > mcTV2 ? 'Over' : 'Under';
     const mcWinnerCorrectV2 = mcWinnerV2 === actualWinner;
-    const mcOuCorrectV2 = (mcOuPickV2 === 'Over' && actualTotal > mcTV2) || (mcOuPickV2 === 'Under' && actualTotal < mcTV2);
+    const mcOuCorrectV2 = hasLine ? ((mcOuPickV2 === 'Over' && actualTotal > mcTV2) || (mcOuPickV2 === 'Under' && actualTotal < mcTV2)) : false;
     const mcTotalV2 = Math.round(mcResultV2.homeExpectedScore + mcResultV2.awayExpectedScore);
     const mcTotalCorrectV2 = Math.abs(actualTotal - mcTotalV2) <= 1.5;
 
@@ -420,10 +423,10 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
     const boostedConf = Number((boostedWinner === 'home' ? boostedHomeProbVal : 100 - boostedHomeProbVal).toFixed(1));
     const boostedHomeExpected = (wSports * sportsResultV2.homeExpectedScore + wElo * eloResultV2.homeExpectedScore + wMc * mcResultV2.homeExpectedScore + wQuant * quantResult.homeExpectedScore) / (wSum || 1);
     const boostedAwayExpected = (wSports * sportsResultV2.awayExpectedScore + wElo * eloResultV2.awayExpectedScore + wMc * mcResultV2.awayExpectedScore + wQuant * quantResult.awayExpectedScore) / (wSum || 1);
-    const boostedT = realLine !== undefined ? realLine : sportsResultV2.ouLine;
+    const boostedT = hasLine ? realLine : sportsResultV2.ouLine;
     const boostedOuPick = (boostedHomeExpected + boostedAwayExpected) > boostedT ? 'Over' : 'Under';
     const boostedWinnerCorrect = boostedWinner === actualWinner;
-    const boostedOuCorrect = (boostedOuPick === 'Over' && actualTotal > boostedT) || (boostedOuPick === 'Under' && actualTotal < boostedT);
+    const boostedOuCorrect = hasLine ? ((boostedOuPick === 'Over' && actualTotal > boostedT) || (boostedOuPick === 'Under' && actualTotal < boostedT)) : false;
     const boostedTotal = Math.round(boostedHomeExpected + boostedAwayExpected);
     const boostedTotalCorrect = Math.abs(actualTotal - boostedTotal) <= 1.5;
 
@@ -570,7 +573,8 @@ export function getBacktestGamesForDate(dateStr: string, league: 'ALL' | 'NBA' |
         totalScoreCorrect: quantTotalCorrect
       },
       pitchers: g.league === 'MLB' ? pitchers : null,
-      errorAnalysis
+      errorAnalysis,
+      hasTaiwanLine: hasLine
     });
   });
 
@@ -635,70 +639,90 @@ export function getHistoricalAccuracy(
       // SportsAI V1 & V2
       dailyStats.SportsAI.winTotal++;
       if (g.SportsAI.winnerCorrect) dailyStats.SportsAI.winCorrect++;
-      dailyStats.SportsAI.ouTotal++;
-      if (g.SportsAI.ouCorrect) dailyStats.SportsAI.ouCorrect++;
+      if (g.hasTaiwanLine) {
+        dailyStats.SportsAI.ouTotal++;
+        if (g.SportsAI.ouCorrect) dailyStats.SportsAI.ouCorrect++;
+      }
       if (g.SportsAI.totalScoreCorrect) dailyStats.SportsAI.totalScoreCorrect++;
 
       dailyStats.SportsAIV2.winTotal++;
       if (g.SportsAIV2?.winnerCorrect) dailyStats.SportsAIV2.winCorrect++;
-      dailyStats.SportsAIV2.ouTotal++;
-      if (g.SportsAIV2?.ouCorrect) dailyStats.SportsAIV2.ouCorrect++;
+      if (g.hasTaiwanLine) {
+        dailyStats.SportsAIV2.ouTotal++;
+        if (g.SportsAIV2?.ouCorrect) dailyStats.SportsAIV2.ouCorrect++;
+      }
       if (g.SportsAIV2?.totalScoreCorrect) dailyStats.SportsAIV2.totalScoreCorrect++;
       
       // EloRating V1 & V2
       dailyStats.EloRating.winTotal++;
       if (g.EloRating.winnerCorrect) dailyStats.EloRating.winCorrect++;
-      dailyStats.EloRating.ouTotal++;
-      if (g.EloRating.ouCorrect) dailyStats.EloRating.ouCorrect++;
+      if (g.hasTaiwanLine) {
+        dailyStats.EloRating.ouTotal++;
+        if (g.EloRating.ouCorrect) dailyStats.EloRating.ouCorrect++;
+      }
       if (g.EloRating.totalScoreCorrect) dailyStats.EloRating.totalScoreCorrect++;
 
       dailyStats.EloRatingV2.winTotal++;
       if (g.EloRatingV2?.winnerCorrect) dailyStats.EloRatingV2.winCorrect++;
-      dailyStats.EloRatingV2.ouTotal++;
-      if (g.EloRatingV2?.ouCorrect) dailyStats.EloRatingV2.ouCorrect++;
+      if (g.hasTaiwanLine) {
+        dailyStats.EloRatingV2.ouTotal++;
+        if (g.EloRatingV2?.ouCorrect) dailyStats.EloRatingV2.ouCorrect++;
+      }
       if (g.EloRatingV2?.totalScoreCorrect) dailyStats.EloRatingV2.totalScoreCorrect++;
       
       // MonteCarlo V1 & V2
       dailyStats.MonteCarlo.winTotal++;
       if (g.MonteCarlo.winnerCorrect) dailyStats.MonteCarlo.winCorrect++;
-      dailyStats.MonteCarlo.ouTotal++;
-      if (g.MonteCarlo.ouCorrect) dailyStats.MonteCarlo.ouCorrect++;
+      if (g.hasTaiwanLine) {
+        dailyStats.MonteCarlo.ouTotal++;
+        if (g.MonteCarlo.ouCorrect) dailyStats.MonteCarlo.ouCorrect++;
+      }
       if (g.MonteCarlo.totalScoreCorrect) dailyStats.MonteCarlo.totalScoreCorrect++;
 
       dailyStats.MonteCarloV2.winTotal++;
       if (g.MonteCarloV2?.winnerCorrect) dailyStats.MonteCarloV2.winCorrect++;
-      dailyStats.MonteCarloV2.ouTotal++;
-      if (g.MonteCarloV2?.ouCorrect) dailyStats.MonteCarloV2.ouCorrect++;
+      if (g.hasTaiwanLine) {
+        dailyStats.MonteCarloV2.ouTotal++;
+        if (g.MonteCarloV2?.ouCorrect) dailyStats.MonteCarloV2.ouCorrect++;
+      }
       if (g.MonteCarloV2?.totalScoreCorrect) dailyStats.MonteCarloV2.totalScoreCorrect++;
 
       // MetaModel V1
       dailyStats.MetaModel.winTotal++;
       if (g.MetaModel.winnerCorrect) dailyStats.MetaModel.winCorrect++;
-      dailyStats.MetaModel.ouTotal++;
-      if (g.MetaModel.ouCorrect) dailyStats.MetaModel.ouCorrect++;
+      if (g.hasTaiwanLine) {
+        dailyStats.MetaModel.ouTotal++;
+        if (g.MetaModel.ouCorrect) dailyStats.MetaModel.ouCorrect++;
+      }
       if (g.MetaModel.totalScoreCorrect) dailyStats.MetaModel.totalScoreCorrect++;
 
       // MetaModel V2
       dailyStats.MetaModelV2.winTotal++;
       if (g.MetaModelV2.winnerCorrect) dailyStats.MetaModelV2.winCorrect++;
-      dailyStats.MetaModelV2.ouTotal++;
-      if (g.MetaModelV2.ouCorrect) dailyStats.MetaModelV2.ouCorrect++;
+      if (g.hasTaiwanLine) {
+        dailyStats.MetaModelV2.ouTotal++;
+        if (g.MetaModelV2.ouCorrect) dailyStats.MetaModelV2.ouCorrect++;
+      }
       if (g.MetaModelV2.totalScoreCorrect) dailyStats.MetaModelV2.totalScoreCorrect++;
 
       // BoostedMeta
       dailyStats.BoostedMeta.winTotal++;
       if (g.BoostedMeta?.winnerCorrect) dailyStats.BoostedMeta.winCorrect++;
-      dailyStats.BoostedMeta.ouTotal++;
-      if (g.BoostedMeta?.ouCorrect) dailyStats.BoostedMeta.ouCorrect++;
+      if (g.hasTaiwanLine) {
+        dailyStats.BoostedMeta.ouTotal++;
+        if (g.BoostedMeta?.ouCorrect) dailyStats.BoostedMeta.ouCorrect++;
+      }
       if (g.BoostedMeta?.totalScoreCorrect) dailyStats.BoostedMeta.totalScoreCorrect++;
       
       // QuantML
       dailyStats.QuantML.winTotal++;
       if (g.QuantML && g.QuantML.winnerCorrect) dailyStats.QuantML.winCorrect++;
       else if (!g.QuantML && g.SportsAI.winnerCorrect) dailyStats.QuantML.winCorrect++;
-      dailyStats.QuantML.ouTotal++;
-      if (g.QuantML && g.QuantML.ouCorrect) dailyStats.QuantML.ouCorrect++;
-      else if (!g.QuantML && g.SportsAI.ouCorrect) dailyStats.QuantML.ouCorrect++;
+      if (g.hasTaiwanLine) {
+        dailyStats.QuantML.ouTotal++;
+        if (g.QuantML && g.QuantML.ouCorrect) dailyStats.QuantML.ouCorrect++;
+        else if (!g.QuantML && g.SportsAI.ouCorrect) dailyStats.QuantML.ouCorrect++;
+      }
       if (g.QuantML && g.QuantML.totalScoreCorrect) dailyStats.QuantML.totalScoreCorrect++;
       else if (!g.QuantML && g.SportsAI.totalScoreCorrect) dailyStats.QuantML.totalScoreCorrect++;
     });

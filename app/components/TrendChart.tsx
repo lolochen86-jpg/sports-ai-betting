@@ -23,8 +23,8 @@ interface TrendChartProps {
 export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartProps) {
   const [leagueFilter, setLeagueFilter] = useState<'ALL' | 'NBA' | 'MLB'>('ALL');
   const [chartType, setChartType] = useState<'winner' | 'ou' | 'totalScore'>('winner');
-  const [smoothMode, setSmoothMode] = useState<boolean>(true);
-  const [timeRange, setTimeRange] = useState<'7' | '30' | 'ALL'>('ALL');
+  const [smoothMode, setSmoothMode] = useState<boolean>(false); // 預設為每日波動模式
+  const [timeRange, setTimeRange] = useState<'15' | '7'>('15'); // 只保留 15 天與 7 天
   const [dataVersion, setDataVersion] = useState(0); // 用於觸發 useMemo 重算
   
   // Model visibility toggles
@@ -320,14 +320,12 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leagueFilter, smoothMode, dataVersion]);
 
-  // Filter based on Time Range
+  // Filter based on Time Range (只保留 15天 和 7天)
   const chartData = useMemo(() => {
     if (timeRange === '7') {
       return fullData.slice(-7);
-    } else if (timeRange === '30') {
-      return fullData.slice(-30);
     }
-    return fullData;
+    return fullData.slice(-15);
   }, [fullData, timeRange]);
 
   // Fallback active date index (default to latest date)
@@ -496,13 +494,12 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
 
           <div className="inline-flex rounded-xl bg-white/5 border border-white/10 p-0.5 shadow-inner">
             {[
-              { id: 'ALL', name: '全部 (自 2026/01/01 起)' },
-              { id: '30', name: '最近30天' },
-              { id: '7', name: '最近7天' }
+              { id: '15', name: '📅 最近 15 天' },
+              { id: '7', name: '⚡ 最近 7 天' }
             ].map((r) => (
               <button
                 key={r.id}
-                onClick={() => { setTimeRange(r.id as 'ALL' | '30' | '7'); setHoverIndex(null); setSelectedIndex(null); }}
+                onClick={() => { setTimeRange(r.id as '15' | '7'); setHoverIndex(null); setSelectedIndex(null); }}
                 className={`px-3.5 py-2 rounded-lg font-black text-xs transition-all ${timeRange === r.id ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
               >
                 {r.name}
@@ -529,19 +526,20 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
             ))}
           </div>
 
-          {/* Smooth Toggle */}
+          {/* Smooth / Daily Fluctuation Toggle */}
           <button
             onClick={() => { setSmoothMode(!smoothMode); setHoverIndex(null); setSelectedIndex(null); }}
             className={`px-4 py-2 rounded-xl border font-black text-xs transition-all flex items-center gap-1.5 ${
-              smoothMode 
-                ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.1)]' 
-                : 'bg-white/5 text-gray-400 border-white/10 hover:text-white'
+              !smoothMode 
+                ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30 shadow-[0_0_12px_rgba(6,182,212,0.15)]' 
+                : 'bg-purple-500/10 text-purple-300 border-purple-500/30'
             }`}
+            title="切換每日獨立波動模式與累積平滑模式"
           >
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
             </svg>
-            {smoothMode ? '7日平滑曲線開' : '每日波動模式'}
+            {!smoothMode ? '⚡ 每日波動模式 (每日獨立勝率)' : '📈 7日平滑累積模式'}
           </button>
         </div>
 
@@ -1258,9 +1256,11 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                         ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                         : 'bg-red-500/10 text-red-400 border border-red-500/20';
                         
-                      const ouAccBadge = m.data.ouCorrect
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        : 'bg-red-500/10 text-red-400 border border-red-500/20';
+                      const ouAccBadge = !game.hasTaiwanLine
+                        ? 'bg-gray-500/10 text-gray-400 border border-white/10'
+                        : m.data.ouCorrect
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : 'bg-red-500/10 text-red-400 border border-red-500/20';
  
                       return (
                         <div 
@@ -1295,7 +1295,7 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                                   {m.data.ouPick === 'Over' ? '大分' : '小分'} (O/U {m.data.ouT})
                                 </span>
                                 <span className={`text-[8.5px] font-mono px-1 rounded-sm ${ouAccBadge}`}>
-                                  {m.data.ouCorrect ? '命中' : '未中'}
+                                  {!game.hasTaiwanLine ? '無盤口' : m.data.ouCorrect ? '命中' : '未中'}
                                 </span>
                               </div>
                             </div>
