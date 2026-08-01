@@ -142,12 +142,12 @@ function generateAndSettleParlaysForDate(
     const awayStats = getFallbackStats(game.awayCode, game.league, dateStr);
 
     // Model 1: SportsAI
-    const sportsResult = calculateWinProbability(homeStats, awayStats, game.league);
+    const sportsResult = calculateWinProbability(homeStats, awayStats, game.id, game.league);
     const sportsWinner: 'home' | 'away' = sportsResult.homeProbability >= sportsResult.awayProbability ? 'home' : 'away';
     const sportsConf = sportsWinner === 'home' ? sportsResult.homeProbability : sportsResult.awayProbability;
 
     // Model 2: Elo
-    const eloResult = calculateEloProbability(homeStats, awayStats, game.league);
+    const eloResult = calculateEloProbability(undefined, undefined, homeStats, awayStats, game.id, game.league);
     const eloWinner: 'home' | 'away' = eloResult.homeProbability >= eloResult.awayProbability ? 'home' : 'away';
     const eloConf = eloWinner === 'home' ? eloResult.homeProbability : eloResult.awayProbability;
 
