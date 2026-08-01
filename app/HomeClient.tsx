@@ -882,7 +882,7 @@ export default function HomeClient() {
   const [parlayFilterGrade, setParlayFilterGrade] = useState<'ALL' | 'A' | 'B'>('ALL');
   const [parlayFilterSingle, setParlayFilterSingle] = useState(false);
   const [parlayFilterParlay, setParlayFilterParlay] = useState(false);
-  const [parlaySortBy, setParlaySortBy] = useState<'edge' | 'ev'>('edge');
+  const [parlaySortBy, setParlaySortBy] = useState<'edge' | 'evRoi'>('edge');
 
   const toggleParlayCart = (gameId: string, side: 'home' | 'away') => {
     setParlayCart(prev => {
