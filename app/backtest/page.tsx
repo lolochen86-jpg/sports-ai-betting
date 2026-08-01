@@ -72,6 +72,7 @@ export default function BacktestPage() {
 
           <div className="hidden md:flex items-center gap-8 font-bold text-sm text-gray-300">
             <Link href="/" className="hover:text-purple-400 transition-colors">決策看盤中心</Link>
+            <Link href="/smart-parlays" className="hover:text-amber-400 text-amber-400 font-extrabold transition-colors">🎯 智慧三關</Link>
             <span className="text-white border-b-2 border-purple-500 pb-1">歷史量化回測</span>
             <Link href="/history" className="hover:text-purple-400 transition-colors">完賽記錄簿</Link>
             <Link href="/share" className="hover:text-purple-400 transition-colors">📸 戰報字卡</Link>
@@ -89,6 +90,7 @@ export default function BacktestPage() {
         {/* Mobile Navigation Links */}
         <div className="flex md:hidden items-center gap-4 overflow-x-auto whitespace-nowrap pt-3 mt-3 border-t border-white/5 text-xs scrollbar-none font-bold text-gray-300">
           <Link href="/" className="hover:text-purple-400 shrink-0">決策看盤</Link>
+          <Link href="/smart-parlays" className="hover:text-amber-400 text-amber-400 font-extrabold shrink-0">🎯 智慧三關</Link>
           <span className="text-white border-b-2 border-purple-500 pb-0.5 shrink-0">量化回測</span>
           <Link href="/history" className="hover:text-purple-400 shrink-0">完賽記錄</Link>
           <Link href="/share" className="hover:text-purple-400 shrink-0">📸 戰報字卡</Link>

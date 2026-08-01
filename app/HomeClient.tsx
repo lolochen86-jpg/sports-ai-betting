@@ -1788,6 +1788,7 @@ export default function HomeClient() {
 
           <div className="hidden md:flex items-center gap-8 font-bold text-sm text-gray-300">
             <span className="text-white border-b-2 border-purple-500 pb-1">決策看盤中心</span>
+            <Link href="/smart-parlays" className="hover:text-amber-400 text-amber-400 font-extrabold transition-colors">🎯 智慧三關</Link>
             <Link href="/compare" className="hover:text-purple-400 text-purple-300 font-extrabold transition-colors">🔬 新舊模型對照</Link>
             <Link href="/backtest" className="hover:text-purple-400 transition-colors">歷史量化回測</Link>
             <Link href="/history" className="hover:text-purple-400 transition-colors">完賽記錄簿</Link>
@@ -1832,6 +1833,7 @@ export default function HomeClient() {
         {/* Mobile Navigation Links */}
         <div className="flex md:hidden items-center gap-4 overflow-x-auto whitespace-nowrap pt-3 mt-3 border-t border-white/5 text-xs scrollbar-none font-bold text-gray-300">
           <span className="text-white border-b-2 border-purple-500 pb-0.5 shrink-0">決策看盤</span>
+          <Link href="/smart-parlays" className="hover:text-amber-400 text-amber-400 font-extrabold shrink-0">🎯 智慧三關</Link>
           <Link href="/compare" className="hover:text-purple-400 text-purple-300 font-extrabold shrink-0">🔬 對照</Link>
           <Link href="/backtest" className="hover:text-purple-400 shrink-0">量化回測</Link>
           <Link href="/history" className="hover:text-purple-400 shrink-0">完賽記錄</Link>
@@ -3625,221 +3627,133 @@ export default function HomeClient() {
               </div>
             )}
 
-            {/* 🎯 串關組合分析與下注策略面板 */}
-            <div className="bg-gradient-to-br from-violet-950/[0.08] to-fuchsia-950/[0.08] border border-violet-500/20 rounded-3xl p-6 md:p-8 relative overflow-hidden mt-8">
-              {/* Ambient purple glow */}
-              <div className="absolute top-0 right-0 w-48 h-48 bg-violet-500/10 rounded-full filter blur-3xl pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-fuchsia-500/10 rounded-full filter blur-3xl pointer-events-none" />
-
-              {/* Title Header */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-white/5 pb-6">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">🎯</span>
-                  <div>
-                    <h3 className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400 tracking-wider font-sans">
-                      串關組合分析與下注策略面板
-                    </h3>
-                    <p className="text-[10px] text-gray-400 font-sans mt-0.5">
-                      自動計算多場次串關之期望值與勝率，提供科學下注水位建議
-                    </p>
+            {/* 🎯 智慧三關推薦專區引導卡片 */}
+            <div className="bg-gradient-to-r from-purple-900/30 via-indigo-900/20 to-black border border-purple-500/30 rounded-3xl p-6 md:p-8 relative overflow-hidden mt-8 shadow-xl">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+                <div className="space-y-2 text-center md:text-left">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-black">
+                    <span className="animate-pulse">🔥</span> 跨模型四合一共識演算
                   </div>
+                  <h3 className="text-xl md:text-2xl font-black text-white tracking-wide">
+                    AI 智慧三關推薦 & 完賽過關驗證專區
+                  </h3>
+                  <p className="text-xs md:text-sm text-gray-300 max-w-2xl leading-relaxed font-medium">
+                    已獨立移至專屬頁面！結合四大 AI 引擎自動篩選最高勝率三關組合，並提供完整的歷史完賽過關率與 ROI 勝驗證明細。
+                  </p>
                 </div>
-
-                {/* Current settings stats summary */}
-                <div className="flex flex-wrap items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-2 text-[10px] text-gray-400 font-mono">
-                  <span className="text-violet-400 font-bold">目前設定:</span>
-                  <span>本金: ${bettingSettings.bankroll}</span>
-                  <span className="text-gray-600">|</span>
-                  <span>每日上限: ${bettingSettings.dailyLimit}</span>
-                  <span className="text-gray-600">|</span>
-                  <span>Edge%: {(bettingSettings.requiredEdge * 100).toFixed(0)}%</span>
-                  <span className="text-gray-600">|</span>
-                  <span>EV ROI: {(bettingSettings.targetEvRoi * 100).toFixed(0)}%</span>
-                </div>
+                <Link
+                  href="/smart-parlays"
+                  className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-purple-600 hover:from-amber-400 hover:to-purple-500 text-black font-black text-sm tracking-wide shadow-lg shadow-amber-500/20 hover:shadow-amber-500/40 transition-all flex items-center gap-2 shrink-0 group"
+                >
+                  <span>🎯 前往智慧三關推薦專區</span>
+                  <span className="group-hover:translate-x-1 transition-transform">➡️</span>
+                </Link>
               </div>
+            </div>
 
-              {/* Rational Betting Alert Box */}
-              <div className="bg-red-500/10 border border-red-500/25 rounded-2xl p-4 mb-6 text-xs text-red-200 flex items-start gap-3">
-                <span className="text-lg shrink-0">⚠️</span>
-                <div>
-                  <span className="font-black block text-red-400 mb-0.5">理性投注警示</span>
-                  <span className="font-semibold leading-relaxed">不要為了湊關硬買，低賠不等於安全。請嚴格遵守每日最高下注限制與 Kelly 倉位控管。</span>
-                </div>
-              </div>
-
-              {/* Content Grid */}
-              <div className="space-y-8">
+            {/* 3. All Value Bets Pool */}
+            <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-5 mt-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/5 pb-4 mb-4 gap-3">
+                <h4 className="text-xs font-black text-violet-400 uppercase tracking-wider font-sans flex items-center gap-1.5">
+                  <span>📊</span> 大數據價值投注項目池 (台灣運彩已入賠率)
+                </h4>
                 
-                {/* 1. Parlay Cart Section */}
-                <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-5">
-                  <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-4">
-                    <h4 className="text-xs font-black text-violet-400 uppercase tracking-wider font-sans flex items-center gap-1.5">
-                      <span>🎟️</span> 我的自選串關組合
-                    </h4>
-                    <span className="text-[10px] font-mono text-gray-400 bg-white/5 px-2 py-0.5 rounded-full font-bold">
-                      已選 {selectedLegs.length} 場
-                    </span>
-                  </div>
+                {/* Filters and sorting controls */}
+                <div className="flex flex-wrap items-center gap-2 text-[10px] font-sans">
+                  {/* Grade filter */}
+                  <select
+                    value={parlayFilterGrade}
+                    onChange={(e) => setParlayFilterGrade(e.target.value as 'ALL' | 'A' | 'B')}
+                    className="bg-zinc-900 border border-white/10 rounded-lg px-2 py-1 text-white font-bold cursor-pointer"
+                  >
+                    <option value="ALL">全部評級 (A+B)</option>
+                    <option value="A">評級 A 級</option>
+                    <option value="B">評級 B 級</option>
+                  </select>
 
-                  {selectedLegs.length === 0 ? (
-                    <div className="text-center py-6 text-xs text-gray-500 font-sans font-bold">
-                      💡 請在上方今日賽事中點擊 <span className="text-amber-400 font-mono">「加入串關組合 +」</span> 來建立您的自選串關單。
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* Cart items */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {selectedLegs.map((leg) => (
-                          <div key={`${leg.gameId}-${leg.label}`} className="bg-white/5 border border-white/10 rounded-xl p-3 flex items-center justify-between gap-3 text-xs">
-                            <div>
-                              <div className="font-black text-white">{leg.label}</div>
-                              <div className="text-[10px] text-gray-400 font-mono mt-0.5">
-                                賠率: {leg.odds.toFixed(2)} | AI勝率: {(leg.aiProb * 100).toFixed(1)}%
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className={`px-1.5 py-0.5 rounded text-[8px] font-black tracking-wide ${
-                                leg.grade === 'A' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black' :
-                                leg.grade === 'B' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
-                                leg.grade === 'C' ? 'bg-yellow-500/5 text-yellow-300 border border-yellow-500/10' :
-                                'bg-red-500/5 text-gray-500 border border-red-500/10'
+                  {/* Single / Parlay toggle buttons */}
+                  <button
+                    type="button"
+                    onClick={() => setParlayFilterSingle(!parlayFilterSingle)}
+                    className={`px-2 py-1 rounded-lg border font-bold transition-all duration-300 ${
+                      parlayFilterSingle
+                        ? 'bg-violet-500 text-black border-violet-500 shadow-md shadow-violet-500/10'
+                        : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    單關
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setParlayFilterParlay(!parlayFilterParlay)}
+                    className={`px-2 py-1 rounded-lg border font-bold transition-all duration-300 ${
+                      parlayFilterParlay
+                        ? 'bg-violet-500 text-black border-violet-500 shadow-md shadow-violet-500/10'
+                        : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    需過關
+                  </button>
+
+                  {/* Sort toggle */}
+                  <select
+                    value={parlaySortBy}
+                    onChange={(e) => setParlaySortBy(e.target.value as 'edge' | 'ev')}
+                    className="bg-zinc-900 border border-white/10 rounded-lg px-2 py-1 text-white font-bold cursor-pointer"
+                  >
+                    <option value="edge">依 Edge% 排序</option>
+                    <option value="ev">依 EV ROI 排序</option>
+                  </select>
+                </div>
+              </div>
+
+              {sortedLegs.length === 0 ? (
+                <div className="text-center py-6 text-xs text-gray-500 font-sans font-bold">
+                  💡 沒有符合當前篩選條件的價值下注項目。請點擊上方賽事並輸入對應的台灣運彩賠率。
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="text-[10px] text-gray-500 font-mono uppercase border-b border-white/5 font-bold">
+                        <th className="pb-2">投注項目</th>
+                        <th className="pb-2">評級</th>
+                        <th className="pb-2">台運賠率</th>
+                        <th className="pb-2">Edge%</th>
+                        <th className="pb-2">EV ROI</th>
+                        <th className="pb-2 text-center">過關限制</th>
+                        <th className="pb-2 text-right">選入</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.02] font-semibold">
+                      {sortedLegs.map((leg) => {
+                        const isInCart = parlayCart[leg.gameId] === (leg.label.endsWith('(客)') ? 'away' : 'home');
+                        return (
+                          <tr key={`${leg.gameId}-${leg.label}`} className="hover:bg-white/[0.01] transition-colors">
+                            <td className="py-2.5 font-bold text-white pr-2">{leg.label}</td>
+                            <td className="py-2.5">
+                              <span className={`px-1.5 py-0.5 rounded text-[9px] font-black ${
+                                leg.grade === 'A' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold' : 'bg-orange-500/10 text-orange-400'
                               }`}>
-                                {leg.grade} 級
+                                {leg.grade}
                               </span>
+                            </td>
+                            <td className="py-2.5 font-mono font-bold text-gray-300">{leg.odds.toFixed(2)}</td>
+                            <td className={`py-2.5 font-mono font-bold ${leg.edge >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                              {(leg.edge * 100).toFixed(1)}%
+                            </td>
+                            <td className={`py-2.5 font-mono font-bold ${leg.evRoi >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                              {(leg.evRoi * 100).toFixed(1)}%
+                            </td>
+                            <td className="py-2.5 font-mono text-center text-gray-400">
+                              {leg.legLimit === 1 ? '單關' : `至少 ${leg.legLimit} 關`}
+                            </td>
+                            <td className="py-2.5 text-right">
                               <button
                                 type="button"
                                 onClick={() => toggleParlayCart(leg.gameId, leg.label.endsWith('(客)') ? 'away' : 'home')}
-                                className="text-gray-400 hover:text-red-400 transition-colors p-1 font-bold"
-                                title="移除"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Parlay Ticket calculations */}
-                      {selectedLegs.length < 2 ? (
-                        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3 text-center text-[11px] text-gray-400 font-sans font-bold">
-                          ⚠️ 請至少選擇 2 場賽事以進行串關過關計算。
-                        </div>
-                      ) : (() => {
-                        const res = calculateParlay(selectedLegs, bettingSettings.maxParlayBet);
-                        return (
-                          <div className="bg-violet-500/5 border border-violet-500/20 rounded-xl p-4 space-y-3 font-sans">
-                            <div className="grid grid-cols-3 gap-3 text-center text-xs font-mono">
-                              <div className="bg-white/5 rounded-lg p-2">
-                                <span className="text-[9px] text-gray-500 block mb-0.5 font-bold">串關總賠率</span>
-                                <span className="text-base font-black text-white">{res.parlayOdds.toFixed(3)}</span>
-                              </div>
-                              <div className="bg-white/5 rounded-lg p-2">
-                                <span className="text-[9px] text-gray-500 block mb-0.5 font-bold">預估組合勝率</span>
-                                <span className="text-base font-black text-white">{((res.parlayProb) * 100).toFixed(2)}%</span>
-                              </div>
-                              <div className="bg-white/5 rounded-lg p-2">
-                                <span className="text-[9px] text-gray-500 block mb-0.5 font-bold">組合 EV ROI</span>
-                                <span className={`text-base font-black ${res.parlayEv >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                                  {(res.parlayEv * 100).toFixed(1)}%
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs pt-2 border-t border-white/5">
-                              <div className="flex items-center gap-2">
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                                  res.parlayGrade === 'AA' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black' :
-                                  res.parlayGrade === 'AB' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
-                                  res.parlayGrade === 'BB' ? 'bg-yellow-500/5 text-yellow-300 border border-yellow-500/10' :
-                                  'bg-red-500/10 text-red-400 border border-red-500/20'
-                                }`}>
-                                  組合級別 {res.parlayGrade.toUpperCase()}
-                                </span>
-                                <span className="text-gray-300 font-semibold">{res.advice}</span>
-                              </div>
-
-                              {res.suggestedBet > 0 && (
-                                <div className="text-right sm:text-right">
-                                  <span className="text-[10px] text-gray-400 block font-bold">凱利水位建議下注：</span>
-                                  <span className="text-violet-400 font-mono font-black text-base">${res.suggestedBet} NTD</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  )}
-                </div>
-
-                {/* 2. Parlay Suggestions */}
-                <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-5">
-                  <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-4">
-                    <h4 className="text-xs font-black text-fuchsia-400 uppercase tracking-wider font-sans flex items-center gap-1.5">
-                      <span>🤖</span> AI 推薦 2 串 1 最佳組合 (A+A / A+B 優先)
-                    </h4>
-                    <span className="text-[10px] font-mono text-gray-400 font-bold">
-                      共 {parlaySuggestions.length} 組推薦
-                    </span>
-                  </div>
-
-                  {parlaySuggestions.length === 0 ? (
-                    <div className="text-center py-6 text-xs text-gray-500 font-sans font-bold">
-                      💡 目前無符合高價值的 AI 2串1 串關推薦。請輸入更多賽事賠率（需為 A/B 級項目且 EV ROI &gt; 0）。
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {parlaySuggestions.map((sug, idx) => (
-                        <div key={idx} className="bg-white/5 border border-white/10 hover:border-fuchsia-500/40 rounded-2xl p-4 space-y-3 transition-all duration-300 relative">
-                          <div className="absolute top-3 right-3 text-[10px] font-mono text-fuchsia-400 bg-fuchsia-500/10 px-2 py-0.5 rounded-full font-bold">
-                            推薦 #{idx + 1}
-                          </div>
-
-                          <div className="space-y-2">
-                            {sug.legs.map((leg, lIdx) => (
-                              <div key={lIdx} className="flex justify-between items-center text-xs">
-                                <span className="font-black text-white">{leg.label}</span>
-                                <span className="font-mono text-gray-400">賠率: {leg.odds.toFixed(2)}</span>
-                              </div>
-                            ))}
-                          </div>
-
-                          <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-mono border-t border-white/5 pt-2">
-                            <div>
-                              <span className="text-[9px] text-gray-500 block">過關賠率</span>
-                              <span className="font-black text-white">{sug.parlayOdds.toFixed(3)}</span>
-                            </div>
-                            <div>
-                              <span className="text-[9px] text-gray-500 block">組合勝率</span>
-                              <span className="font-black text-white">{((sug.parlayProb) * 100).toFixed(1)}%</span>
-                            </div>
-                            <div>
-                              <span className="text-[9px] text-gray-500 block">組合 EV</span>
-                              <span className="font-black text-emerald-400">{(sug.parlayEv * 100).toFixed(1)}%</span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between text-[11px] bg-white/5 rounded-xl p-2 mt-2">
-                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${
-                              sug.parlayGrade === 'AA' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black shadow' : 'bg-orange-500/10 text-orange-400'
-                            }`}>
-                              {sug.parlayGrade} 級
-                            </span>
-                            <span className="text-fuchsia-300 font-bold font-sans">建議投注: ${sug.suggestedBet} 元</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* 3. All Value Bets Pool */}
-                <div className="bg-white/[0.01] border border-white/5 rounded-2xl p-5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/5 pb-4 mb-4 gap-3">
-                    <h4 className="text-xs font-black text-violet-400 uppercase tracking-wider font-sans flex items-center gap-1.5">
-                      <span>📊</span> 大數據價值投注項目池 (台灣運彩已入賠率)
-                    </h4>
-                    
                     {/* Filters and sorting controls */}
                     <div className="flex flex-wrap items-center gap-2 text-[10px] font-sans">
                       {/* Grade filter */}
