@@ -3771,11 +3771,7 @@ export default function HomeClient() {
                 </div>
               )}
             </div>
-
-              </div>
-            </div>
           </div>
-
         </div>
       </main>
 
