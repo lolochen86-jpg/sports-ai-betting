@@ -12,7 +12,7 @@ import {
   calculateMonteCarloProbability,
   type TeamRecentStats 
 } from './stats';
-import { getTeamNameCnAny } from '../sports-api/team-translations';
+import { getTeamNameCnAny } from '@/lib/sports-api/team-translations';
 
 export interface RawHistoricalGame {
   id: string;
