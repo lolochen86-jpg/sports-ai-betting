@@ -58,8 +58,8 @@ function getFallbackStats(teamCode: string, league: 'NBA' | 'MLB', dateStr: stri
 
 export interface ParlayHistoryLeg {
   gameId: string;
-  homeTeam: { code: string; nameCn: string };
-  awayTeam: { code: string; nameCn: string };
+  homeTeam: { code: string; name: string; nameCn?: string };
+  awayTeam: { code: string; name: string; nameCn?: string };
   pick: 'home' | 'away';
   pickTeamName: string;
   consensusCount: number;
@@ -221,8 +221,8 @@ function generateAndSettleParlaysForDate(
 
       return {
         gameId: c.game.id,
-        homeTeam: { code: c.game.homeCode, nameCn: getTeamNameCnAny(c.game.homeCode) || c.game.homeName },
-        awayTeam: { code: c.game.awayCode, nameCn: getTeamNameCnAny(c.game.awayCode) || c.game.awayName },
+        homeTeam: { code: c.game.homeCode, name: c.game.homeName, nameCn: getTeamNameCnAny(c.game.homeCode) || c.game.homeName },
+        awayTeam: { code: c.game.awayCode, name: c.game.awayName, nameCn: getTeamNameCnAny(c.game.awayCode) || c.game.awayName },
         pick: c.pick,
         pickTeamName,
         consensusCount: c.consensusCount,

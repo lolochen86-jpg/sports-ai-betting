@@ -16,7 +16,7 @@ interface SmartParlayLeg {
     MonteCarlo: 'home' | 'away';
     MetaModel: 'home' | 'away';
   };
-  predictedTotal: number;
+  predictedTotal?: number;
 }
 
 interface SmartParlay {

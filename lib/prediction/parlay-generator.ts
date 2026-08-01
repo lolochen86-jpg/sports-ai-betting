@@ -15,7 +15,7 @@ export interface SmartParlayLeg {
     MonteCarlo: 'home' | 'away';
     MetaModel: 'home' | 'away';
   };
-  predictedTotal: number;            // Predicted total score
+  predictedTotal?: number;            // Predicted total score
 }
 
 export interface SmartParlay {
