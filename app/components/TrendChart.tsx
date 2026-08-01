@@ -1222,12 +1222,12 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                         {game.pitchers.away ? (
                           <div className="mt-0.5">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-black text-gray-200">{game.pitchers.away.nameCn || translatePlayerName(game.pitchers.away.name)}</span>
-                              <span className="text-cyan-400 font-mono font-bold text-[11px]">(ERA {game.pitchers.away.era.toFixed(2)} | WHIP {game.pitchers.away.whip ? game.pitchers.away.whip.toFixed(2) : '1.25'})</span>
+                              <span className="font-black text-gray-200">{(game.pitchers.away as any).nameCn || translatePlayerName(game.pitchers.away.name)}</span>
+                              <span className="text-cyan-400 font-mono font-bold text-[11px]">(ERA {game.pitchers.away.era.toFixed(2)} | WHIP {(game.pitchers.away as any).whip ? (game.pitchers.away as any).whip.toFixed(2) : '1.25'})</span>
                             </div>
-                            {game.pitchers.away.recentFormSummary && (
+                            {(game.pitchers.away as any).recentFormSummary && (
                               <span className="text-[10px] font-mono text-cyan-300/80 font-bold block mt-0.5">
-                                {game.pitchers.away.recentFormSummary}
+                                {(game.pitchers.away as any).recentFormSummary}
                               </span>
                             )}
                           </div>
@@ -1240,12 +1240,12 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                         {game.pitchers.home ? (
                           <div className="mt-0.5">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-black text-gray-200">{game.pitchers.home.nameCn || translatePlayerName(game.pitchers.home.name)}</span>
-                              <span className="text-cyan-400 font-mono font-bold text-[11px]">(ERA {game.pitchers.home.era.toFixed(2)} | WHIP {game.pitchers.home.whip ? game.pitchers.home.whip.toFixed(2) : '1.25'})</span>
+                              <span className="font-black text-gray-200">{(game.pitchers.home as any).nameCn || translatePlayerName(game.pitchers.home.name)}</span>
+                              <span className="text-cyan-400 font-mono font-bold text-[11px]">(ERA {game.pitchers.home.era.toFixed(2)} | WHIP {(game.pitchers.home as any).whip ? (game.pitchers.home as any).whip.toFixed(2) : '1.25'})</span>
                             </div>
-                            {game.pitchers.home.recentFormSummary && (
+                            {(game.pitchers.home as any).recentFormSummary && (
                               <span className="text-[10px] font-mono text-cyan-300/80 font-bold block mt-0.5">
-                                {game.pitchers.home.recentFormSummary}
+                                {(game.pitchers.home as any).recentFormSummary}
                               </span>
                             )}
                           </div>
