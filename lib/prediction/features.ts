@@ -1,6 +1,7 @@
 import type { League, GameWithTeams } from '@/types/sports';
 import type { TeamRecentStats, H2HRecord, FatigueInfo, PitcherInfo } from './stats';
 import { apiCache } from '@/lib/sports-api/cache';
+import { translatePlayerName } from '@/lib/sports-api/team-translations';
 
 const CACHE_TTL_FEATURES = 60 * 60; // Cache extracted features for 1 hour
 
