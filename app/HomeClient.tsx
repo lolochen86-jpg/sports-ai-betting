@@ -3700,11 +3700,11 @@ export default function HomeClient() {
                   {/* Sort toggle */}
                   <select
                     value={parlaySortBy}
-                    onChange={(e) => setParlaySortBy(e.target.value as 'edge' | 'ev')}
+                    onChange={(e) => setParlaySortBy(e.target.value as 'edge' | 'evRoi')}
                     className="bg-zinc-900 border border-white/10 rounded-lg px-2 py-1 text-white font-bold cursor-pointer"
                   >
                     <option value="edge">依 Edge% 排序</option>
-                    <option value="ev">依 EV ROI 排序</option>
+                    <option value="evRoi">依 EV ROI 排序</option>
                   </select>
                 </div>
               </div>
