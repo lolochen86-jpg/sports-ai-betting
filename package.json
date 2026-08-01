@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && (prisma db push --accept-data-loss || echo \"Database offline, skipping push\") && next build",
+    "build": "DATABASE_URL=\"${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/dummy}\" prisma generate && (DATABASE_URL=\"${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/dummy}\" prisma db push --accept-data-loss || echo \"Database offline, skipping push\") && next build",
     "start": "next start",
     "lint": "eslint"
   },
