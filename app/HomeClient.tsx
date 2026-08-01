@@ -3754,118 +3754,23 @@ export default function HomeClient() {
                               <button
                                 type="button"
                                 onClick={() => toggleParlayCart(leg.gameId, leg.label.endsWith('(客)') ? 'away' : 'home')}
-                    {/* Filters and sorting controls */}
-                    <div className="flex flex-wrap items-center gap-2 text-[10px] font-sans">
-                      {/* Grade filter */}
-                      <select
-                        value={parlayFilterGrade}
-                        onChange={(e) => setParlayFilterGrade(e.target.value as 'ALL' | 'A' | 'B')}
-                        className="bg-zinc-900 border border-white/10 rounded-lg px-2 py-1 text-white font-bold cursor-pointer"
-                      >
-                        <option value="ALL">全部評級 (A+B)</option>
-                        <option value="A">評級 A 級</option>
-                        <option value="B">評級 B 級</option>
-                      </select>
-
-                      {/* Single / Parlay toggle buttons */}
-                      <button
-                        type="button"
-                        onClick={() => setParlayFilterSingle(!parlayFilterSingle)}
-                        className={`px-2 py-1 rounded-lg border font-bold transition-all duration-300 ${
-                          parlayFilterSingle
-                            ? 'bg-violet-500 text-black border-violet-500 shadow-md shadow-violet-500/10'
-                            : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        單關
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setParlayFilterParlay(!parlayFilterParlay)}
-                        className={`px-2 py-1 rounded-lg border font-bold transition-all duration-300 ${
-                          parlayFilterParlay
-                            ? 'bg-violet-500 text-black border-violet-500 shadow-md shadow-violet-500/10'
-                            : 'bg-white/5 border-white/10 text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        需過關
-                      </button>
-
-                      {/* Sort toggle */}
-                      <select
-                        value={parlaySortBy}
-                        onChange={(e) => setParlaySortBy(e.target.value as 'edge' | 'ev')}
-                        className="bg-zinc-900 border border-white/10 rounded-lg px-2 py-1 text-white font-bold cursor-pointer"
-                      >
-                        <option value="edge">依 Edge% 排序</option>
-                        <option value="ev">依 EV ROI 排序</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {sortedLegs.length === 0 ? (
-                    <div className="text-center py-6 text-xs text-gray-500 font-sans font-bold">
-                      💡 沒有符合當前篩選條件的價值下注項目。請點擊上方賽事並輸入對應的台灣運彩賠率。
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                          <tr className="text-[10px] text-gray-500 font-mono uppercase border-b border-white/5 font-bold">
-                            <th className="pb-2">投注項目</th>
-                            <th className="pb-2">評級</th>
-                            <th className="pb-2">台運賠率</th>
-                            <th className="pb-2">Edge%</th>
-                            <th className="pb-2">EV ROI</th>
-                            <th className="pb-2 text-center">過關限制</th>
-                            <th className="pb-2 text-right">選入</th>
+                                className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${
+                                  isInCart
+                                    ? 'bg-amber-500 text-black border-amber-500'
+                                    : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
+                                }`}
+                              >
+                                {isInCart ? '已選 ✓' : '選入 +'}
+                              </button>
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/[0.02] font-semibold">
-                          {sortedLegs.map((leg) => {
-                            const isInCart = parlayCart[leg.gameId] === (leg.label.endsWith('(客)') ? 'away' : 'home');
-                            return (
-                              <tr key={`${leg.gameId}-${leg.label}`} className="hover:bg-white/[0.01] transition-colors">
-                                <td className="py-2.5 font-bold text-white pr-2">{leg.label}</td>
-                                <td className="py-2.5">
-                                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-black ${
-                                    leg.grade === 'A' ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold' : 'bg-orange-500/10 text-orange-400'
-                                  }`}>
-                                    {leg.grade}
-                                  </span>
-                                </td>
-                                <td className="py-2.5 font-mono font-bold text-gray-300">{leg.odds.toFixed(2)}</td>
-                                <td className={`py-2.5 font-mono font-bold ${leg.edge >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                                  {(leg.edge * 100).toFixed(1)}%
-                                </td>
-                                <td className={`py-2.5 font-mono font-bold ${leg.evRoi >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                                  {(leg.evRoi * 100).toFixed(1)}%
-                                </td>
-                                <td className="py-2.5 font-mono text-center text-gray-400">
-                                  {leg.legLimit === 1 ? '單關' : `至少 ${leg.legLimit} 關`}
-                                </td>
-                                <td className="py-2.5 text-right">
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleParlayCart(leg.gameId, leg.label.endsWith('(客)') ? 'away' : 'home')}
-                                    className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${
-                                      isInCart
-                                        ? 'bg-amber-500 text-black border-amber-500'
-                                        : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
-                                    }`}
-                                  >
-                                    {isInCart ? '已選 ✓' : '選入 +'}
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
+              )}
+            </div>
 
               </div>
             </div>
