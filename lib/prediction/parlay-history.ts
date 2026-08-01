@@ -12,7 +12,7 @@ import {
   calculateMonteCarloProbability,
   type TeamRecentStats 
 } from './stats';
-import { translatePlayerName } from '../sports-api/team-translations';
+import { getTeamNameCnAny } from '../sports-api/team-translations';
 
 export interface RawHistoricalGame {
   id: string;
@@ -216,13 +216,13 @@ function generateAndSettleParlaysForDate(
       const actualWinner: 'home' | 'away' = c.game.homeScore > c.game.awayScore ? 'home' : 'away';
       const isHit = c.pick === actualWinner;
       const pickTeamName = c.pick === 'home'
-        ? (translatePlayerName(c.game.homeCode) || c.game.homeName)
-        : (translatePlayerName(c.game.awayCode) || c.game.awayName);
+        ? (getTeamNameCnAny(c.game.homeCode) || c.game.homeName)
+        : (getTeamNameCnAny(c.game.awayCode) || c.game.awayName);
 
       return {
         gameId: c.game.id,
-        homeTeam: { code: c.game.homeCode, nameCn: translatePlayerName(c.game.homeCode) || c.game.homeName },
-        awayTeam: { code: c.game.awayCode, nameCn: translatePlayerName(c.game.awayCode) || c.game.awayName },
+        homeTeam: { code: c.game.homeCode, nameCn: getTeamNameCnAny(c.game.homeCode) || c.game.homeName },
+        awayTeam: { code: c.game.awayCode, nameCn: getTeamNameCnAny(c.game.awayCode) || c.game.awayName },
         pick: c.pick,
         pickTeamName,
         consensusCount: c.consensusCount,
