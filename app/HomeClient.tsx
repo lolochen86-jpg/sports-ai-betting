@@ -30,7 +30,6 @@ import {
   type BettingSettings,
 } from '@/lib/betting/bettingSettings';
 import OddsCard from '@/components/OddsCard';
-import SmartParlayCard from '@/components/SmartParlayCard';
 import { ModelChessSpectrum } from '@/components/ModelChessSpectrum';
 import type { Bookmaker } from '@/lib/odds/types';
 
@@ -2008,17 +2007,6 @@ export default function HomeClient() {
               </div>
             ) : (
               <div className="flex flex-col gap-6">
-                {smartParlayData && smartParlayData.parlays && smartParlayData.parlays.length > 0 && (
-                  <SmartParlayCard
-                    parlays={smartParlayData.parlays}
-                    totalGames={smartParlayData.totalGames}
-                    totalTeamsCovered={smartParlayData.totalTeamsCovered}
-                    totalTeams={smartParlayData.totalTeams}
-                    uncoveredTeams={smartParlayData.uncoveredTeams}
-                    manualOdds={manualOdds}
-                    loading={smartParlayLoading}
-                  />
-                )}
                 {games.map((game) => {
                   const isUnlocked = true;
                   const isExpanded = !collapsedGames[game.id];
