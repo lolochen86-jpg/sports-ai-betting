@@ -5,25 +5,27 @@ export interface SmartParlayLeg {
   gameId: string;
   homeTeam: { name: string; code: string; nameCn?: string };
   awayTeam: { name: string; code: string; nameCn?: string };
-  pick: 'home' | 'away';            // Which team to pick
-  pickTeamName: string;              // Display name of picked team
+  betType: 'winner' | 'over_under';   // Bet type: winner (獨贏) or over_under (大小分)
+  pick: 'home' | 'away' | 'Over' | 'Under'; // Pick selection
+  pickTeamName: string;              // Display label for pick (e.g., "洋基" or "全場 大 218.5")
   consensusCount: number;            // How many of 4 models agree (2-4)
   avgConfidence: number;             // Average confidence of agreeing models
-  models: {                          // Each model's pick
-    SportsAI: 'home' | 'away';
-    EloRating: 'home' | 'away';
-    MonteCarlo: 'home' | 'away';
-    MetaModel: 'home' | 'away';
+  models: {                          // Each model's pick for this bet type
+    SportsAI: string;
+    EloRating: string;
+    MonteCarlo: string;
+    MetaModel: string;
   };
   predictedTotal?: number;            // Predicted total score
+  ouLine?: number;                    // Line used for over/under
 }
 
 export interface SmartParlay {
   id: number;                        // 1-indexed
-  legs: SmartParlayLeg[];            // Exactly 3 legs (or 2 if tail)
+  legs: SmartParlayLeg[];            // Exactly 2 legs
   combinedProb: number;              // Product of (avgConfidence/100)
   grade: 'S' | 'A' | 'B';           // S=all consensus 4/4, A=avg consensus >=3.3, B=rest
-  coverageTeams: string[];           // Team codes included (e.g. ['NYY', 'LAD', 'BOS', 'SFG', ...])
+  coverageTeams: string[];           // Team codes included
 }
 
 export interface ParlayGeneratorResult {
@@ -35,56 +37,43 @@ export interface ParlayGeneratorResult {
 }
 
 /**
- * Analyzes a single game's prediction to determine leg strength and consensus.
+ * Analyzes a single game's prediction for both Winner (獨贏) and Over/Under (大小分) legs.
  */
 export function analyzeLegStrength(
   game: GameWithTeams,
-  prediction: PredictionResult
-): SmartParlayLeg {
+  prediction: PredictionResult,
+  taiwanLine?: number
+): SmartParlayLeg[] {
   const models = prediction.models;
-  
-  const picks = {
+  const legs: SmartParlayLeg[] = [];
+
+  // 1. Winner Leg Analysis (獨贏)
+  const winnerPicks = {
     SportsAI: models.SportsAI.winner,
     EloRating: models.EloRating.winner,
     MonteCarlo: models.MonteCarlo.winner,
     MetaModel: models.MetaModel.winner,
   };
 
-  // Count home vs away votes
   let homeVotes = 0;
   let awayVotes = 0;
-
-  Object.values(picks).forEach(winner => {
+  Object.values(winnerPicks).forEach(winner => {
     if (winner === 'home') homeVotes++;
     else awayVotes++;
   });
 
-  const pick: 'home' | 'away' = homeVotes >= awayVotes ? 'home' : 'away';
-  const consensusCount = pick === 'home' ? homeVotes : awayVotes;
+  const winnerPick: 'home' | 'away' = homeVotes >= awayVotes ? 'home' : 'away';
+  const winnerConsensus = winnerPick === 'home' ? homeVotes : awayVotes;
 
-  // Calculate average confidence of the agreeing models
-  let confidenceSum = 0;
-  let agreeingCount = 0;
+  let winnerConfSum = 0;
+  let winnerAgreeCount = 0;
+  if (models.SportsAI.winner === winnerPick) { winnerConfSum += models.SportsAI.confidence; winnerAgreeCount++; }
+  if (models.EloRating.winner === winnerPick) { winnerConfSum += models.EloRating.confidence; winnerAgreeCount++; }
+  if (models.MonteCarlo.winner === winnerPick) { winnerConfSum += models.MonteCarlo.confidence; winnerAgreeCount++; }
+  if (models.MetaModel.winner === winnerPick) { winnerConfSum += models.MetaModel.confidence; winnerAgreeCount++; }
 
-  if (models.SportsAI.winner === pick) {
-    confidenceSum += models.SportsAI.confidence;
-    agreeingCount++;
-  }
-  if (models.EloRating.winner === pick) {
-    confidenceSum += models.EloRating.confidence;
-    agreeingCount++;
-  }
-  if (models.MonteCarlo.winner === pick) {
-    confidenceSum += models.MonteCarlo.confidence;
-    agreeingCount++;
-  }
-  if (models.MetaModel.winner === pick) {
-    confidenceSum += models.MetaModel.confidence;
-    agreeingCount++;
-  }
-
-  const avgConfidence = agreeingCount > 0 ? (confidenceSum / agreeingCount) : 50;
-  const pickTeamName = pick === 'home' 
+  const winnerAvgConf = winnerAgreeCount > 0 ? (winnerConfSum / winnerAgreeCount) : 50;
+  const winnerTeamName = winnerPick === 'home'
     ? (game.homeTeam.nameCn || game.homeTeam.name)
     : (game.awayTeam.nameCn || game.awayTeam.name);
 
@@ -92,34 +81,73 @@ export function analyzeLegStrength(
     (models.MetaModel.homeExpectedScore + models.MetaModel.awayExpectedScore)
   );
 
-  return {
+  legs.push({
     gameId: game.id,
-    homeTeam: {
-      name: game.homeTeam.name,
-      code: game.homeTeam.code,
-      nameCn: game.homeTeam.nameCn,
-    },
-    awayTeam: {
-      name: game.awayTeam.name,
-      code: game.awayTeam.code,
-      nameCn: game.awayTeam.nameCn,
-    },
-    pick,
-    pickTeamName,
-    consensusCount,
-    avgConfidence,
-    models: picks,
+    homeTeam: { name: game.homeTeam.name, code: game.homeTeam.code, nameCn: game.homeTeam.nameCn },
+    awayTeam: { name: game.awayTeam.name, code: game.awayTeam.code, nameCn: game.awayTeam.nameCn },
+    betType: 'winner',
+    pick: winnerPick,
+    pickTeamName: `${winnerTeamName} (獨贏)`,
+    consensusCount: winnerConsensus,
+    avgConfidence: winnerAvgConf,
+    models: winnerPicks,
     predictedTotal,
+  });
+
+  // 2. Over/Under Leg Analysis (大小分 - 優先使用台灣運彩盤口線)
+  const line = taiwanLine || models.MetaModel.ouLine || (game.league === 'NBA' ? 220 : 8.5);
+
+  const ouPicks = {
+    SportsAI: models.SportsAI.ouPick || (models.SportsAI.homeExpectedScore + models.SportsAI.awayExpectedScore > line ? 'Over' : 'Under'),
+    EloRating: models.EloRating.ouPick || (models.EloRating.homeExpectedScore + models.EloRating.awayExpectedScore > line ? 'Over' : 'Under'),
+    MonteCarlo: models.MonteCarlo.ouPick || (models.MonteCarlo.homeExpectedScore + models.MonteCarlo.awayExpectedScore > line ? 'Over' : 'Under'),
+    MetaModel: models.MetaModel.ouPick || (models.MetaModel.homeExpectedScore + models.MetaModel.awayExpectedScore > line ? 'Over' : 'Under'),
   };
+
+  let overVotes = 0;
+  let underVotes = 0;
+  Object.values(ouPicks).forEach(pick => {
+    if (pick === 'Over') overVotes++;
+    else underVotes++;
+  });
+
+  const ouPick: 'Over' | 'Under' = overVotes >= underVotes ? 'Over' : 'Under';
+  const ouConsensus = ouPick === 'Over' ? overVotes : underVotes;
+
+  let ouConfSum = 0;
+  let ouAgreeCount = 0;
+  if (ouPicks.SportsAI === ouPick) { ouConfSum += models.SportsAI.confidence; ouAgreeCount++; }
+  if (ouPicks.EloRating === ouPick) { ouConfSum += models.EloRating.confidence; ouAgreeCount++; }
+  if (ouPicks.MonteCarlo === ouPick) { ouConfSum += models.MonteCarlo.confidence; ouAgreeCount++; }
+  if (ouPicks.MetaModel === ouPick) { ouConfSum += models.MetaModel.confidence; ouAgreeCount++; }
+
+  const ouAvgConf = ouAgreeCount > 0 ? (ouConfSum / ouAgreeCount) : 50;
+
+  legs.push({
+    gameId: game.id,
+    homeTeam: { name: game.homeTeam.name, code: game.homeTeam.code, nameCn: game.homeTeam.nameCn },
+    awayTeam: { name: game.awayTeam.name, code: game.awayTeam.code, nameCn: game.awayTeam.nameCn },
+    betType: 'over_under',
+    pick: ouPick,
+    pickTeamName: `全場 ${ouPick === 'Over' ? '大' : '小'} ${line}`,
+    consensusCount: ouConsensus,
+    avgConfidence: ouAvgConf,
+    models: ouPicks,
+    predictedTotal,
+    ouLine: line,
+  });
+
+  return legs;
 }
 
 /**
- * Generates smart 3-leg parlay combinations from all games.
- * Tries to include every team across all parlays.
+ * Generates smart 2-leg parlay combinations from all games.
+ * Supports mixing Winner and Over/Under legs.
  */
 export function generateSmartParlays(
   games: GameWithTeams[],
-  predictions: Map<string, PredictionResult>
+  predictions: Map<string, PredictionResult>,
+  taiwanOddsMap?: Record<string, { totalsLine?: number }>
 ): ParlayGeneratorResult {
   const allTeams = new Set<string>();
   games.forEach(g => {
@@ -133,11 +161,14 @@ export function generateSmartParlays(
     const pred = predictions.get(game.id);
     if (!pred) continue;
     
-    const leg = analyzeLegStrength(game, pred);
-    // Only include legs where there is some consensus (consensusCount >= 2)
-    if (leg.consensusCount >= 2) {
-      validLegs.push(leg);
-    }
+    const line = taiwanOddsMap?.[game.id]?.totalsLine;
+    const gameLegs = analyzeLegStrength(game, pred, line);
+    
+    gameLegs.forEach(leg => {
+      if (leg.consensusCount >= 2) {
+        validLegs.push(leg);
+      }
+    });
   }
 
   // Sort legs by consensus strength (4/4 -> 3/4 -> 2/4) and then average confidence
@@ -152,27 +183,26 @@ export function generateSmartParlays(
   const coveredTeams = new Set<string>();
   let parlayId = 1;
 
-  // Group legs into 3-leg parlays greedily
-  for (let i = 0; i < validLegs.length; i += 3) {
-    const legsGroup = validLegs.slice(i, i + 3);
+  // Group legs into 2-leg (二關) parlays greedily
+  for (let i = 0; i < validLegs.length; i += 2) {
+    const legsGroup = validLegs.slice(i, i + 2);
     if (legsGroup.length < 2) {
-      // 1 leg is not a parlay, skip or append to previous if possible
+      // If 1 leg left and we have existing parlays, append it if different game
       if (parlays.length > 0 && legsGroup.length === 1) {
-        parlays[parlays.length - 1].legs.push(legsGroup[0]);
-        parlays[parlays.length - 1].coverageTeams.push(legsGroup[0].homeTeam.code, legsGroup[0].awayTeam.code);
-        coveredTeams.add(legsGroup[0].homeTeam.code);
-        coveredTeams.add(legsGroup[0].awayTeam.code);
+        const lastParlay = parlays[parlays.length - 1];
+        if (lastParlay.legs[0].gameId !== legsGroup[0].gameId) {
+          lastParlay.legs.push(legsGroup[0]);
+          lastParlay.coverageTeams.push(legsGroup[0].homeTeam.code, legsGroup[0].awayTeam.code);
+          coveredTeams.add(legsGroup[0].homeTeam.code);
+          coveredTeams.add(legsGroup[0].awayTeam.code);
+        }
       }
       continue;
     }
 
-    // Calculate combined probability
+    // Ensure 2 legs in a parlay are not from the exact same gamePK if both are winner/OU
     const combinedProb = legsGroup.reduce((acc, leg) => acc * (leg.avgConfidence / 100), 1);
 
-    // Grade the parlay:
-    // S: All legs are consensus 4/4
-    // A: Average consensus >= 3.3
-    // B: Others
     const avgConsensus = legsGroup.reduce((acc, leg) => acc + leg.consensusCount, 0) / legsGroup.length;
     let grade: 'S' | 'A' | 'B' = 'B';
     if (legsGroup.every(l => l.consensusCount === 4)) {

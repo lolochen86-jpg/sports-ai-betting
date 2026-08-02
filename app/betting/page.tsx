@@ -174,7 +174,7 @@ export default function BettingDashboard() {
           </div>
           <div className="hidden md:flex items-center gap-6 text-sm">
             <Link href="/" className="text-gray-400 hover:text-white transition-colors">決策看盤中心</Link>
-            <Link href="/smart-parlays" className="text-amber-400 font-bold hover:text-amber-300 transition-colors">🎯 智慧三關</Link>
+            <Link href="/smart-parlays" className="text-amber-400 font-bold hover:text-amber-300 transition-colors">🎯 智慧二關</Link>
             <Link href="/backtest" className="text-gray-400 hover:text-white transition-colors">歷史量化回測</Link>
             <Link href="/history" className="text-gray-400 hover:text-white transition-colors">完賽記錄簿</Link>
             <Link href="/share" className="text-gray-400 hover:text-white transition-colors">📸 戰報字卡</Link>

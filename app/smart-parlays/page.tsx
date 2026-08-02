@@ -76,7 +76,7 @@ export default function SmartParlaysPage() {
             <Link href="/" className="flex items-center gap-2 group">
               <span className="text-xl">🎯</span>
               <span className="font-black text-lg bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">
-                SportsAI 智慧三關推薦
+                SportsAI 智慧二關推薦
               </span>
             </Link>
           </div>
@@ -84,7 +84,7 @@ export default function SmartParlaysPage() {
           {/* Desktop Nav Links */}
           <div className="hidden md:flex items-center gap-6 font-bold text-sm text-gray-300">
             <Link href="/" className="hover:text-purple-400 transition-colors">決策看盤中心</Link>
-            <span className="text-amber-400 border-b-2 border-amber-500 pb-1 font-black">🎯 智慧三關</span>
+            <span className="text-amber-400 border-b-2 border-amber-500 pb-1 font-black">🎯 智慧二關</span>
             <Link href="/backtest" className="hover:text-purple-400 transition-colors">歷史量化回測</Link>
             <Link href="/history" className="hover:text-purple-400 transition-colors">完賽記錄簿</Link>
             <Link href="/share" className="hover:text-purple-400 transition-colors">📸 戰報字卡</Link>
@@ -94,7 +94,7 @@ export default function SmartParlaysPage() {
           {/* Mobile Nav Links */}
           <div className="flex md:hidden items-center gap-4 overflow-x-auto whitespace-nowrap w-full pt-2 border-t border-white/5 text-xs scrollbar-none font-bold text-gray-300">
             <Link href="/">決策看盤</Link>
-            <span className="text-amber-400 border-b-2 border-amber-500 pb-0.5 shrink-0 font-black">🎯 智慧三關</span>
+            <span className="text-amber-400 border-b-2 border-amber-500 pb-0.5 shrink-0 font-black">🎯 智慧二關</span>
             <Link href="/backtest">量化回測</Link>
             <Link href="/history">完賽記錄</Link>
             <Link href="/share">📸 戰報字卡</Link>
@@ -114,10 +114,10 @@ export default function SmartParlaysPage() {
                 <span className="animate-pulse">🔥</span> 跨模型四合一共識演算
               </div>
               <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-                智慧三關組合推薦與完賽驗證
+                智慧二關組合推薦與完賽驗證
               </h1>
               <p className="text-gray-400 text-xs md:text-sm mt-1 max-w-2xl leading-relaxed font-medium">
-                結合 SportsAI、EloRating、MonteCarlo 與 MetaModel 2.0 四大 AI 量化引擎，自動萃取高勝算對決組合。提供即時推薦與完整歷史完賽過關紀錄對位驗證。
+                結合 SportsAI、EloRating、MonteCarlo 與 MetaModel 2.0 四大 AI 量化引擎，自動萃取高勝算獨贏與大小分二關組合（以台灣運彩盤口為主）。
               </p>
             </div>
 
@@ -149,7 +149,7 @@ export default function SmartParlaysPage() {
               </div>
 
               <div className="bg-gradient-to-b from-amber-500/10 to-transparent border border-amber-500/20 rounded-2xl p-4 text-center">
-                <span className="text-[10px] md:text-xs text-amber-300 font-bold block mb-1">🎯 三關全過勝率</span>
+                <span className="text-[10px] md:text-xs text-amber-300 font-bold block mb-1">🎯 二關全過勝率</span>
                 <span className="text-xl md:text-2xl font-black text-amber-400 font-mono">{stats.perfectHitRate}%</span>
                 <span className="text-[10px] text-amber-400/80 block mt-0.5">{stats.perfectHits} / {stats.totalParlays} 組成功通關</span>
               </div>

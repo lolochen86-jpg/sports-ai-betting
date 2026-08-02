@@ -1,5 +1,5 @@
 'use client';
-// dummy test comment
+
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useGames } from '@/hooks/useGames';
@@ -1788,7 +1788,7 @@ export default function HomeClient() {
 
           <div className="hidden md:flex items-center gap-8 font-bold text-sm text-gray-300">
             <span className="text-white border-b-2 border-purple-500 pb-1">決策看盤中心</span>
-            <Link href="/smart-parlays" className="hover:text-amber-400 text-amber-400 font-extrabold transition-colors">🎯 智慧三關</Link>
+            <Link href="/smart-parlays" className="hover:text-amber-400 text-amber-400 font-extrabold transition-colors">🎯 智慧二關</Link>
             <Link href="/compare" className="hover:text-purple-400 text-purple-300 font-extrabold transition-colors">🔬 新舊模型對照</Link>
             <Link href="/backtest" className="hover:text-purple-400 transition-colors">歷史量化回測</Link>
             <Link href="/history" className="hover:text-purple-400 transition-colors">完賽記錄簿</Link>
@@ -1833,7 +1833,7 @@ export default function HomeClient() {
         {/* Mobile Navigation Links */}
         <div className="flex md:hidden items-center gap-4 overflow-x-auto whitespace-nowrap pt-3 mt-3 border-t border-white/5 text-xs scrollbar-none font-bold text-gray-300">
           <span className="text-white border-b-2 border-purple-500 pb-0.5 shrink-0">決策看盤</span>
-          <Link href="/smart-parlays" className="hover:text-amber-400 text-amber-400 font-extrabold shrink-0">🎯 智慧三關</Link>
+          <Link href="/smart-parlays" className="hover:text-amber-400 text-amber-400 font-extrabold shrink-0">🎯 智慧二關</Link>
           <Link href="/compare" className="hover:text-purple-400 text-purple-300 font-extrabold shrink-0">🔬 對照</Link>
           <Link href="/backtest" className="hover:text-purple-400 shrink-0">量化回測</Link>
           <Link href="/history" className="hover:text-purple-400 shrink-0">完賽記錄</Link>
@@ -3216,25 +3216,7 @@ export default function HomeClient() {
                                               )}
                                             </div>
 
-                                            <button
-                                              type="button"
-                                              onClick={() => toggleParlayCart(game.id, 'away')}
-                                              className={`w-full py-1.5 rounded-xl text-[11px] font-black tracking-wide border transition-all duration-300 ${
-                                                isInCart
-                                                  ? 'bg-amber-500 text-black border-amber-500 hover:bg-amber-600 hover:border-amber-600 shadow-md shadow-amber-500/10'
-                                                  : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white'
-                                              }`}
-                                            >
-                                              {isInCart ? '已加入串關組合 ✓' : '加入串關組合 +'}
-                                            </button>
-
-                                            <div className={`rounded-xl p-2.5 text-[11px] font-sans font-semibold border ${
-                                              parlayAdvice.isSuitableForParlay 
-                                                ? 'bg-amber-500/5 border-amber-500/20 text-amber-300' 
-                                                : 'bg-white/[0.02] border-white/5 text-gray-400'
-                                            }`}>
-                                              {parlayAdvice.text}
-                                            </div>
+                                            {/* Parlay option disabled on home page */}
                                           </div>
                                         )}
                                       </div>
@@ -3389,25 +3371,7 @@ export default function HomeClient() {
                                               )}
                                             </div>
 
-                                            <button
-                                              type="button"
-                                              onClick={() => toggleParlayCart(game.id, 'home')}
-                                              className={`w-full py-1.5 rounded-xl text-[11px] font-black tracking-wide border transition-all duration-300 ${
-                                                isInCart
-                                                  ? 'bg-amber-500 text-black border-amber-500 hover:bg-amber-600 hover:border-amber-600 shadow-md shadow-amber-500/10'
-                                                  : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white'
-                                              }`}
-                                            >
-                                              {isInCart ? '已加入串關組合 ✓' : '加入串關組合 +'}
-                                            </button>
-
-                                            <div className={`rounded-xl p-2.5 text-[11px] font-sans font-semibold border ${
-                                              parlayAdvice.isSuitableForParlay 
-                                                ? 'bg-amber-500/5 border-amber-500/20 text-amber-300' 
-                                                : 'bg-white/[0.02] border-white/5 text-gray-400'
-                                            }`}>
-                                              {parlayAdvice.text}
-                                            </div>
+                                            {/* Parlay option disabled on home page */}
                                           </div>
                                         )}
                                       </div>
@@ -3724,12 +3688,10 @@ export default function HomeClient() {
                         <th className="pb-2">Edge%</th>
                         <th className="pb-2">EV ROI</th>
                         <th className="pb-2 text-center">過關限制</th>
-                        <th className="pb-2 text-right">選入</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/[0.02] font-semibold">
                       {sortedLegs.map((leg) => {
-                        const isInCart = parlayCart[leg.gameId] === (leg.label.endsWith('(客)') ? 'away' : 'home');
                         return (
                           <tr key={`${leg.gameId}-${leg.label}`} className="hover:bg-white/[0.01] transition-colors">
                             <td className="py-2.5 font-bold text-white pr-2">{leg.label}</td>
@@ -3749,19 +3711,6 @@ export default function HomeClient() {
                             </td>
                             <td className="py-2.5 font-mono text-center text-gray-400">
                               {leg.legLimit === 1 ? '單關' : `至少 ${leg.legLimit} 關`}
-                            </td>
-                            <td className="py-2.5 text-right">
-                              <button
-                                type="button"
-                                onClick={() => toggleParlayCart(leg.gameId, leg.label.endsWith('(客)') ? 'away' : 'home')}
-                                className={`px-2 py-1 rounded text-[10px] font-bold border transition-colors ${
-                                  isInCart
-                                    ? 'bg-amber-500 text-black border-amber-500'
-                                    : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
-                                }`}
-                              >
-                                {isInCart ? '已選 ✓' : '選入 +'}
-                              </button>
                             </td>
                           </tr>
                         );

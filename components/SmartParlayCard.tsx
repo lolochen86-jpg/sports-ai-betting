@@ -6,17 +6,19 @@ interface SmartParlayLeg {
   gameId: string;
   homeTeam: { name: string; code: string; nameCn?: string };
   awayTeam: { name: string; code: string; nameCn?: string };
-  pick: 'home' | 'away';
+  betType?: 'winner' | 'over_under';
+  pick: 'home' | 'away' | 'Over' | 'Under';
   pickTeamName: string;
   consensusCount: number;
   avgConfidence: number;
   models: {
-    SportsAI: 'home' | 'away';
-    EloRating: 'home' | 'away';
-    MonteCarlo: 'home' | 'away';
-    MetaModel: 'home' | 'away';
+    SportsAI: string;
+    EloRating: string;
+    MonteCarlo: string;
+    MetaModel: string;
   };
   predictedTotal?: number;
+  ouLine?: number;
 }
 
 interface SmartParlay {
@@ -71,7 +73,7 @@ const ConsensusStars = ({ count }: { count: number }) => (
   </span>
 );
 
-const ModelDots = ({ models, pick }: { models: SmartParlayLeg['models']; pick: 'home' | 'away' }) => {
+const ModelDots = ({ models, pick }: { models: SmartParlayLeg['models']; pick: string }) => {
   const modelNames = ['SportsAI', 'EloRating', 'MonteCarlo', 'MetaModel'] as const;
   const shortNames = ['SA', 'Elo', 'MC', 'Meta'];
   return (
@@ -86,7 +88,7 @@ const ModelDots = ({ models, pick }: { models: SmartParlayLeg['models']; pick: '
                 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                 : 'bg-red-500/10 text-red-400/50 border border-red-500/10'
             }`}
-            title={`${m}: ${models[m] === 'home' ? '主隊' : '客隊'}`}
+            title={`${m}: ${models[m]}`}
           >
             {shortNames[i]}
           </span>
@@ -107,35 +109,32 @@ export default function SmartParlayCard({
 }: SmartParlayCardProps) {
   // Global stake state in NTD
   const [stake, setStake] = useState<string>('1000');
-  // Local odds override state: { [parlayId]: [oddsLeg1, oddsLeg2, oddsLeg3] }
+  // Local odds override state: { [parlayId]: [oddsLeg1, oddsLeg2] }
   const [customOdds, setCustomOdds] = useState<Record<number, string[]>>({});
 
   // Helper to compute realistic odds for a leg
   const getLegDefaultOdds = (leg: SmartParlayLeg): string => {
     if (manualOdds) {
-      // 1. Try gameId lookup
       let gOdds = manualOdds[leg.gameId];
-      
-      // 2. Try awayCode_homeCode lookup (e.g. SD_LAD, NYM_ATL)
       if (!gOdds && leg.awayTeam?.code && leg.homeTeam?.code) {
         const matchKey = `${leg.awayTeam.code}_${leg.homeTeam.code}`;
         gOdds = manualOdds[matchKey];
       }
 
-      if (gOdds) {
+      if (gOdds && leg.betType === 'winner') {
         const realOddsStr = leg.pick === 'home' ? gOdds.home : gOdds.away;
         if (realOddsStr && parseFloat(realOddsStr) > 1.0 && realOddsStr !== '1.75') {
           return parseFloat(realOddsStr).toFixed(2);
         }
       }
     }
-    // Dynamic fallback based on AI confidence (with 8% bookmaker margin)
+    // Dynamic fallback for Winner or Over/Under
+    if (leg.betType === 'over_under') return '1.75';
     const winProb = Math.max(0.3, Math.min(0.9, (leg.avgConfidence || 50) / 100));
     const estimatedOdds = (1 / winProb) * 0.92;
     return Math.max(1.15, Math.min(3.20, estimatedOdds)).toFixed(2);
   };
 
-  // Initialize odds state when parlays or manualOdds change
   useEffect(() => {
     if (parlays && parlays.length > 0) {
       const initialOdds: Record<number, string[]> = {};
@@ -148,7 +147,7 @@ export default function SmartParlayCard({
 
   const handleOddsChange = (parlayId: number, legIdx: number, val: string) => {
     const targetParlay = parlays.find(p => p.id === parlayId);
-    const defaults = targetParlay ? targetParlay.legs.map(l => getLegDefaultOdds(l)) : ['1.75', '1.75', '1.75'];
+    const defaults = targetParlay ? targetParlay.legs.map(l => getLegDefaultOdds(l)) : ['1.75', '1.75'];
     setCustomOdds(prev => ({
       ...prev,
       [parlayId]: (prev[parlayId] || defaults).map((o, idx) => idx === legIdx ? val : o)
@@ -178,7 +177,7 @@ export default function SmartParlayCard({
       <div className="glass-panel rounded-3xl border border-white/5 p-6">
         <div className="flex items-center gap-3 mb-3">
           <span className="text-2xl">⚡</span>
-          <h3 className="text-sm font-black text-white font-sans">今日智慧三關推薦</h3>
+          <h3 className="text-sm font-black text-white font-sans">今日智慧二關推薦 (2 串 1)</h3>
         </div>
         <p className="text-xs text-gray-500 font-sans">尚未產生推薦組合，需要至少 2 場賽事才能計算。</p>
       </div>
@@ -197,9 +196,9 @@ export default function SmartParlayCard({
             <span className="text-lg">⚡</span>
           </div>
           <div>
-            <h3 className="text-sm font-black text-white font-sans tracking-wide">今日智慧三關推薦</h3>
+            <h3 className="text-sm font-black text-white font-sans tracking-wide">今日智慧二關推薦 (2 串 1 · 獨贏/大小分)</h3>
             <p className="text-[10px] text-gray-500 font-mono mt-0.5">
-              基於 4 大 AI 模型共識度自動選腿 · {totalGames} 場賽事分析
+              基於 4 大 AI 模型共識度自動選腿 · 台灣運彩盤口為主 · {totalGames} 場賽事分析
             </p>
           </div>
         </div>
@@ -233,12 +232,10 @@ export default function SmartParlayCard({
             return getLegDefaultOdds(leg);
           });
           
-          // Calculate overall parlay stats
           const multiplier = oddsArray.reduce((acc, curr) => acc * (parseFloat(curr) || 1.0), 1.0);
           const stakeVal = parseFloat(stake) || 0;
           const estPayout = stakeVal * multiplier;
           
-          // EV calculation: (combinedProb * multiplier - 1) * 100
           const ev = (parlay.combinedProb * multiplier - 1.0) * 100.0;
           const isEvPositive = ev > 0;
 
@@ -252,7 +249,7 @@ export default function SmartParlayCard({
                 <div className="flex items-center gap-2">
                   <span className={`text-xs font-black ${style.text}`}>{style.label}</span>
                   <span className="text-[10px] font-mono text-gray-500">
-                    組合 #{parlay.id}
+                    二關組合 #{parlay.id}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -268,28 +265,32 @@ export default function SmartParlayCard({
               {/* Legs */}
               <div className="space-y-2">
                 {parlay.legs.map((leg, legIdx) => {
-                  const legNames = ['第一場', '第二場', '第三場'];
+                  const legNames = ['第一關', '第二關'];
                   const currentLegOdds = oddsArray[legIdx];
+                  const isOu = leg.betType === 'over_under';
+
                   return (
                     <div
-                      key={leg.gameId}
+                      key={`${leg.gameId}-${legIdx}`}
                       className="flex items-center justify-between bg-black/35 rounded-xl px-3 py-2 border border-white/5"
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <span className="text-[9px] font-sans font-black text-gray-400 shrink-0 bg-white/5 px-1.5 py-0.5 rounded">
-                          {legNames[legIdx] || `第 ${legIdx + 1} 場`}
+                          {legNames[legIdx] || `第 ${legIdx + 1} 關`}
                         </span>
                         <div className="flex flex-col min-w-0">
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs font-black text-white truncate">
                               {leg.pickTeamName}
                             </span>
-                            <span className={`text-[8.5px] font-black px-1 rounded-sm ${
-                              leg.pick === 'home' 
-                                ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' 
-                                : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                            <span className={`text-[8.5px] font-black px-1.5 py-0.5 rounded-sm ${
+                              isOu
+                                ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                                : leg.pick === 'home' 
+                                  ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' 
+                                  : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                             }`}>
-                              {leg.pick === 'home' ? '主勝' : '客勝'}
+                              {isOu ? '大小分' : (leg.pick === 'home' ? '主勝' : '客勝')}
                             </span>
                           </div>
                           <span className="text-[9px] text-gray-500 font-mono truncate mt-0.5">
@@ -373,8 +374,8 @@ export default function SmartParlayCard({
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-4 text-[10px] text-gray-600 font-mono">
-        <span>⚡ AI 多模型共識引擎 v1.1</span>
-        <span>共 {parlays.length} 組三關推薦</span>
+        <span>⚡ AI 多模型共識引擎 v1.2</span>
+        <span>共 {parlays.length} 組二關推薦</span>
       </div>
     </div>
   );
