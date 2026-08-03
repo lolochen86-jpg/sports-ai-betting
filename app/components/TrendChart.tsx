@@ -949,6 +949,83 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
               />
             )}
 
+            {/* ─── 3.5. Data Point Circles & Percentage Text Labels ─── */}
+            {chartData.map((d, idx) => {
+              const x = getX(idx);
+              let primaryKey: string | null = null;
+              let primaryColor = '#fb7185';
+              
+              if (visibleModels.BoostedMeta) { primaryKey = 'BoostedMeta'; primaryColor = '#fb7185'; }
+              else if (visibleModels.MetaModelV2) { primaryKey = 'MetaModelV2'; primaryColor = '#f59e0b'; }
+              else if (visibleModels.QuantML) { primaryKey = 'QuantML'; primaryColor = '#10b981'; }
+              else if (visibleModels.MetaModel) { primaryKey = 'MetaModel'; primaryColor = '#ec4899'; }
+              else if (visibleModels.SportsAIV2) { primaryKey = 'SportsAIV2'; primaryColor = '#c084fc'; }
+              else if (visibleModels.EloRatingV2) { primaryKey = 'EloRatingV2'; primaryColor = '#fb923c'; }
+              else if (visibleModels.MonteCarloV2) { primaryKey = 'MonteCarloV2'; primaryColor = '#38bdf8'; }
+
+              if (!primaryKey) return null;
+
+              const modelObj = (d as any)[primaryKey] || d.SportsAI;
+              const acc = modelObj ? (modelObj[chartType] ?? 0) : 0;
+              const y = getY(acc);
+              const isLast = idx === chartData.length - 1;
+              const isSelected = activeIndex === idx;
+
+              return (
+                <g key={`point-${idx}`} className="select-none pointer-events-none">
+                  {/* Point Circle */}
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={isLast || isSelected ? '5' : '3.5'}
+                    fill="#030712"
+                    stroke={primaryColor}
+                    strokeWidth={isLast || isSelected ? '3' : '2'}
+                  />
+
+                  {/* Text Data Value */}
+                  {!isLast ? (
+                    <text
+                      x={x}
+                      y={y - 8}
+                      textAnchor="middle"
+                      fill="#ffffff"
+                      fontSize="9.5"
+                      fontWeight="900"
+                      className="font-mono shadow-sm"
+                      style={{ textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}
+                    >
+                      {acc}%
+                    </text>
+                  ) : (
+                    /* End point prominent badge */
+                    <g transform={`translate(${x}, ${y - 22})`}>
+                      <rect
+                        x="-22"
+                        y="-10"
+                        width="44"
+                        height="18"
+                        rx="5"
+                        fill={primaryColor}
+                        className="shadow-lg"
+                      />
+                      <text
+                        x="0"
+                        y="2"
+                        textAnchor="middle"
+                        fill="#000000"
+                        fontSize="10"
+                        fontWeight="900"
+                        className="font-mono font-black"
+                      >
+                        {acc}%
+                      </text>
+                    </g>
+                  )}
+                </g>
+              );
+            })}
+
             {/* ─── 4. Interactive Hover Positioning Line & Highlight Circles ─── */}
             {hoverIndex !== null && hoverData && (
               <g>
