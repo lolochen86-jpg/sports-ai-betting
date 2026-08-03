@@ -24,7 +24,7 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
   const [leagueFilter, setLeagueFilter] = useState<'ALL' | 'NBA' | 'MLB'>('ALL');
   const [chartType, setChartType] = useState<'winner' | 'ou' | 'totalScore'>('winner');
   const [smoothMode, setSmoothMode] = useState<boolean>(true);
-  const [timeRange, setTimeRange] = useState<'7' | '30' | 'ALL'>('ALL');
+  const [timeRange, setTimeRange] = useState<'7' | '30'>('30');
   const [dataVersion, setDataVersion] = useState(0); // 用於觸發 useMemo 重算
   
   // Model visibility toggles
@@ -496,13 +496,12 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
 
           <div className="inline-flex rounded-xl bg-white/5 border border-white/10 p-0.5 shadow-inner">
             {[
-              { id: 'ALL', name: '全部 (自 2026/01/01 起)' },
               { id: '30', name: '最近30天' },
               { id: '7', name: '最近7天' }
             ].map((r) => (
               <button
                 key={r.id}
-                onClick={() => { setTimeRange(r.id as 'ALL' | '30' | '7'); setHoverIndex(null); setSelectedIndex(null); }}
+                onClick={() => { setTimeRange(r.id as '30' | '7'); setHoverIndex(null); setSelectedIndex(null); }}
                 className={`px-3.5 py-2 rounded-lg font-black text-xs transition-all ${timeRange === r.id ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
               >
                 {r.name}
