@@ -1933,10 +1933,30 @@ export default function HomeClient() {
         {/* Prediction Cards Board */}
         <div className="w-full mb-16">
           <div className="w-full flex flex-col gap-6">
-            <h2 className="text-3xl font-black flex items-center gap-2.5 text-white font-sans tracking-wide">
-              <span className={`w-2 h-7 rounded bg-gradient-to-b ${activeLeague === 'NBA' ? 'from-orange-500 to-yellow-500' : 'from-cyan-400 to-blue-500'}`} />
-              熱門比賽預測板 (今日推薦)
-            </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <h2 className="text-2xl md:text-3xl font-black flex items-center gap-2.5 text-white font-sans tracking-wide">
+                <span className={`w-2 h-7 rounded bg-gradient-to-b ${activeLeague === 'NBA' ? 'from-orange-500 to-yellow-500' : 'from-cyan-400 to-blue-500'}`} />
+                熱門比賽預測板 (今日推薦)
+              </h2>
+
+              {/* 生圖 Quick Action Bar */}
+              <div className="flex items-center gap-2.5 shrink-0">
+                <Link
+                  href={`/share?date=${selectedDate}&mode=prediction`}
+                  className="px-3.5 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-xs font-black transition-all flex items-center gap-1.5 shadow-md shadow-purple-500/10 active:scale-95"
+                  title="生成賽前 AI 勝率預測分享戰報圖"
+                >
+                  <span>🔮 預測生圖</span>
+                </Link>
+                <Link
+                  href={`/share?date=${selectedDate}&mode=completed`}
+                  className="px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-black transition-all flex items-center gap-1.5 shadow-md shadow-emerald-500/10 active:scale-95"
+                  title="生成賽後完賽比分與對位驗算戰報圖"
+                >
+                  <span>✅ 驗算生圖</span>
+                </Link>
+              </div>
+            </div>
 
             {/* Game Cards List */}
             {loading ? (

@@ -347,7 +347,7 @@ export default function HistoryPage() {
         </p>
 
         {/* Action Widgets */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-5xl mx-auto">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 max-w-5xl mx-auto">
           <Link
             href="/"
             className="px-5 py-2 rounded-2xl bg-white/5 hover:bg-white/10 text-gray-200 font-black text-xs border border-white/10 hover:border-purple-500/30 transition-all flex items-center gap-2 font-sans"
@@ -356,6 +356,15 @@ export default function HistoryPage() {
               <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />
             </svg>
             返回看盤中心
+          </Link>
+
+          {/* 生圖 Quick Action Button */}
+          <Link
+            href="/share?mode=completed"
+            className="px-5 py-2 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-black text-xs border border-emerald-500/30 transition-all flex items-center gap-2 font-sans shadow-md shadow-emerald-500/10 active:scale-95"
+            title="一鍵生成完賽賽果對位驗算戰報圖"
+          >
+            <span>✅ 一鍵驗算生圖</span>
           </Link>
 
           {/* League Filter */}

@@ -336,13 +336,13 @@ export default function SharePage() {
       ctx.fillText('智能大數據分析平台', 50, 87);
 
       // Mode Badge Indicator (Right)
-      let modeText = '🏆 完賽最終得分字卡';
+      let modeText = '✅ 完賽結果對位驗算戰報';
       let badgeColor = '#10b981';
       if (mode === 'prediction') {
-        modeText = '🤖 SportsAI 預測得分字卡';
+        modeText = '🔮 賽前 AI 獨贏勝率預測戰報';
         badgeColor = '#8b5cf6';
       } else if (mode === 'meta') {
-        modeText = '👑 Meta 元模型預測字卡';
+        modeText = '👑 Meta 2.0 綜合量化預測戰報';
         badgeColor = '#d97706';
       }
 
@@ -766,26 +766,26 @@ export default function SharePage() {
           {/* Mode Toggles */}
           <div className="flex flex-col gap-2">
             <label className="text-xs font-black text-purple-300 uppercase tracking-widest">
-              📊 字卡展示模式
+              📸 生圖模式選擇 (預測 vs 驗算)
             </label>
             <div className="grid grid-cols-3 p-1 bg-white/5 rounded-xl border border-white/10 w-full">
               <button
                 onClick={() => setMode('prediction')}
                 className={`py-2 rounded-lg text-xs font-black transition-all ${mode === 'prediction' ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20' : 'text-gray-400 hover:text-white'}`}
               >
-                🤖 SportsAI 預測
+                🔮 預測生圖
               </button>
               <button
                 onClick={() => setMode('meta')}
                 className={`py-2 rounded-lg text-xs font-black transition-all ${mode === 'meta' ? 'bg-amber-600 text-white shadow-md shadow-amber-500/20' : 'text-gray-400 hover:text-white'}`}
               >
-                👑 Meta 元模型
+                👑 Meta 預測生圖
               </button>
               <button
                 onClick={() => setMode('completed')}
                 className={`py-2 rounded-lg text-xs font-black transition-all ${mode === 'completed' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20' : 'text-gray-400 hover:text-white'}`}
               >
-                🏆 完賽真實比分
+                ✅ 驗算生圖
               </button>
             </div>
           </div>

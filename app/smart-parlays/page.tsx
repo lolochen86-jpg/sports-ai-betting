@@ -121,21 +121,38 @@ export default function SmartParlaysPage() {
               </p>
             </div>
 
-            {/* League Switcher */}
-            <div className="flex items-center gap-2 bg-black/40 border border-white/10 p-1.5 rounded-2xl shrink-0">
-              {(['ALL', 'MLB', 'NBA'] as const).map(league => (
-                <button
-                  key={league}
-                  onClick={() => setSelectedLeague(league)}
-                  className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
-                    selectedLeague === league
-                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  {league === 'ALL' ? '全部聯盟' : league}
-                </button>
-              ))}
+            {/* Action Bar: League Switcher & 生圖 Buttons */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex items-center gap-2 bg-black/40 border border-white/10 p-1.5 rounded-2xl shrink-0">
+                {(['ALL', 'MLB', 'NBA'] as const).map(league => (
+                  <button
+                    key={league}
+                    onClick={() => setSelectedLeague(league)}
+                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                      selectedLeague === league
+                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {league === 'ALL' ? '全部聯盟' : league}
+                  </button>
+                ))}
+              </div>
+
+              <Link
+                href="/share?mode=prediction"
+                className="px-3.5 py-2 rounded-2xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-xs font-black transition-all flex items-center gap-1.5 shadow-md shadow-purple-500/10 active:scale-95"
+                title="生成賽前 AI 二關與獨贏預測分享戰報圖"
+              >
+                <span>🔮 預測生圖</span>
+              </Link>
+              <Link
+                href="/share?mode=completed"
+                className="px-3.5 py-2 rounded-2xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-black transition-all flex items-center gap-1.5 shadow-md shadow-emerald-500/10 active:scale-95"
+                title="生成歷史完賽對位驗算戰報圖"
+              >
+                <span>✅ 驗算生圖</span>
+              </Link>
             </div>
           </div>
 

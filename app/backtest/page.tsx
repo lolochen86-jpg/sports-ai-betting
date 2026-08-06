@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import TrendChart from '../components/TrendChart';
 
@@ -26,6 +26,165 @@ const ChartIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
     <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3" />
   </svg>
 );
+
+function WalkForwardDashboard() {
+  const [report, setReport] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchWalkForward() {
+      try {
+        const res = await fetch('/api/backtest/walk-forward?league=ALL');
+        const json = await res.json();
+        if (json.success && json.report) {
+          setReport(json.report);
+        }
+      } catch (err) {
+        console.error('Failed to load Walk-Forward report:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchWalkForward();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="glass-panel rounded-3xl p-6 md:p-8 border border-purple-500/20 mb-12 animate-pulse">
+        <div className="h-6 bg-white/5 rounded w-64 mb-4" />
+        <div className="h-24 bg-white/5 rounded-2xl mb-4" />
+      </div>
+    );
+  }
+
+  if (!report) return null;
+
+  const agg = report.aggregate;
+  const base = report.baseline;
+  const guard = report.guard;
+
+  return (
+    <div className="glass-panel rounded-3xl p-6 md:p-8 border border-purple-500/20 relative overflow-hidden mb-12 shadow-2xl">
+      <div className="absolute top-[-60px] right-[-60px] w-[200px] h-[200px] bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-white/5 pb-4">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-black mb-2">
+            <span className="animate-pulse">🛡️</span> 滾動視窗與因子防護系統 (Walk-Forward Engine v1.0)
+          </div>
+          <h3 className="text-xl font-black text-white font-sans tracking-wide">
+            Walk-Forward 滑動視窗驗證與因子防護報告
+          </h3>
+          <p className="text-xs text-gray-400 font-medium mt-1">
+            採用 30 天訓練 / 7 天驗證的滾動視窗機制，包含 Look-ahead 時間戳防範與因子樣本不足自動停用防護。
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-mono font-black">
+            防護狀態: 安全防線全面運作中
+          </span>
+        </div>
+      </div>
+
+      {/* KPI Highlights */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 mb-6">
+        <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-center">
+          <span className="text-[10px] md:text-xs text-gray-400 font-bold block mb-1">總滾動視窗數</span>
+          <span className="text-xl md:text-2xl font-black text-white font-mono">{agg.totalWindows} <span className="text-xs text-gray-500 font-normal">組</span></span>
+          <span className="text-[10px] text-gray-500 block mt-0.5">滑動區間 7 天/步</span>
+        </div>
+
+        <div className="bg-gradient-to-b from-purple-500/10 to-transparent border border-purple-500/20 rounded-2xl p-4 text-center">
+          <span className="text-[10px] md:text-xs text-purple-300 font-bold block mb-1">滾動驗證勝率</span>
+          <span className="text-xl md:text-2xl font-black text-purple-300 font-mono">{(agg.overallAccuracy * 100).toFixed(1)}%</span>
+          <span className="text-[10px] text-purple-400/80 block mt-0.5">{agg.totalValidationRecords} 場樣本對位</span>
+        </div>
+
+        <div className="bg-gradient-to-b from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-2xl p-4 text-center">
+          <span className="text-[10px] md:text-xs text-emerald-300 font-bold block mb-1">基線提升比例 (Lift)</span>
+          <span className="text-xl md:text-2xl font-black text-emerald-400 font-mono">+{base.liftPercent}%</span>
+          <span className="text-[10px] text-gray-500 block mt-0.5">基線勝率 {(base.overallAccuracy * 100).toFixed(1)}%</span>
+        </div>
+
+        <div className="bg-gradient-to-b from-amber-500/10 to-transparent border border-amber-500/20 rounded-2xl p-4 text-center">
+          <span className="text-[10px] md:text-xs text-amber-300 font-bold block mb-1">真實成交 ROI</span>
+          <span className="text-xl md:text-2xl font-black text-amber-400 font-mono">+{(agg.overallRoi * 100).toFixed(1)}%</span>
+          <span className="text-[10px] text-amber-400/80 block mt-0.5">依真實賠率真算</span>
+        </div>
+      </div>
+
+      {/* Guard & Warnings Box */}
+      {guard && (
+        <div className="mb-6 p-4 rounded-2xl bg-black/35 border border-white/10 space-y-2 text-xs font-mono">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-2">
+            <span className="font-bold text-gray-300 flex items-center gap-1.5 font-sans">
+              <span>⚠️</span> 系統防護檢測 (Guard Diagnostics):
+            </span>
+            <span className="text-[10px] text-gray-400">
+              Look-ahead 時間戳攔截: <strong className="text-emerald-400 font-mono">{guard.lookAheadBlockedFactors.length > 0 ? guard.lookAheadBlockedFactors.join(', ') : '0 個 (通過)'}</strong>
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <span className="text-gray-400 font-bold font-sans">樣本不足停用因子:</span>
+            {guard.blockedFactors.length === 0 ? (
+              <span className="text-gray-500">無</span>
+            ) : (
+              guard.blockedFactors.map((f: string) => (
+                <span key={f} className="px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] font-bold">
+                  {f} (樣本數 &lt; 350)
+                </span>
+              ))
+            )}
+          </div>
+
+          {report.warnings && report.warnings.length > 0 && (
+            <div className="text-[11px] text-amber-400/90 pt-1 space-y-1 font-sans font-medium">
+              {report.warnings.map((w: string, idx: number) => (
+                <div key={idx} className="flex items-center gap-1.5">
+                  <span>💡</span> {w}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Sliding Windows Table */}
+      <div className="overflow-x-auto">
+        <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3 font-sans">
+          📊 滾動視窗歷史驗證明細 (Sliding Windows Detail)
+        </h4>
+        <table className="w-full text-left border-collapse text-xs font-mono">
+          <thead>
+            <tr className="border-b border-white/10 text-gray-400 text-[11px]">
+              <th className="py-2 px-3 font-black">視窗序號</th>
+              <th className="py-2 px-3 font-black">訓練區間 (Train)</th>
+              <th className="py-2 px-3 font-black">驗證區間 (Validate)</th>
+              <th className="py-2 px-3 font-black text-center">驗證場次</th>
+              <th className="py-2 px-3 font-black text-right">視窗勝率</th>
+              <th className="py-2 px-3 font-black text-right">基線勝率</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5 text-gray-300">
+            {report.windows.slice(0, 8).map((w: any) => (
+              <tr key={w.windowIndex} className="hover:bg-white/[0.02] transition-colors">
+                <td className="py-2.5 px-3 font-bold text-purple-400">Window #{w.windowIndex}</td>
+                <td className="py-2.5 px-3 text-gray-400 text-[11px]">{w.trainStartDate} ~ {w.trainEndDate}</td>
+                <td className="py-2.5 px-3 text-white text-[11px] font-bold">{w.validateStartDate} ~ {w.validateEndDate}</td>
+                <td className="py-2.5 px-3 text-center">{w.validateRecordsCount} 場</td>
+                <td className="py-2.5 px-3 text-right font-black text-purple-300">{(w.accuracy * 100).toFixed(1)}%</td>
+                <td className="py-2.5 px-3 text-right text-gray-400">{(w.baselineAccuracy * 100).toFixed(1)}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
 export default function BacktestPage() {
   const [loading, setLoading] = useState(false);
@@ -204,7 +363,10 @@ export default function BacktestPage() {
           </div>
         </div>
 
-        {/* 4. Methodology Explanation Cards */}
+        {/* 4. Walk-Forward 滾動視窗與因子防護檢測報告 (NEW INTEGRATED PANEL) */}
+        <WalkForwardDashboard />
+
+        {/* 5. Methodology Explanation Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
           {/* Winner Prediction Methodology Card */}

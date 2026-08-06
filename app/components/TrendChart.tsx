@@ -1332,8 +1332,9 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
+                      { id: 'BoostedMeta', name: '⚡ 權重加成後 AI 預測 (Boosted)', data: (game as any).BoostedMeta ?? game.MetaModelV2, stroke: 'border-rose-500/30 focus:border-rose-500/60 bg-rose-500/10', color: 'text-rose-300', dot: 'bg-rose-500' },
                       { id: 'MetaModelV2', name: '👑 Meta 2.0 增強元模型', data: game.MetaModelV2, stroke: 'border-amber-500/20 focus:border-amber-500/50 bg-amber-500/5', color: 'text-amber-300', dot: 'bg-amber-500' },
                       { id: 'QuantML', name: '🔬 QuantML 量化物理模型', data: game.QuantML ?? game.SportsAI, stroke: 'border-emerald-500/20 focus:border-emerald-500/50 bg-emerald-500/5', color: 'text-emerald-300', dot: 'bg-emerald-500' },
                       { id: 'MetaModel', name: '👑 Meta 堆疊元模型', data: game.MetaModel, stroke: 'border-pink-500/20 focus:border-pink-500/50 bg-pink-500/5', color: 'text-pink-300', dot: 'bg-pink-500' },
@@ -1341,7 +1342,8 @@ export default function TrendChart({ refreshKey = 0, onSyncStatus }: TrendChartP
                       { id: 'EloRating', name: '📈 Elo 戰力比對', data: game.EloRating, stroke: 'border-orange-500/20 focus:border-orange-500/50 bg-orange-500/5', color: 'text-orange-300', dot: 'bg-orange-500' },
                       { id: 'MonteCarlo', name: '🎲 Monte Carlo 模擬', data: game.MonteCarlo, stroke: 'border-cyan-400/20 focus:border-cyan-400/50 bg-cyan-400/5', color: 'text-cyan-300', dot: 'bg-cyan-400' }
                     ].map((m) => {
-                      if (!visibleModels[m.id as 'SportsAI' | 'EloRating' | 'MonteCarlo' | 'MetaModel' | 'MetaModelV2' | 'QuantML']) return null;
+                      if (!visibleModels[m.id]) return null;
+                      if (!m.data) return null;
                       
                       const predictedWinnerName = m.data.winner === 'home' ? game.homeTeam.nameCn : game.awayTeam.nameCn;
                       const winnerAccBadge = m.data.winnerCorrect
