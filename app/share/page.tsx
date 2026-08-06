@@ -539,39 +539,23 @@ export default function SharePage() {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        if (mode === 'prediction') {
+        if (mode === 'prediction' || mode === 'meta') {
           if (pred) {
-            const sportsAIPred = pred.models?.SportsAI;
-            const predWinner = sportsAIPred?.winner || pred.winner;
-            const predConfidence = sportsAIPred?.confidence || pred.confidence;
+            const targetModel = mode === 'meta' ? (pred.models?.MetaModel || pred.models?.MetaModelV2) : pred.models?.SportsAI;
+            const predWinner = targetModel?.winner || pred.winner;
+            const predConfidence = targetModel?.confidence || pred.confidence;
             
             const winnerCn = predWinner === 'home' 
               ? getTeamNameCn(game.homeTeam.code, game.league)
               : getTeamNameCn(game.awayTeam.code, game.league);
             const conf = getDisplayConfidence(predConfidence);
 
-            ctx.fillStyle = 'rgba(167, 139, 250, 0.9)'; // Purple-300
-            ctx.font = '800 12px Outfit, sans-serif';
-            ctx.fillText(`★ SportsAI 預估: ${winnerCn}勝 (${conf}% 信心)`, cardX + 267.5, cardY + 152);
-          } else {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-            ctx.font = 'bold 12px Outfit, sans-serif';
-            ctx.fillText('暫無預測計算數據', cardX + 267.5, cardY + 152);
-          }
-        } else if (mode === 'meta') {
-          if (pred) {
-            const metaPred = pred.models?.MetaModel;
-            const predWinner = metaPred?.winner || pred.winner;
-            const predConfidence = metaPred?.confidence || pred.confidence;
+            const totalLine = targetModel ? targetModel.ouT : (pred.predictedTotalScore || (game.league === 'NBA' ? 218.5 : 8.5));
+            const ouPickStr = targetModel ? (targetModel.ouPick === 'Over' ? '大分' : '小分') : (totalLine >= (game.league === 'NBA' ? 218.5 : 8.5) ? '大分' : '小分');
 
-            const winnerCn = predWinner === 'home' 
-              ? getTeamNameCn(game.homeTeam.code, game.league)
-              : getTeamNameCn(game.awayTeam.code, game.league);
-            const conf = getDisplayConfidence(predConfidence);
-
-            ctx.fillStyle = 'rgba(251, 191, 36, 0.9)'; // Amber-400
-            ctx.font = '800 12px Outfit, sans-serif';
-            ctx.fillText(`★ Meta 預估: ${winnerCn}勝 (${conf}% 信心)`, cardX + 267.5, cardY + 152);
+            ctx.fillStyle = mode === 'meta' ? 'rgba(251, 191, 36, 0.95)' : 'rgba(167, 139, 250, 0.95)';
+            ctx.font = '800 11.5px Outfit, sans-serif';
+            ctx.fillText(`🎯 勝負: ${winnerCn}勝 (${conf}%)  |  🎲 大小分: ${ouPickStr} (${totalLine}分)`, cardX + 267.5, cardY + 152);
           } else {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
             ctx.font = 'bold 12px Outfit, sans-serif';
@@ -723,9 +707,22 @@ export default function SharePage() {
           
           {/* Calendar Picker */}
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-black text-purple-300 uppercase tracking-widest flex items-center gap-1.5">
-              <CalendarIcon className="w-3.5 h-3.5" /> 選擇比賽日期
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-black text-purple-300 uppercase tracking-widest flex items-center gap-1.5">
+                <CalendarIcon className="w-3.5 h-3.5" /> 選擇比賽日期
+              </label>
+              <button
+                onClick={() => {
+                  const tomorrow = new Date();
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  setSelectedDate(tomorrow.toISOString().split('T')[0]);
+                }}
+                className="text-[10px] font-black text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded-lg border border-amber-500/30 transition-all cursor-pointer"
+                title="一鍵將日期切換至隔天 (23:00 自動定時排程預設區間)"
+              >
+                🔮 一鍵載入隔天賽事
+              </button>
+            </div>
             <input
               type="date"
               value={selectedDate}
