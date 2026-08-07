@@ -2064,10 +2064,10 @@ export default function HomeClient() {
                       className={`glass-panel rounded-3xl overflow-hidden transition-all duration-300 border ${isExpanded ? (game.league === 'NBA' ? 'border-orange-500/40 shadow-[0_0_25px_rgba(255,107,0,0.15)]' : 'border-cyan-400/40 shadow-[0_0_25px_rgba(0,240,255,0.15)]') : 'border-white/5'} ${borderThemeGlow}`}
                     >
                       {/* Card Main matching header */}
-                      <div className="p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative">
+                      <div className="p-4 md:p-5 flex flex-col md:flex-row items-center justify-between gap-4 relative">
                         
                         {/* Status/Venue Badge */}
-                        <div className="absolute top-4 left-6 flex items-center gap-2">
+                        <div className="absolute top-3 left-5 flex items-center gap-2">
                           <span className="text-xs font-mono text-gray-400 font-bold max-w-[240px] truncate">{game.venue}</span>
                           <span className="w-1 h-1 rounded-full bg-gray-700 shrink-0" />
                           {game.status === 'live' ? (
@@ -2095,27 +2095,27 @@ export default function HomeClient() {
                         </div>
 
                         {/* Matchup visualizer */}
-                        <div className="flex items-center justify-between w-full md:w-auto gap-8 pt-4 md:pt-0">
+                        <div className="flex items-center justify-between w-full md:w-auto gap-6 pt-4 md:pt-0">
                           
                           {/* Away Team */}
                           <div className="flex flex-col items-center md:items-end text-center md:text-right w-24 md:w-32">
-                            <div className="relative w-14 h-14 rounded-2xl flex items-center justify-center shadow-md overflow-hidden bg-white/5 border border-white/10 shrink-0">
+                            <div className="relative w-12 h-12 rounded-2xl flex items-center justify-center shadow-md overflow-hidden bg-white/5 border border-white/10 shrink-0">
                               {game.awayTeam.logo ? (
                                 <img 
                                   src={game.awayTeam.logo} 
                                   alt={game.awayTeam.name} 
-                                  className="w-12 h-12 object-contain z-10"
+                                  className="w-10 h-10 object-contain z-10"
                                   onError={(e) => {
                                     e.currentTarget.style.display = 'none';
                                   }}
                                 />
                               ) : null}
-                              <div className={`absolute inset-0 bg-gradient-to-tr ${getLogoGradient(game.awayTeam.code)} flex items-center justify-center font-black text-white text-sm tracking-wider`}>
+                              <div className={`absolute inset-0 bg-gradient-to-tr ${getLogoGradient(game.awayTeam.code)} flex items-center justify-center font-black text-white text-xs tracking-wider`}>
                                 {game.awayTeam.code}
                               </div>
                             </div>
-                            <span className="text-lg font-black text-white mt-2 block line-clamp-1">{game.awayTeam.nameCn || game.awayTeam.name}</span>
-                            <span className="text-sm font-mono font-bold text-gray-400 block mt-0.5">客隊 (Odds {awayOdds})</span>
+                            <span className="text-base font-black text-white mt-1.5 block line-clamp-1">{game.awayTeam.nameCn || game.awayTeam.name}</span>
+                            <span className="text-xs font-mono font-bold text-gray-400 block mt-0.5">客隊</span>
                             <div className="text-xs text-gray-400 font-semibold mt-1.5 bg-white/5 border border-white/5 rounded-md px-2 py-1 inline-block">
                               近5場均: <span className="font-black text-white font-mono">{game.awayTeam.avgPoints !== undefined ? `${game.awayTeam.avgPoints}分` : '--'}</span>
                             </div>
@@ -2173,8 +2173,8 @@ export default function HomeClient() {
                                 {game.homeTeam.code}
                               </div>
                             </div>
-                            <span className="text-lg font-black text-white mt-2 block line-clamp-1">{game.homeTeam.nameCn || game.homeTeam.name}</span>
-                            <span className="text-sm font-mono font-bold text-gray-400 block mt-0.5">主隊 (Odds {homeOdds})</span>
+                            <span className="text-base font-black text-white mt-1.5 block line-clamp-1">{game.homeTeam.nameCn || game.homeTeam.name}</span>
+                            <span className="text-xs font-mono font-bold text-gray-400 block mt-0.5">主隊</span>
                             <div className="text-xs text-gray-400 font-semibold mt-1.5 bg-white/5 border border-white/5 rounded-md px-2 py-1 inline-block">
                               近5場均: <span className="font-black text-white font-mono">{game.homeTeam.avgPoints !== undefined ? `${game.homeTeam.avgPoints}分` : '--'}</span>
                             </div>
