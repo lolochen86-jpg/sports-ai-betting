@@ -1787,6 +1787,7 @@ export default function HomeClient() {
 
           <div className="hidden md:flex items-center gap-8 font-bold text-sm text-gray-300">
             <span className="text-white border-b-2 border-purple-500 pb-1">決策看盤中心</span>
+            <Link href="/daily-report" className="hover:text-purple-400 text-purple-300 font-extrabold transition-colors">🤖 AI戰報</Link>
             <Link href="/smart-parlays" className="hover:text-amber-400 text-amber-400 font-extrabold transition-colors">🎯 智慧二關</Link>
             <Link href="/compare" className="hover:text-purple-400 text-purple-300 font-extrabold transition-colors">🔬 新舊模型對照</Link>
             <Link href="/backtest" className="hover:text-purple-400 transition-colors">歷史量化回測</Link>
