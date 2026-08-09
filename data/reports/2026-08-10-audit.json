@@ -1,0 +1,1229 @@
+{
+  "targetDate": "2026-08-10",
+  "generatedAt": "2026-08-09T16:05:47.032Z",
+  "totalGames": 10,
+  "games": [
+    {
+      "gameId": "822780",
+      "league": "MLB",
+      "gameDate": "2026-08-10T23:07:00Z",
+      "homeTeam": {
+        "code": "TOR",
+        "name": "Toronto Blue Jays",
+        "nameCn": "多倫多藍鳥"
+      },
+      "awayTeam": {
+        "code": "BOS",
+        "name": "Boston Red Sox",
+        "nameCn": "波士頓紅襪"
+      },
+      "venue": "Rogers Centre",
+      "checks": [
+        {
+          "field": "pitcher",
+          "label": "先發投手",
+          "status": "missing",
+          "reason": "TBD"
+        },
+        {
+          "field": "recentStats",
+          "label": "近期戰績",
+          "status": "ok"
+        },
+        {
+          "field": "parkFactor",
+          "label": "球場因子",
+          "status": "ok"
+        },
+        {
+          "field": "weather",
+          "label": "天氣資訊",
+          "status": "ok"
+        },
+        {
+          "field": "restTravel",
+          "label": "休息與移動",
+          "status": "ok"
+        },
+        {
+          "field": "injuries",
+          "label": "傷兵名單",
+          "status": "missing"
+        },
+        {
+          "field": "h2h",
+          "label": "對戰紀錄",
+          "status": "ok"
+        },
+        {
+          "field": "records",
+          "label": "球隊戰績",
+          "status": "ok"
+        }
+      ],
+      "completeness": 75,
+      "data": {
+        "homePitcher": null,
+        "awayPitcher": null,
+        "homeRecentScores": [
+          7,
+          5,
+          2,
+          5,
+          2,
+          3,
+          1,
+          5,
+          3,
+          5
+        ],
+        "awayRecentScores": [
+          3,
+          13,
+          12,
+          4,
+          14,
+          8,
+          3,
+          9,
+          5,
+          4
+        ],
+        "homeRecord": "56-62",
+        "awayRecord": "64-52",
+        "homeStreak": 2,
+        "awayStreak": -1,
+        "parkFactor": {
+          "runFactor": 1,
+          "category": "neutral",
+          "description": "標準大聯盟球場 (中性得分環境)"
+        },
+        "weather": {
+          "tempC": 22,
+          "humidity": 50,
+          "windSpeedKph": 0,
+          "windDirection": "None",
+          "condition": "Indoor",
+          "isIndoor": true,
+          "description": "室內球場，氣候控制恆溫"
+        },
+        "restTravel": {
+          "homeRestDays": 0,
+          "awayRestDays": 0,
+          "homeFatigue": "heavy",
+          "awayFatigue": "heavy"
+        },
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "h2h": {
+          "homeWins": 6,
+          "awayWins": 4,
+          "totalGames": 10
+        }
+      }
+    },
+    {
+      "gameId": "824887",
+      "league": "MLB",
+      "gameDate": "2026-08-10T23:15:00Z",
+      "homeTeam": {
+        "code": "ATL",
+        "name": "Atlanta Braves",
+        "nameCn": "亞特蘭大勇士"
+      },
+      "awayTeam": {
+        "code": "NYM",
+        "name": "New York Mets",
+        "nameCn": "紐約大都會"
+      },
+      "venue": "Truist Park",
+      "checks": [
+        {
+          "field": "pitcher",
+          "label": "先發投手",
+          "status": "ok"
+        },
+        {
+          "field": "recentStats",
+          "label": "近期戰績",
+          "status": "ok"
+        },
+        {
+          "field": "parkFactor",
+          "label": "球場因子",
+          "status": "ok"
+        },
+        {
+          "field": "weather",
+          "label": "天氣資訊",
+          "status": "missing",
+          "reason": "No API key or fetch failed"
+        },
+        {
+          "field": "restTravel",
+          "label": "休息與移動",
+          "status": "ok"
+        },
+        {
+          "field": "injuries",
+          "label": "傷兵名單",
+          "status": "missing"
+        },
+        {
+          "field": "h2h",
+          "label": "對戰紀錄",
+          "status": "ok"
+        },
+        {
+          "field": "records",
+          "label": "球隊戰績",
+          "status": "ok"
+        }
+      ],
+      "completeness": 75,
+      "data": {
+        "homePitcher": {
+          "name": "Bryce Elder",
+          "nameCn": "布萊斯·Elder",
+          "era": 3.69,
+          "whip": 1.2,
+          "record": "8勝 6敗",
+          "strikeouts": 104,
+          "recentEra": 1.5,
+          "recentFormSummary": "近3場 2勝0敗 ERA 1.50 (🔥 狀態火熱)",
+          "recentForm": [
+            "7.0局 1失分 (勝)",
+            "6.0局 1失分 (勝)",
+            "5.0局 1失分"
+          ],
+          "pitchHand": "R",
+          "advantageFactor": 1.08,
+          "statusLabel": "hot"
+        },
+        "awayPitcher": {
+          "name": "Christian Scott",
+          "nameCn": "Christian·Scott",
+          "era": 3.15,
+          "whip": 1.26,
+          "record": "3勝 3敗",
+          "strikeouts": 92,
+          "recentEra": 4.3,
+          "recentFormSummary": "近3場 1勝0敗 ERA 4.30 (🧊 控球受挫)",
+          "recentForm": [
+            "5.0局 3失分 (勝)",
+            "6.0局 1失分",
+            "3.2局 3失分"
+          ],
+          "pitchHand": "R",
+          "advantageFactor": 1.27,
+          "statusLabel": "cold"
+        },
+        "homeRecentScores": [
+          4,
+          2,
+          11,
+          4,
+          4,
+          4,
+          8,
+          6,
+          5,
+          1
+        ],
+        "awayRecentScores": [
+          0,
+          6,
+          13,
+          6,
+          6,
+          0,
+          2,
+          2,
+          4,
+          0
+        ],
+        "homeRecord": "70-47",
+        "awayRecord": "51-67",
+        "homeStreak": -2,
+        "awayStreak": -1,
+        "parkFactor": {
+          "runFactor": 1.03,
+          "category": "neutral",
+          "description": "信託公園球場 (氣候溫和，標準大聯盟高層級打擊環境)"
+        },
+        "weather": null,
+        "restTravel": {
+          "homeRestDays": 0,
+          "awayRestDays": 0,
+          "homeFatigue": "heavy",
+          "awayFatigue": "heavy"
+        },
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "h2h": {
+          "homeWins": 4,
+          "awayWins": 6,
+          "totalGames": 10
+        }
+      }
+    },
+    {
+      "gameId": "823675",
+      "league": "MLB",
+      "gameDate": "2026-08-10T23:40:00Z",
+      "homeTeam": {
+        "code": "MIN",
+        "name": "Minnesota Twins",
+        "nameCn": "明尼蘇達雙城"
+      },
+      "awayTeam": {
+        "code": "BAL",
+        "name": "Baltimore Orioles",
+        "nameCn": "巴爾的摩金鶯"
+      },
+      "venue": "Target Field",
+      "checks": [
+        {
+          "field": "pitcher",
+          "label": "先發投手",
+          "status": "missing",
+          "reason": "TBD"
+        },
+        {
+          "field": "recentStats",
+          "label": "近期戰績",
+          "status": "ok"
+        },
+        {
+          "field": "parkFactor",
+          "label": "球場因子",
+          "status": "ok"
+        },
+        {
+          "field": "weather",
+          "label": "天氣資訊",
+          "status": "missing",
+          "reason": "No API key or fetch failed"
+        },
+        {
+          "field": "restTravel",
+          "label": "休息與移動",
+          "status": "ok"
+        },
+        {
+          "field": "injuries",
+          "label": "傷兵名單",
+          "status": "missing"
+        },
+        {
+          "field": "h2h",
+          "label": "對戰紀錄",
+          "status": "ok"
+        },
+        {
+          "field": "records",
+          "label": "球隊戰績",
+          "status": "ok"
+        }
+      ],
+      "completeness": 62.5,
+      "data": {
+        "homePitcher": null,
+        "awayPitcher": null,
+        "homeRecentScores": [
+          3,
+          8,
+          4,
+          1,
+          2,
+          6,
+          3,
+          5,
+          4,
+          0
+        ],
+        "awayRecentScores": [
+          1,
+          1,
+          1,
+          5,
+          3,
+          0,
+          6,
+          10,
+          0,
+          8
+        ],
+        "homeRecord": "58-60",
+        "awayRecord": "56-61",
+        "homeStreak": -1,
+        "awayStreak": -3,
+        "parkFactor": {
+          "runFactor": 1,
+          "category": "neutral",
+          "description": "標準大聯盟球場 (中性得分環境)"
+        },
+        "weather": null,
+        "restTravel": {
+          "homeRestDays": 0,
+          "awayRestDays": 0,
+          "homeFatigue": "heavy",
+          "awayFatigue": "heavy"
+        },
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "h2h": {
+          "homeWins": 1,
+          "awayWins": 4,
+          "totalGames": 5
+        }
+      }
+    },
+    {
+      "gameId": "823018",
+      "league": "MLB",
+      "gameDate": "2026-08-10T23:45:00Z",
+      "homeTeam": {
+        "code": "STL",
+        "name": "St. Louis Cardinals",
+        "nameCn": "聖路易紅雀"
+      },
+      "awayTeam": {
+        "code": "PHI",
+        "name": "Philadelphia Phillies",
+        "nameCn": "費城費城人"
+      },
+      "venue": "Busch Stadium",
+      "checks": [
+        {
+          "field": "pitcher",
+          "label": "先發投手",
+          "status": "ok"
+        },
+        {
+          "field": "recentStats",
+          "label": "近期戰績",
+          "status": "ok"
+        },
+        {
+          "field": "parkFactor",
+          "label": "球場因子",
+          "status": "ok"
+        },
+        {
+          "field": "weather",
+          "label": "天氣資訊",
+          "status": "missing",
+          "reason": "No API key or fetch failed"
+        },
+        {
+          "field": "restTravel",
+          "label": "休息與移動",
+          "status": "ok"
+        },
+        {
+          "field": "injuries",
+          "label": "傷兵名單",
+          "status": "missing"
+        },
+        {
+          "field": "h2h",
+          "label": "對戰紀錄",
+          "status": "missing",
+          "reason": "No past matchups"
+        },
+        {
+          "field": "records",
+          "label": "球隊戰績",
+          "status": "ok"
+        }
+      ],
+      "completeness": 62.5,
+      "data": {
+        "homePitcher": {
+          "name": "Hunter Dobbins",
+          "nameCn": "Hunter·Dobbins",
+          "era": 3.6,
+          "whip": 1.3,
+          "record": "2勝 2敗",
+          "strikeouts": 36,
+          "recentEra": 3.06,
+          "recentFormSummary": "近3場 1勝0敗 ERA 3.06 (⚡ 表現穩定)",
+          "recentForm": [
+            "6.1局 2失分",
+            "5.1局 4失分",
+            "6.0局 0失分 (勝)"
+          ],
+          "pitchHand": "R",
+          "advantageFactor": 1.11,
+          "statusLabel": "stable"
+        },
+        "awayPitcher": {
+          "name": "Andrew Painter",
+          "nameCn": "Andrew·Painter",
+          "era": 6.48,
+          "whip": 1.57,
+          "record": "1勝 8敗",
+          "strikeouts": 63,
+          "recentEra": 6.75,
+          "recentFormSummary": "近3場 ERA 6.75 (⚠️ 防禦線偏高)",
+          "recentForm": [
+            "4.0局 1失分",
+            "6.0局 2失分",
+            "2.0局 6失分"
+          ],
+          "pitchHand": "R",
+          "advantageFactor": 0.62,
+          "statusLabel": "warning"
+        },
+        "homeRecentScores": [
+          6,
+          3,
+          3,
+          0,
+          13,
+          5,
+          1,
+          1,
+          2,
+          3
+        ],
+        "awayRecentScores": [
+          5,
+          4,
+          7,
+          4,
+          5,
+          6,
+          5,
+          4,
+          6,
+          0
+        ],
+        "homeRecord": "58-59",
+        "awayRecord": "62-56",
+        "homeStreak": -1,
+        "awayStreak": -2,
+        "parkFactor": {
+          "runFactor": 1,
+          "category": "neutral",
+          "description": "標準大聯盟球場 (中性得分環境)"
+        },
+        "weather": null,
+        "restTravel": {
+          "homeRestDays": 0,
+          "awayRestDays": 0,
+          "homeFatigue": "heavy",
+          "awayFatigue": "heavy"
+        },
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "h2h": null
+      }
+    },
+    {
+      "gameId": "823998",
+      "league": "MLB",
+      "gameDate": "2026-08-11T01:38:00Z",
+      "homeTeam": {
+        "code": "LAA",
+        "name": "Los Angeles Angels",
+        "nameCn": "洛杉磯天使"
+      },
+      "awayTeam": {
+        "code": "TEX",
+        "name": "Texas Rangers",
+        "nameCn": "德州遊騎兵"
+      },
+      "venue": "Angel Stadium",
+      "checks": [
+        {
+          "field": "pitcher",
+          "label": "先發投手",
+          "status": "missing",
+          "reason": "TBD"
+        },
+        {
+          "field": "recentStats",
+          "label": "近期戰績",
+          "status": "ok"
+        },
+        {
+          "field": "parkFactor",
+          "label": "球場因子",
+          "status": "ok"
+        },
+        {
+          "field": "weather",
+          "label": "天氣資訊",
+          "status": "missing",
+          "reason": "No API key or fetch failed"
+        },
+        {
+          "field": "restTravel",
+          "label": "休息與移動",
+          "status": "ok"
+        },
+        {
+          "field": "injuries",
+          "label": "傷兵名單",
+          "status": "missing"
+        },
+        {
+          "field": "h2h",
+          "label": "對戰紀錄",
+          "status": "ok"
+        },
+        {
+          "field": "records",
+          "label": "球隊戰績",
+          "status": "ok"
+        }
+      ],
+      "completeness": 62.5,
+      "data": {
+        "homePitcher": null,
+        "awayPitcher": null,
+        "homeRecentScores": [
+          0,
+          4,
+          4,
+          2,
+          1,
+          3,
+          1,
+          2,
+          4,
+          2
+        ],
+        "awayRecentScores": [
+          5,
+          2,
+          6,
+          5,
+          1,
+          3,
+          4,
+          2,
+          2,
+          0
+        ],
+        "homeRecord": "45-72",
+        "awayRecord": "59-58",
+        "homeStreak": -1,
+        "awayStreak": 4,
+        "parkFactor": {
+          "runFactor": 1,
+          "category": "neutral",
+          "description": "標準大聯盟球場 (中性得分環境)"
+        },
+        "weather": null,
+        "restTravel": {
+          "homeRestDays": 1,
+          "awayRestDays": 1,
+          "homeFatigue": "heavy",
+          "awayFatigue": "heavy"
+        },
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "h2h": {
+          "homeWins": 5,
+          "awayWins": 3,
+          "totalGames": 8
+        }
+      }
+    },
+    {
+      "gameId": "825048",
+      "league": "MLB",
+      "gameDate": "2026-08-11T01:40:00Z",
+      "homeTeam": {
+        "code": "AZ",
+        "name": "Arizona Diamondbacks",
+        "nameCn": "亞利桑那響尾蛇"
+      },
+      "awayTeam": {
+        "code": "COL",
+        "name": "Colorado Rockies",
+        "nameCn": "科羅拉多洛磯"
+      },
+      "venue": "Chase Field",
+      "checks": [
+        {
+          "field": "pitcher",
+          "label": "先發投手",
+          "status": "missing",
+          "reason": "TBD"
+        },
+        {
+          "field": "recentStats",
+          "label": "近期戰績",
+          "status": "ok"
+        },
+        {
+          "field": "parkFactor",
+          "label": "球場因子",
+          "status": "ok"
+        },
+        {
+          "field": "weather",
+          "label": "天氣資訊",
+          "status": "ok"
+        },
+        {
+          "field": "restTravel",
+          "label": "休息與移動",
+          "status": "ok"
+        },
+        {
+          "field": "injuries",
+          "label": "傷兵名單",
+          "status": "missing"
+        },
+        {
+          "field": "h2h",
+          "label": "對戰紀錄",
+          "status": "ok"
+        },
+        {
+          "field": "records",
+          "label": "球隊戰績",
+          "status": "ok"
+        }
+      ],
+      "completeness": 75,
+      "data": {
+        "homePitcher": null,
+        "awayPitcher": null,
+        "homeRecentScores": [
+          1,
+          4,
+          1,
+          10,
+          4,
+          5,
+          0,
+          12,
+          4,
+          3
+        ],
+        "awayRecentScores": [
+          8,
+          2,
+          0,
+          7,
+          9,
+          8,
+          12,
+          3,
+          1,
+          7
+        ],
+        "homeRecord": "62-56",
+        "awayRecord": "46-71",
+        "homeStreak": -1,
+        "awayStreak": 1,
+        "parkFactor": {
+          "runFactor": 1,
+          "category": "neutral",
+          "description": "標準大聯盟球場 (中性得分環境)"
+        },
+        "weather": {
+          "tempC": 22,
+          "humidity": 50,
+          "windSpeedKph": 0,
+          "windDirection": "None",
+          "condition": "Indoor",
+          "isIndoor": true,
+          "description": "室內球場，氣候控制恆溫"
+        },
+        "restTravel": {
+          "homeRestDays": 1,
+          "awayRestDays": 1,
+          "homeFatigue": "mild",
+          "awayFatigue": "heavy"
+        },
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "h2h": {
+          "homeWins": 6,
+          "awayWins": 4,
+          "totalGames": 10
+        }
+      }
+    },
+    {
+      "gameId": "824969",
+      "league": "MLB",
+      "gameDate": "2026-08-11T01:40:00Z",
+      "homeTeam": {
+        "code": "ATH",
+        "name": "Athletics",
+        "nameCn": "ATH"
+      },
+      "awayTeam": {
+        "code": "TB",
+        "name": "Tampa Bay Rays",
+        "nameCn": "坦帕灣光芒"
+      },
+      "venue": "Sutter Health Park",
+      "checks": [
+        {
+          "field": "pitcher",
+          "label": "先發投手",
+          "status": "missing",
+          "reason": "TBD"
+        },
+        {
+          "field": "recentStats",
+          "label": "近期戰績",
+          "status": "ok"
+        },
+        {
+          "field": "parkFactor",
+          "label": "球場因子",
+          "status": "ok"
+        },
+        {
+          "field": "weather",
+          "label": "天氣資訊",
+          "status": "missing",
+          "reason": "No API key or fetch failed"
+        },
+        {
+          "field": "restTravel",
+          "label": "休息與移動",
+          "status": "ok"
+        },
+        {
+          "field": "injuries",
+          "label": "傷兵名單",
+          "status": "missing"
+        },
+        {
+          "field": "h2h",
+          "label": "對戰紀錄",
+          "status": "missing",
+          "reason": "No past matchups"
+        },
+        {
+          "field": "records",
+          "label": "球隊戰績",
+          "status": "ok"
+        }
+      ],
+      "completeness": 50,
+      "data": {
+        "homePitcher": null,
+        "awayPitcher": null,
+        "homeRecentScores": [
+          7,
+          1,
+          5,
+          2,
+          4,
+          0,
+          6,
+          1,
+          4,
+          2
+        ],
+        "awayRecentScores": [
+          3,
+          2,
+          4,
+          9,
+          13,
+          1,
+          1,
+          1,
+          3,
+          3
+        ],
+        "homeRecord": "46-71",
+        "awayRecord": "70-46",
+        "homeStreak": 1,
+        "awayStreak": 5,
+        "parkFactor": {
+          "runFactor": 1,
+          "category": "neutral",
+          "description": "標準大聯盟球場 (中性得分環境)"
+        },
+        "weather": null,
+        "restTravel": {
+          "homeRestDays": 1,
+          "awayRestDays": 1,
+          "homeFatigue": "heavy",
+          "awayFatigue": "mild"
+        },
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "h2h": null
+      }
+    },
+    {
+      "gameId": "823265",
+      "league": "MLB",
+      "gameDate": "2026-08-11T01:40:00Z",
+      "homeTeam": {
+        "code": "SD",
+        "name": "San Diego Padres",
+        "nameCn": "聖地牙哥教士"
+      },
+      "awayTeam": {
+        "code": "MIL",
+        "name": "Milwaukee Brewers",
+        "nameCn": "密爾瓦基釀酒人"
+      },
+      "venue": "Petco Park",
+      "checks": [
+        {
+          "field": "pitcher",
+          "label": "先發投手",
+          "status": "missing",
+          "reason": "TBD"
+        },
+        {
+          "field": "recentStats",
+          "label": "近期戰績",
+          "status": "ok"
+        },
+        {
+          "field": "parkFactor",
+          "label": "球場因子",
+          "status": "ok"
+        },
+        {
+          "field": "weather",
+          "label": "天氣資訊",
+          "status": "missing",
+          "reason": "No API key or fetch failed"
+        },
+        {
+          "field": "restTravel",
+          "label": "休息與移動",
+          "status": "ok"
+        },
+        {
+          "field": "injuries",
+          "label": "傷兵名單",
+          "status": "missing"
+        },
+        {
+          "field": "h2h",
+          "label": "對戰紀錄",
+          "status": "ok"
+        },
+        {
+          "field": "records",
+          "label": "球隊戰績",
+          "status": "ok"
+        }
+      ],
+      "completeness": 62.5,
+      "data": {
+        "homePitcher": null,
+        "awayPitcher": null,
+        "homeRecentScores": [
+          3,
+          3,
+          5,
+          4,
+          9,
+          1,
+          5,
+          6,
+          7,
+          1
+        ],
+        "awayRecentScores": [
+          4,
+          6,
+          5,
+          4,
+          4,
+          3,
+          0,
+          3,
+          6,
+          3
+        ],
+        "homeRecord": "61-57",
+        "awayRecord": "73-44",
+        "homeStreak": 1,
+        "awayStreak": 1,
+        "parkFactor": {
+          "runFactor": 0.94,
+          "category": "pitcher_paradise",
+          "description": "佩特科球場 (海邊高濕度大氣與深遠邊線，投手壓制力大幅提高)"
+        },
+        "weather": null,
+        "restTravel": {
+          "homeRestDays": 0,
+          "awayRestDays": 1,
+          "homeFatigue": "heavy",
+          "awayFatigue": "heavy"
+        },
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "h2h": {
+          "homeWins": 2,
+          "awayWins": 3,
+          "totalGames": 5
+        }
+      }
+    },
+    {
+      "gameId": "823189",
+      "league": "MLB",
+      "gameDate": "2026-08-11T01:45:00Z",
+      "homeTeam": {
+        "code": "SF",
+        "name": "San Francisco Giants",
+        "nameCn": "舊金山巨人"
+      },
+      "awayTeam": {
+        "code": "HOU",
+        "name": "Houston Astros",
+        "nameCn": "休士頓太空人"
+      },
+      "venue": "Oracle Park",
+      "checks": [
+        {
+          "field": "pitcher",
+          "label": "先發投手",
+          "status": "missing",
+          "reason": "TBD"
+        },
+        {
+          "field": "recentStats",
+          "label": "近期戰績",
+          "status": "ok"
+        },
+        {
+          "field": "parkFactor",
+          "label": "球場因子",
+          "status": "ok"
+        },
+        {
+          "field": "weather",
+          "label": "天氣資訊",
+          "status": "missing",
+          "reason": "No API key or fetch failed"
+        },
+        {
+          "field": "restTravel",
+          "label": "休息與移動",
+          "status": "ok"
+        },
+        {
+          "field": "injuries",
+          "label": "傷兵名單",
+          "status": "missing"
+        },
+        {
+          "field": "h2h",
+          "label": "對戰紀錄",
+          "status": "missing",
+          "reason": "No past matchups"
+        },
+        {
+          "field": "records",
+          "label": "球隊戰績",
+          "status": "ok"
+        }
+      ],
+      "completeness": 50,
+      "data": {
+        "homePitcher": null,
+        "awayPitcher": null,
+        "homeRecentScores": [
+          0,
+          5,
+          0,
+          4,
+          5,
+          4,
+          5,
+          0,
+          4,
+          16
+        ],
+        "awayRecentScores": [
+          2,
+          6,
+          4,
+          7,
+          1,
+          7,
+          5,
+          11,
+          7,
+          3
+        ],
+        "homeRecord": "49-68",
+        "awayRecord": "60-58",
+        "homeStreak": -1,
+        "awayStreak": -1,
+        "parkFactor": {
+          "runFactor": 0.93,
+          "category": "pitcher_paradise",
+          "description": "歐拉克球場 (舊金山灣冰冷海風與強烈逆風，大聯盟頂級投手天堂)"
+        },
+        "weather": null,
+        "restTravel": {
+          "homeRestDays": 1,
+          "awayRestDays": 0,
+          "homeFatigue": "heavy",
+          "awayFatigue": "heavy"
+        },
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "h2h": null
+      }
+    },
+    {
+      "gameId": "823918",
+      "league": "MLB",
+      "gameDate": "2026-08-11T02:10:00Z",
+      "homeTeam": {
+        "code": "LAD",
+        "name": "Los Angeles Dodgers",
+        "nameCn": "洛杉磯道奇"
+      },
+      "awayTeam": {
+        "code": "KC",
+        "name": "Kansas City Royals",
+        "nameCn": "堪薩斯皇家"
+      },
+      "venue": "UNIQLO Field at Dodger Stadium",
+      "checks": [
+        {
+          "field": "pitcher",
+          "label": "先發投手",
+          "status": "missing",
+          "reason": "TBD"
+        },
+        {
+          "field": "recentStats",
+          "label": "近期戰績",
+          "status": "ok"
+        },
+        {
+          "field": "parkFactor",
+          "label": "球場因子",
+          "status": "ok"
+        },
+        {
+          "field": "weather",
+          "label": "天氣資訊",
+          "status": "missing",
+          "reason": "No API key or fetch failed"
+        },
+        {
+          "field": "restTravel",
+          "label": "休息與移動",
+          "status": "ok"
+        },
+        {
+          "field": "injuries",
+          "label": "傷兵名單",
+          "status": "missing"
+        },
+        {
+          "field": "h2h",
+          "label": "對戰紀錄",
+          "status": "ok"
+        },
+        {
+          "field": "records",
+          "label": "球隊戰績",
+          "status": "ok"
+        }
+      ],
+      "completeness": 62.5,
+      "data": {
+        "homePitcher": null,
+        "awayPitcher": null,
+        "homeRecentScores": [
+          2,
+          3,
+          6,
+          1,
+          5,
+          4,
+          2,
+          4,
+          6,
+          4
+        ],
+        "awayRecentScores": [
+          6,
+          4,
+          3,
+          2,
+          8,
+          1,
+          6,
+          1,
+          3,
+          4
+        ],
+        "homeRecord": "70-47",
+        "awayRecord": "49-69",
+        "homeStreak": 1,
+        "awayStreak": 1,
+        "parkFactor": {
+          "runFactor": 1.02,
+          "category": "neutral",
+          "description": "道奇體育場 (夜間海風帶來重濕氣，白天打擊環境佳，整體呈微偏打者環境)"
+        },
+        "weather": null,
+        "restTravel": {
+          "homeRestDays": 1,
+          "awayRestDays": 1,
+          "homeFatigue": "mild",
+          "awayFatigue": "heavy"
+        },
+        "injuries": {
+          "home": [],
+          "away": []
+        },
+        "h2h": {
+          "homeWins": 2,
+          "awayWins": 0,
+          "totalGames": 2
+        }
+      }
+    }
+  ],
+  "summary": {
+    "fullyComplete": 0,
+    "partiallyComplete": 10,
+    "averageCompleteness": 63.75,
+    "missingItems": [
+      "先發投手",
+      "傷兵名單",
+      "天氣資訊",
+      "對戰紀錄"
+    ]
+  }
+}

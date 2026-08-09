@@ -1,0 +1,1236 @@
+{
+  "targetDate": "2026-08-10",
+  "generatedAt": "2026-08-09T16:05:52.684Z",
+  "totalGames": 10,
+  "games": [
+    {
+      "gameId": "822780",
+      "league": "MLB",
+      "homeTeam": {
+        "code": "TOR",
+        "name": "Toronto Blue Jays",
+        "nameCn": "多倫多藍鳥"
+      },
+      "awayTeam": {
+        "code": "BOS",
+        "name": "Boston Red Sox",
+        "nameCn": "波士頓紅襪"
+      },
+      "venue": "Rogers Centre",
+      "gameDate": "2026-08-10T23:07:00Z",
+      "prediction": {
+        "winner": "away",
+        "winnerTeamName": "波士頓紅襪",
+        "confidence": 56.2,
+        "ouPick": "Over",
+        "ouLine": 8.5,
+        "predictedTotal": 9,
+        "homeExpectedScore": 5,
+        "awayExpectedScore": 4.1
+      },
+      "reasoning": [
+        {
+          "icon": "⚾",
+          "category": "先發投手對決",
+          "explanation": "先發投手資訊不足，無法進行完整比較。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🏟️",
+          "category": "場地因子影響",
+          "explanation": "Rogers Centre 場地特性為 neutral (Run Factor 1.00)。標準大聯盟球場 (中性得分環境)",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🌡️",
+          "category": "氣候條件",
+          "explanation": "本場於室內場地進行，比賽不受外部氣候影響。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📅",
+          "category": "賽程安排",
+          "explanation": "TOR 休息 0 天 (heavy)，BOS 休息 0 天 (heavy)。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🩹",
+          "category": "傷兵影響",
+          "explanation": "TOR 有 0 名主要傷兵名單；BOS 則有 0 名。波士頓紅襪 陣容調度深度充足，牛棚/替補席戰力充沛；多倫多藍鳥 連續背靠背客戰，體能消耗恐影響末段防守強度。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📈",
+          "category": "近期趨勢",
+          "explanation": "TOR 近期戰績為 56-62 (2連勝)，BOS 戰績為 64-52 (1連敗)。 \n特殊標註：🧊 多倫多藍鳥 近10場有 3 場得分低於3分 / 🔥 波士頓紅襪 近10場有 3 場得分破10分",
+          "impact": "positive",
+          "impactTeam": "home"
+        },
+        {
+          "icon": "📊",
+          "category": "歷史對戰",
+          "explanation": "雙方近期交手 10 次，TOR 取得 6 勝，BOS 取得 4 勝。",
+          "impact": "positive",
+          "impactTeam": "home"
+        },
+        {
+          "icon": "🤖",
+          "category": "模型共識",
+          "explanation": "在 6 個評估模型中，有 3 個模型支持 BOS 勝出。整合置信度為 56.2%。",
+          "impact": "positive",
+          "impactTeam": "away"
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "modelName": "SportsAI MLB 機器學習模型 (v1.0)",
+          "winner": "away",
+          "confidence": 56.2,
+          "homeScore": 4.3,
+          "awayScore": 4.6
+        },
+        {
+          "modelName": "Elo 戰力指數迭代模型 (v1.8)",
+          "winner": "home",
+          "confidence": 52.8,
+          "homeScore": 4.8,
+          "awayScore": 4.2
+        },
+        {
+          "modelName": "Monte Carlo 萬次隨機模擬模型 (v2.5)",
+          "winner": "away",
+          "confidence": 69.1,
+          "homeScore": 4,
+          "awayScore": 5
+        },
+        {
+          "modelName": "⚾ 投打與後援牛棚對位模型 (v1.0)",
+          "winner": "away",
+          "confidence": 67,
+          "homeScore": 3.3,
+          "awayScore": 5.4
+        },
+        {
+          "modelName": "🔬 QuantML 量化機器學習模型 (v1.0)",
+          "winner": "home",
+          "confidence": 75.5,
+          "homeScore": 6.95,
+          "awayScore": 2.7
+        },
+        {
+          "modelName": "👑 Meta 堆疊元模型 (v1.0)",
+          "winner": "home",
+          "confidence": 50.6,
+          "homeScore": 5,
+          "awayScore": 4.1
+        }
+      ]
+    },
+    {
+      "gameId": "824887",
+      "league": "MLB",
+      "homeTeam": {
+        "code": "ATL",
+        "name": "Atlanta Braves",
+        "nameCn": "亞特蘭大勇士"
+      },
+      "awayTeam": {
+        "code": "NYM",
+        "name": "New York Mets",
+        "nameCn": "紐約大都會"
+      },
+      "venue": "Truist Park",
+      "gameDate": "2026-08-10T23:15:00Z",
+      "prediction": {
+        "winner": "home",
+        "winnerTeamName": "亞特蘭大勇士",
+        "confidence": 55,
+        "ouPick": "Under",
+        "ouLine": 11.5,
+        "predictedTotal": 10,
+        "homeExpectedScore": 4.9,
+        "awayExpectedScore": 5.4
+      },
+      "reasoning": [
+        {
+          "icon": "⚾",
+          "category": "先發投手對決",
+          "explanation": "⚾ 先發投手對決：ATL 派出 布萊斯·Elder (ERA 3.69) vs NYM 派出 Christian·Scott (ERA 3.15)。 Christian·Scott 具有明顯防禦率優勢。 主投近期：近3場 2勝0敗 ERA 1.50 (🔥 狀態火熱)。 客投近期：近3場 1勝0敗 ERA 4.30 (🧊 控球受挫)。",
+          "impact": "positive",
+          "impactTeam": "away"
+        },
+        {
+          "icon": "🏟️",
+          "category": "場地因子影響",
+          "explanation": "Truist Park 場地特性為 neutral (Run Factor 1.03)。信託公園球場 (氣候溫和，標準大聯盟高層級打擊環境)",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🌡️",
+          "category": "氣候條件",
+          "explanation": "氣候條件在正常範圍內，對比賽無重大影響。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📅",
+          "category": "賽程安排",
+          "explanation": "ATL 休息 0 天 (heavy)，NYM 休息 0 天 (heavy)。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🩹",
+          "category": "傷兵影響",
+          "explanation": "ATL 有 0 名主要傷兵名單；NYM 則有 0 名。紐約大都會 陣中有主力遭遇輕微拉傷困擾，賽前出戰機率為 70%，戰力調度受限；亞特蘭大勇士 主力全員健康待命。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📈",
+          "category": "近期趨勢",
+          "explanation": "ATL 近期戰績為 70-47 (2連敗)，NYM 戰績為 51-67 (1連敗)。 \n特殊標註：🧊 紐約大都會 近10場有 5 場得分低於3分",
+          "impact": "positive",
+          "impactTeam": "away"
+        },
+        {
+          "icon": "📊",
+          "category": "歷史對戰",
+          "explanation": "雙方近期交手 10 次，ATL 取得 4 勝，NYM 取得 6 勝。",
+          "impact": "positive",
+          "impactTeam": "away"
+        },
+        {
+          "icon": "🤖",
+          "category": "模型共識",
+          "explanation": "在 6 個評估模型中，有 3 個模型支持 ATL 勝出。整合置信度為 55%。",
+          "impact": "positive",
+          "impactTeam": "home"
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "modelName": "SportsAI MLB 機器學習模型 (v1.0)",
+          "winner": "home",
+          "confidence": 55,
+          "homeScore": 5.8,
+          "awayScore": 5.1
+        },
+        {
+          "modelName": "Elo 戰力指數迭代模型 (v1.8)",
+          "winner": "home",
+          "confidence": 66.2,
+          "homeScore": 6.7,
+          "awayScore": 4.1
+        },
+        {
+          "modelName": "Monte Carlo 萬次隨機模擬模型 (v2.5)",
+          "winner": "away",
+          "confidence": 74.6,
+          "homeScore": 4.8,
+          "awayScore": 6.2
+        },
+        {
+          "modelName": "⚾ 投打與後援牛棚對位模型 (v1.0)",
+          "winner": "away",
+          "confidence": 61,
+          "homeScore": 3.7,
+          "awayScore": 5.1
+        },
+        {
+          "modelName": "🔬 QuantML 量化機器學習模型 (v1.0)",
+          "winner": "home",
+          "confidence": 51.6,
+          "homeScore": 4.48,
+          "awayScore": 4.22
+        },
+        {
+          "modelName": "👑 Meta 堆疊元模型 (v1.0)",
+          "winner": "away",
+          "confidence": 50.4,
+          "homeScore": 4.9,
+          "awayScore": 5.4
+        }
+      ]
+    },
+    {
+      "gameId": "823675",
+      "league": "MLB",
+      "homeTeam": {
+        "code": "MIN",
+        "name": "Minnesota Twins",
+        "nameCn": "明尼蘇達雙城"
+      },
+      "awayTeam": {
+        "code": "BAL",
+        "name": "Baltimore Orioles",
+        "nameCn": "巴爾的摩金鶯"
+      },
+      "venue": "Target Field",
+      "gameDate": "2026-08-10T23:40:00Z",
+      "prediction": {
+        "winner": "home",
+        "winnerTeamName": "明尼蘇達雙城",
+        "confidence": 55.7,
+        "ouPick": "Under",
+        "ouLine": 11.5,
+        "predictedTotal": 11,
+        "homeExpectedScore": 6.2,
+        "awayExpectedScore": 4.3
+      },
+      "reasoning": [
+        {
+          "icon": "⚾",
+          "category": "先發投手對決",
+          "explanation": "先發投手資訊不足，無法進行完整比較。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🏟️",
+          "category": "場地因子影響",
+          "explanation": "Target Field 場地特性為 neutral (Run Factor 1.00)。標準大聯盟球場 (中性得分環境)",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🌡️",
+          "category": "氣候條件",
+          "explanation": "氣候條件在正常範圍內，對比賽無重大影響。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📅",
+          "category": "賽程安排",
+          "explanation": "MIN 休息 0 天 (heavy)，BAL 休息 0 天 (heavy)。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🩹",
+          "category": "傷兵影響",
+          "explanation": "MIN 有 0 名主要傷兵名單；BAL 則有 0 名。明尼蘇達雙城 陣容調度深度充足，牛棚/替補席戰力充沛；巴爾的摩金鶯 連續背靠背客戰，體能消耗恐影響末段防守強度。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📈",
+          "category": "近期趨勢",
+          "explanation": "MIN 近期戰績為 58-60 (1連敗)，BAL 戰績為 56-61 (3連敗)。 \n特殊標註：🧊 明尼蘇達雙城 近10場有 3 場得分低於3分 / 🧊 巴爾的摩金鶯 近10場有 5 場得分低於3分",
+          "impact": "positive",
+          "impactTeam": "home"
+        },
+        {
+          "icon": "📊",
+          "category": "歷史對戰",
+          "explanation": "雙方近期交手 5 次，MIN 取得 1 勝，BAL 取得 4 勝。",
+          "impact": "positive",
+          "impactTeam": "away"
+        },
+        {
+          "icon": "🤖",
+          "category": "模型共識",
+          "explanation": "在 6 個評估模型中，有 6 個模型支持 MIN 勝出。整合置信度為 55.7%。",
+          "impact": "positive",
+          "impactTeam": "home"
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "modelName": "SportsAI MLB 機器學習模型 (v1.0)",
+          "winner": "home",
+          "confidence": 55.7,
+          "homeScore": 7.1,
+          "awayScore": 3.6
+        },
+        {
+          "modelName": "Elo 戰力指數迭代模型 (v1.8)",
+          "winner": "home",
+          "confidence": 57.9,
+          "homeScore": 6.7,
+          "awayScore": 4.1
+        },
+        {
+          "modelName": "Monte Carlo 萬次隨機模擬模型 (v2.5)",
+          "winner": "home",
+          "confidence": 63.5,
+          "homeScore": 5.9,
+          "awayScore": 5.2
+        },
+        {
+          "modelName": "⚾ 投打與後援牛棚對位模型 (v1.0)",
+          "winner": "home",
+          "confidence": 52,
+          "homeScore": 4.7,
+          "awayScore": 4.5
+        },
+        {
+          "modelName": "🔬 QuantML 量化機器學習模型 (v1.0)",
+          "winner": "home",
+          "confidence": 51.800000000000004,
+          "homeScore": 4.68,
+          "awayScore": 4.38
+        },
+        {
+          "modelName": "👑 Meta 堆疊元模型 (v1.0)",
+          "winner": "home",
+          "confidence": 56.9,
+          "homeScore": 6.2,
+          "awayScore": 4.3
+        }
+      ]
+    },
+    {
+      "gameId": "823018",
+      "league": "MLB",
+      "homeTeam": {
+        "code": "STL",
+        "name": "St. Louis Cardinals",
+        "nameCn": "聖路易紅雀"
+      },
+      "awayTeam": {
+        "code": "PHI",
+        "name": "Philadelphia Phillies",
+        "nameCn": "費城費城人"
+      },
+      "venue": "Busch Stadium",
+      "gameDate": "2026-08-10T23:45:00Z",
+      "prediction": {
+        "winner": "home",
+        "winnerTeamName": "聖路易紅雀",
+        "confidence": 52,
+        "ouPick": "Under",
+        "ouLine": 9.5,
+        "predictedTotal": 9,
+        "homeExpectedScore": 6,
+        "awayExpectedScore": 3.2
+      },
+      "reasoning": [
+        {
+          "icon": "⚾",
+          "category": "先發投手對決",
+          "explanation": "⚾ 先發投手對決：STL 派出 Hunter·Dobbins (ERA 3.60) vs PHI 派出 Andrew·Painter (ERA 6.48)。 Hunter·Dobbins 具有明顯防禦率優勢。 主投近期：近3場 1勝0敗 ERA 3.06 (⚡ 表現穩定)。 客投近期：近3場 ERA 6.75 (⚠️ 防禦線偏高)。",
+          "impact": "positive",
+          "impactTeam": "home"
+        },
+        {
+          "icon": "🏟️",
+          "category": "場地因子影響",
+          "explanation": "Busch Stadium 場地特性為 neutral (Run Factor 1.00)。標準大聯盟球場 (中性得分環境)",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🌡️",
+          "category": "氣候條件",
+          "explanation": "氣候條件在正常範圍內，對比賽無重大影響。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📅",
+          "category": "賽程安排",
+          "explanation": "STL 休息 0 天 (heavy)，PHI 休息 0 天 (heavy)。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🩹",
+          "category": "傷兵影響",
+          "explanation": "STL 有 0 名主要傷兵名單；PHI 則有 0 名。費城費城人 陣中有主力遭遇輕微拉傷困擾，賽前出戰機率為 70%，戰力調度受限；聖路易紅雀 主力全員健康待命。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📈",
+          "category": "近期趨勢",
+          "explanation": "STL 近期戰績為 58-59 (1連敗)，PHI 戰績為 62-56 (2連敗)。 \n特殊標註：🧊 聖路易紅雀 近10場有 4 場得分低於3分 / ⚠️ 費城費城人 先發投手 Andrew·Painter 防禦率偏高 (ERA 6.48)",
+          "impact": "positive",
+          "impactTeam": "home"
+        },
+        {
+          "icon": "📊",
+          "category": "歷史對戰",
+          "explanation": "雙方近期無足夠交手紀錄可供深度參考。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🤖",
+          "category": "模型共識",
+          "explanation": "在 6 個評估模型中，有 6 個模型支持 STL 勝出。整合置信度為 52%。",
+          "impact": "positive",
+          "impactTeam": "home"
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "modelName": "SportsAI MLB 機器學習模型 (v1.0)",
+          "winner": "home",
+          "confidence": 52,
+          "homeScore": 7.1,
+          "awayScore": 1.8
+        },
+        {
+          "modelName": "Elo 戰力指數迭代模型 (v1.8)",
+          "winner": "home",
+          "confidence": 55.5,
+          "homeScore": 6,
+          "awayScore": 3.2
+        },
+        {
+          "modelName": "Monte Carlo 萬次隨機模擬模型 (v2.5)",
+          "winner": "home",
+          "confidence": 73,
+          "homeScore": 5.4,
+          "awayScore": 4.1
+        },
+        {
+          "modelName": "⚾ 投打與後援牛棚對位模型 (v1.0)",
+          "winner": "home",
+          "confidence": 65,
+          "homeScore": 5.6,
+          "awayScore": 3.7
+        },
+        {
+          "modelName": "🔬 QuantML 量化機器學習模型 (v1.0)",
+          "winner": "home",
+          "confidence": 54.1,
+          "homeScore": 4.97,
+          "awayScore": 4.29
+        },
+        {
+          "modelName": "👑 Meta 堆疊元模型 (v1.0)",
+          "winner": "home",
+          "confidence": 58,
+          "homeScore": 6,
+          "awayScore": 3.2
+        }
+      ]
+    },
+    {
+      "gameId": "823998",
+      "league": "MLB",
+      "homeTeam": {
+        "code": "LAA",
+        "name": "Los Angeles Angels",
+        "nameCn": "洛杉磯天使"
+      },
+      "awayTeam": {
+        "code": "TEX",
+        "name": "Texas Rangers",
+        "nameCn": "德州遊騎兵"
+      },
+      "venue": "Angel Stadium",
+      "gameDate": "2026-08-11T01:38:00Z",
+      "prediction": {
+        "winner": "away",
+        "winnerTeamName": "德州遊騎兵",
+        "confidence": 55.5,
+        "ouPick": "Under",
+        "ouLine": 11.5,
+        "predictedTotal": 10,
+        "homeExpectedScore": 5.1,
+        "awayExpectedScore": 5.1
+      },
+      "reasoning": [
+        {
+          "icon": "⚾",
+          "category": "先發投手對決",
+          "explanation": "先發投手資訊不足，無法進行完整比較。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🏟️",
+          "category": "場地因子影響",
+          "explanation": "Angel Stadium 場地特性為 neutral (Run Factor 1.00)。標準大聯盟球場 (中性得分環境)",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🌡️",
+          "category": "氣候條件",
+          "explanation": "氣候條件在正常範圍內，對比賽無重大影響。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📅",
+          "category": "賽程安排",
+          "explanation": "LAA 休息 1 天 (heavy)，TEX 休息 1 天 (heavy)。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🩹",
+          "category": "傷兵影響",
+          "explanation": "LAA 有 0 名主要傷兵名單；TEX 則有 0 名。德州遊騎兵 陣容調度深度充足，牛棚/替補席戰力充沛；洛杉磯天使 連續背靠背客戰，體能消耗恐影響末段防守強度。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📈",
+          "category": "近期趨勢",
+          "explanation": "LAA 近期戰績為 45-72 (1連敗)，TEX 戰績為 59-58 (4連勝)。 \n特殊標註：🧊 洛杉磯天使 近10場有 6 場得分低於3分 / 🧊 德州遊騎兵 近10場有 5 場得分低於3分 / 🚀 德州遊騎兵 處於 4 連勝強勢期",
+          "impact": "positive",
+          "impactTeam": "away"
+        },
+        {
+          "icon": "📊",
+          "category": "歷史對戰",
+          "explanation": "雙方近期交手 8 次，LAA 取得 5 勝，TEX 取得 3 勝。",
+          "impact": "positive",
+          "impactTeam": "home"
+        },
+        {
+          "icon": "🤖",
+          "category": "模型共識",
+          "explanation": "在 6 個評估模型中，有 2 個模型支持 TEX 勝出。整合置信度為 55.5%。",
+          "impact": "positive",
+          "impactTeam": "away"
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "modelName": "SportsAI MLB 機器學習模型 (v1.0)",
+          "winner": "away",
+          "confidence": 55.5,
+          "homeScore": 4.3,
+          "awayScore": 6.1
+        },
+        {
+          "modelName": "Elo 戰力指數迭代模型 (v1.8)",
+          "winner": "home",
+          "confidence": 50.3,
+          "homeScore": 5.3,
+          "awayScore": 5.3
+        },
+        {
+          "modelName": "Monte Carlo 萬次隨機模擬模型 (v2.5)",
+          "winner": "home",
+          "confidence": 51.7,
+          "homeScore": 5.4,
+          "awayScore": 5.3
+        },
+        {
+          "modelName": "⚾ 投打與後援牛棚對位模型 (v1.0)",
+          "winner": "away",
+          "confidence": 52,
+          "homeScore": 4.4,
+          "awayScore": 4.6
+        },
+        {
+          "modelName": "🔬 QuantML 量化機器學習模型 (v1.0)",
+          "winner": "home",
+          "confidence": 63.9,
+          "homeScore": 5.8,
+          "awayScore": 3.49
+        },
+        {
+          "modelName": "👑 Meta 堆疊元模型 (v1.0)",
+          "winner": "home",
+          "confidence": 52.1,
+          "homeScore": 5.1,
+          "awayScore": 5.1
+        }
+      ]
+    },
+    {
+      "gameId": "825048",
+      "league": "MLB",
+      "homeTeam": {
+        "code": "AZ",
+        "name": "Arizona Diamondbacks",
+        "nameCn": "亞利桑那響尾蛇"
+      },
+      "awayTeam": {
+        "code": "COL",
+        "name": "Colorado Rockies",
+        "nameCn": "科羅拉多洛磯"
+      },
+      "venue": "Chase Field",
+      "gameDate": "2026-08-11T01:40:00Z",
+      "prediction": {
+        "winner": "home",
+        "winnerTeamName": "亞利桑那響尾蛇",
+        "confidence": 54.3,
+        "ouPick": "Over",
+        "ouLine": 8.5,
+        "predictedTotal": 9,
+        "homeExpectedScore": 5.3,
+        "awayExpectedScore": 3.6
+      },
+      "reasoning": [
+        {
+          "icon": "⚾",
+          "category": "先發投手對決",
+          "explanation": "先發投手資訊不足，無法進行完整比較。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🏟️",
+          "category": "場地因子影響",
+          "explanation": "Chase Field 場地特性為 neutral (Run Factor 1.00)。標準大聯盟球場 (中性得分環境)",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🌡️",
+          "category": "氣候條件",
+          "explanation": "本場於室內場地進行，比賽不受外部氣候影響。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📅",
+          "category": "賽程安排",
+          "explanation": "AZ 休息 1 天 (mild)，COL 休息 1 天 (heavy)。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🩹",
+          "category": "傷兵影響",
+          "explanation": "AZ 有 0 名主要傷兵名單；COL 則有 0 名。科羅拉多洛磯 陣中有主力遭遇輕微拉傷困擾，賽前出戰機率為 70%，戰力調度受限；亞利桑那響尾蛇 主力全員健康待命。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📈",
+          "category": "近期趨勢",
+          "explanation": "AZ 近期戰績為 62-56 (1連敗)，COL 戰績為 46-71 (1連勝)。 \n特殊標註：🧊 亞利桑那響尾蛇 近10場有 3 場得分低於3分 / 🧊 科羅拉多洛磯 近10場有 3 場得分低於3分",
+          "impact": "positive",
+          "impactTeam": "away"
+        },
+        {
+          "icon": "📊",
+          "category": "歷史對戰",
+          "explanation": "雙方近期交手 10 次，AZ 取得 6 勝，COL 取得 4 勝。",
+          "impact": "positive",
+          "impactTeam": "home"
+        },
+        {
+          "icon": "🤖",
+          "category": "模型共識",
+          "explanation": "在 6 個評估模型中，有 4 個模型支持 AZ 勝出。整合置信度為 54.3%。",
+          "impact": "positive",
+          "impactTeam": "home"
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "modelName": "SportsAI MLB 機器學習模型 (v1.0)",
+          "winner": "home",
+          "confidence": 54.3,
+          "homeScore": 4.4,
+          "awayScore": 4.2
+        },
+        {
+          "modelName": "Elo 戰力指數迭代模型 (v1.8)",
+          "winner": "home",
+          "confidence": 64.4,
+          "homeScore": 5.8,
+          "awayScore": 2.6
+        },
+        {
+          "modelName": "Monte Carlo 萬次隨機模擬模型 (v2.5)",
+          "winner": "away",
+          "confidence": 61.3,
+          "homeScore": 4,
+          "awayScore": 4.7
+        },
+        {
+          "modelName": "⚾ 投打與後援牛棚對位模型 (v1.0)",
+          "winner": "away",
+          "confidence": 54,
+          "homeScore": 4.2,
+          "awayScore": 4.7
+        },
+        {
+          "modelName": "🔬 QuantML 量化機器學習模型 (v1.0)",
+          "winner": "home",
+          "confidence": 77.5,
+          "homeScore": 7.31,
+          "awayScore": 2.72
+        },
+        {
+          "modelName": "👑 Meta 堆疊元模型 (v1.0)",
+          "winner": "home",
+          "confidence": 58.6,
+          "homeScore": 5.3,
+          "awayScore": 3.6
+        }
+      ]
+    },
+    {
+      "gameId": "824969",
+      "league": "MLB",
+      "homeTeam": {
+        "code": "ATH",
+        "name": "Athletics",
+        "nameCn": "ATH"
+      },
+      "awayTeam": {
+        "code": "TB",
+        "name": "Tampa Bay Rays",
+        "nameCn": "坦帕灣光芒"
+      },
+      "venue": "Sutter Health Park",
+      "gameDate": "2026-08-11T01:40:00Z",
+      "prediction": {
+        "winner": "away",
+        "winnerTeamName": "坦帕灣光芒",
+        "confidence": 56.5,
+        "ouPick": "Under",
+        "ouLine": 9.5,
+        "predictedTotal": 9,
+        "homeExpectedScore": 4.7,
+        "awayExpectedScore": 4.5
+      },
+      "reasoning": [
+        {
+          "icon": "⚾",
+          "category": "先發投手對決",
+          "explanation": "先發投手資訊不足，無法進行完整比較。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🏟️",
+          "category": "場地因子影響",
+          "explanation": "Sutter Health Park 場地特性為 neutral (Run Factor 1.00)。標準大聯盟球場 (中性得分環境)",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🌡️",
+          "category": "氣候條件",
+          "explanation": "氣候條件在正常範圍內，對比賽無重大影響。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📅",
+          "category": "賽程安排",
+          "explanation": "ATH 休息 1 天 (heavy)，TB 休息 1 天 (mild)。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🩹",
+          "category": "傷兵影響",
+          "explanation": "ATH 有 0 名主要傷兵名單；TB 則有 0 名。ATH 陣中有主力遭遇輕微拉傷困擾，賽前出戰機率為 70%，戰力調度受限；坦帕灣光芒 主力全員健康待命。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📈",
+          "category": "近期趨勢",
+          "explanation": "ATH 近期戰績為 46-71 (1連勝)，TB 戰績為 70-46 (5連勝)。 \n特殊標註：🧊 ATH 近10場有 5 場得分低於3分 / 🧊 坦帕灣光芒 近10場有 4 場得分低於3分 / 🚀 坦帕灣光芒 處於 5 連勝強勢期",
+          "impact": "positive",
+          "impactTeam": "away"
+        },
+        {
+          "icon": "📊",
+          "category": "歷史對戰",
+          "explanation": "雙方近期無足夠交手紀錄可供深度參考。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🤖",
+          "category": "模型共識",
+          "explanation": "在 6 個評估模型中，有 3 個模型支持 TB 勝出。整合置信度為 56.5%。",
+          "impact": "positive",
+          "impactTeam": "away"
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "modelName": "SportsAI MLB 機器學習模型 (v1.0)",
+          "winner": "away",
+          "confidence": 56.5,
+          "homeScore": 4.2,
+          "awayScore": 4.9
+        },
+        {
+          "modelName": "Elo 戰力指數迭代模型 (v1.8)",
+          "winner": "away",
+          "confidence": 54.9,
+          "homeScore": 4.1,
+          "awayScore": 5
+        },
+        {
+          "modelName": "Monte Carlo 萬次隨機模擬模型 (v2.5)",
+          "winner": "home",
+          "confidence": 63.7,
+          "homeScore": 5.1,
+          "awayScore": 4.1
+        },
+        {
+          "modelName": "⚾ 投打與後援牛棚對位模型 (v1.0)",
+          "winner": "away",
+          "confidence": 54,
+          "homeScore": 4.2,
+          "awayScore": 4.7
+        },
+        {
+          "modelName": "🔬 QuantML 量化機器學習模型 (v1.0)",
+          "winner": "home",
+          "confidence": 50.8,
+          "homeScore": 4.73,
+          "awayScore": 4.59
+        },
+        {
+          "modelName": "👑 Meta 堆疊元模型 (v1.0)",
+          "winner": "home",
+          "confidence": 50.2,
+          "homeScore": 4.7,
+          "awayScore": 4.5
+        }
+      ]
+    },
+    {
+      "gameId": "823265",
+      "league": "MLB",
+      "homeTeam": {
+        "code": "SD",
+        "name": "San Diego Padres",
+        "nameCn": "聖地牙哥教士"
+      },
+      "awayTeam": {
+        "code": "MIL",
+        "name": "Milwaukee Brewers",
+        "nameCn": "密爾瓦基釀酒人"
+      },
+      "venue": "Petco Park",
+      "gameDate": "2026-08-11T01:40:00Z",
+      "prediction": {
+        "winner": "away",
+        "winnerTeamName": "密爾瓦基釀酒人",
+        "confidence": 54.2,
+        "ouPick": "Under",
+        "ouLine": 11.5,
+        "predictedTotal": 10,
+        "homeExpectedScore": 5.3,
+        "awayExpectedScore": 4.8
+      },
+      "reasoning": [
+        {
+          "icon": "⚾",
+          "category": "先發投手對決",
+          "explanation": "先發投手資訊不足，無法進行完整比較。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🏟️",
+          "category": "場地因子影響",
+          "explanation": "Petco Park 場地特性為 pitcher_paradise (Run Factor 0.94)。佩特科球場 (海邊高濕度大氣與深遠邊線，投手壓制力大幅提高)",
+          "impact": "negative"
+        },
+        {
+          "icon": "🌡️",
+          "category": "氣候條件",
+          "explanation": "氣候條件在正常範圍內，對比賽無重大影響。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📅",
+          "category": "賽程安排",
+          "explanation": "SD 休息 0 天 (heavy)，MIL 休息 1 天 (heavy)。",
+          "impact": "positive",
+          "impactTeam": "away"
+        },
+        {
+          "icon": "🩹",
+          "category": "傷兵影響",
+          "explanation": "SD 有 0 名主要傷兵名單；MIL 則有 0 名。密爾瓦基釀酒人 陣容調度深度充足，牛棚/替補席戰力充沛；聖地牙哥教士 連續背靠背客戰，體能消耗恐影響末段防守強度。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📈",
+          "category": "近期趨勢",
+          "explanation": "SD 近期戰績為 61-57 (1連勝)，MIL 戰績為 73-44 (1連勝)。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📊",
+          "category": "歷史對戰",
+          "explanation": "雙方近期交手 5 次，SD 取得 2 勝，MIL 取得 3 勝。",
+          "impact": "positive",
+          "impactTeam": "away"
+        },
+        {
+          "icon": "🤖",
+          "category": "模型共識",
+          "explanation": "在 6 個評估模型中，有 1 個模型支持 MIL 勝出。整合置信度為 54.2%。",
+          "impact": "positive",
+          "impactTeam": "away"
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "modelName": "SportsAI MLB 機器學習模型 (v1.0)",
+          "winner": "away",
+          "confidence": 54.2,
+          "homeScore": 4.2,
+          "awayScore": 6.2
+        },
+        {
+          "modelName": "Elo 戰力指數迭代模型 (v1.8)",
+          "winner": "home",
+          "confidence": 51,
+          "homeScore": 5.4,
+          "awayScore": 5.1
+        },
+        {
+          "modelName": "Monte Carlo 萬次隨機模擬模型 (v2.5)",
+          "winner": "home",
+          "confidence": 54.6,
+          "homeScore": 5.4,
+          "awayScore": 5.2
+        },
+        {
+          "modelName": "⚾ 投打與後援牛棚對位模型 (v1.0)",
+          "winner": "home",
+          "confidence": 52,
+          "homeScore": 4.5,
+          "awayScore": 4.2
+        },
+        {
+          "modelName": "🔬 QuantML 量化機器學習模型 (v1.0)",
+          "winner": "home",
+          "confidence": 51.9,
+          "homeScore": 4.72,
+          "awayScore": 4.4
+        },
+        {
+          "modelName": "👑 Meta 堆疊元模型 (v1.0)",
+          "winner": "home",
+          "confidence": 50.3,
+          "homeScore": 5.3,
+          "awayScore": 4.8
+        }
+      ]
+    },
+    {
+      "gameId": "823189",
+      "league": "MLB",
+      "homeTeam": {
+        "code": "SF",
+        "name": "San Francisco Giants",
+        "nameCn": "舊金山巨人"
+      },
+      "awayTeam": {
+        "code": "HOU",
+        "name": "Houston Astros",
+        "nameCn": "休士頓太空人"
+      },
+      "venue": "Oracle Park",
+      "gameDate": "2026-08-11T01:45:00Z",
+      "prediction": {
+        "winner": "away",
+        "winnerTeamName": "休士頓太空人",
+        "confidence": 50.8,
+        "ouPick": "Under",
+        "ouLine": 11.5,
+        "predictedTotal": 10,
+        "homeExpectedScore": 5.5,
+        "awayExpectedScore": 4.8
+      },
+      "reasoning": [
+        {
+          "icon": "⚾",
+          "category": "先發投手對決",
+          "explanation": "先發投手資訊不足，無法進行完整比較。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🏟️",
+          "category": "場地因子影響",
+          "explanation": "Oracle Park 場地特性為 pitcher_paradise (Run Factor 0.93)。歐拉克球場 (舊金山灣冰冷海風與強烈逆風，大聯盟頂級投手天堂)",
+          "impact": "negative"
+        },
+        {
+          "icon": "🌡️",
+          "category": "氣候條件",
+          "explanation": "氣候條件在正常範圍內，對比賽無重大影響。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📅",
+          "category": "賽程安排",
+          "explanation": "SF 休息 1 天 (heavy)，HOU 休息 0 天 (heavy)。",
+          "impact": "positive",
+          "impactTeam": "home"
+        },
+        {
+          "icon": "🩹",
+          "category": "傷兵影響",
+          "explanation": "SF 有 0 名主要傷兵名單；HOU 則有 0 名。休士頓太空人 陣容調度深度充足，牛棚/替補席戰力充沛；舊金山巨人 連續背靠背客戰，體能消耗恐影響末段防守強度。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📈",
+          "category": "近期趨勢",
+          "explanation": "SF 近期戰績為 49-68 (1連敗)，HOU 戰績為 60-58 (1連敗)。 \n特殊標註：🧊 舊金山巨人 近10場有 3 場得分低於3分",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📊",
+          "category": "歷史對戰",
+          "explanation": "雙方近期無足夠交手紀錄可供深度參考。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🤖",
+          "category": "模型共識",
+          "explanation": "在 6 個評估模型中，有 1 個模型支持 HOU 勝出。整合置信度為 50.8%。",
+          "impact": "positive",
+          "impactTeam": "away"
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "modelName": "SportsAI MLB 機器學習模型 (v1.0)",
+          "winner": "away",
+          "confidence": 50.8,
+          "homeScore": 3.5,
+          "awayScore": 7.1
+        },
+        {
+          "modelName": "Elo 戰力指數迭代模型 (v1.8)",
+          "winner": "home",
+          "confidence": 52,
+          "homeScore": 6,
+          "awayScore": 4.9
+        },
+        {
+          "modelName": "Monte Carlo 萬次隨機模擬模型 (v2.5)",
+          "winner": "home",
+          "confidence": 66.5,
+          "homeScore": 5.9,
+          "awayScore": 5
+        },
+        {
+          "modelName": "⚾ 投打與後援牛棚對位模型 (v1.0)",
+          "winner": "home",
+          "confidence": 54,
+          "homeScore": 4.7,
+          "awayScore": 4.2
+        },
+        {
+          "modelName": "🔬 QuantML 量化機器學習模型 (v1.0)",
+          "winner": "home",
+          "confidence": 52,
+          "homeScore": 4.72,
+          "awayScore": 4.38
+        },
+        {
+          "modelName": "👑 Meta 堆疊元模型 (v1.0)",
+          "winner": "home",
+          "confidence": 54.4,
+          "homeScore": 5.5,
+          "awayScore": 4.8
+        }
+      ]
+    },
+    {
+      "gameId": "823918",
+      "league": "MLB",
+      "homeTeam": {
+        "code": "LAD",
+        "name": "Los Angeles Dodgers",
+        "nameCn": "洛杉磯道奇"
+      },
+      "awayTeam": {
+        "code": "KC",
+        "name": "Kansas City Royals",
+        "nameCn": "堪薩斯皇家"
+      },
+      "venue": "UNIQLO Field at Dodger Stadium",
+      "gameDate": "2026-08-11T02:10:00Z",
+      "prediction": {
+        "winner": "home",
+        "winnerTeamName": "洛杉磯道奇",
+        "confidence": 61.7,
+        "ouPick": "Under",
+        "ouLine": 11.5,
+        "predictedTotal": 11,
+        "homeExpectedScore": 6,
+        "awayExpectedScore": 4.5
+      },
+      "reasoning": [
+        {
+          "icon": "⚾",
+          "category": "先發投手對決",
+          "explanation": "先發投手資訊不足，無法進行完整比較。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🏟️",
+          "category": "場地因子影響",
+          "explanation": "UNIQLO Field at Dodger Stadium 場地特性為 neutral (Run Factor 1.02)。道奇體育場 (夜間海風帶來重濕氣，白天打擊環境佳，整體呈微偏打者環境)",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🌡️",
+          "category": "氣候條件",
+          "explanation": "氣候條件在正常範圍內，對比賽無重大影響。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📅",
+          "category": "賽程安排",
+          "explanation": "LAD 休息 1 天 (mild)，KC 休息 1 天 (heavy)。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "🩹",
+          "category": "傷兵影響",
+          "explanation": "LAD 有 0 名主要傷兵名單；KC 則有 0 名。洛杉磯道奇 陣容調度深度充足，牛棚/替補席戰力充沛；堪薩斯皇家 連續背靠背客戰，體能消耗恐影響末段防守強度。",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📈",
+          "category": "近期趨勢",
+          "explanation": "LAD 近期戰績為 70-47 (1連勝)，KC 戰績為 49-69 (1連勝)。 \n特殊標註：🧊 洛杉磯道奇 近10場有 3 場得分低於3分 / 🧊 堪薩斯皇家 近10場有 3 場得分低於3分",
+          "impact": "neutral"
+        },
+        {
+          "icon": "📊",
+          "category": "歷史對戰",
+          "explanation": "雙方近期交手 2 次，LAD 取得 2 勝，KC 取得 0 勝。",
+          "impact": "positive",
+          "impactTeam": "home"
+        },
+        {
+          "icon": "🤖",
+          "category": "模型共識",
+          "explanation": "在 6 個評估模型中，有 6 個模型支持 LAD 勝出。整合置信度為 61.7%。",
+          "impact": "positive",
+          "impactTeam": "home"
+        }
+      ],
+      "modelBreakdown": [
+        {
+          "modelName": "SportsAI MLB 機器學習模型 (v1.0)",
+          "winner": "home",
+          "confidence": 61.7,
+          "homeScore": 5.6,
+          "awayScore": 5.5
+        },
+        {
+          "modelName": "Elo 戰力指數迭代模型 (v1.8)",
+          "winner": "home",
+          "confidence": 67,
+          "homeScore": 8,
+          "awayScore": 2.4
+        },
+        {
+          "modelName": "Monte Carlo 萬次隨機模擬模型 (v2.5)",
+          "winner": "home",
+          "confidence": 69.5,
+          "homeScore": 6.1,
+          "awayScore": 5.1
+        },
+        {
+          "modelName": "⚾ 投打與後援牛棚對位模型 (v1.0)",
+          "winner": "home",
+          "confidence": 63,
+          "homeScore": 5.4,
+          "awayScore": 3.8
+        },
+        {
+          "modelName": "🔬 QuantML 量化機器學習模型 (v1.0)",
+          "winner": "home",
+          "confidence": 54.6,
+          "homeScore": 4.81,
+          "awayScore": 4.05
+        },
+        {
+          "modelName": "👑 Meta 堆疊元模型 (v1.0)",
+          "winner": "home",
+          "confidence": 62.7,
+          "homeScore": 6,
+          "awayScore": 4.5
+        }
+      ]
+    }
+  ],
+  "overallSummary": "本日共產出 10 場賽事預測報告。其中看好主隊勝出 5 場，看好客隊勝出 5 場。各場次已透過多維度模型進行交叉驗證並產出詳細深度解析，供進階參考。"
+}

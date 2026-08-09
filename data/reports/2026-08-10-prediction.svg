@@ -1,0 +1,1245 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="2690" viewBox="0 0 1100 2690">
+    <defs>
+      <!-- Cyberpunk Background Gradient -->
+      <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#060913" />
+        <stop offset="40%" stop-color="#0a0f24" />
+        <stop offset="100%" stop-color="#070b1a" />
+      </linearGradient>
+
+      <!-- Glass Card Background -->
+      <linearGradient id="cardBg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="rgba(15, 23, 42, 0.85)" />
+        <stop offset="100%" stop-color="rgba(11, 18, 33, 0.95)" />
+      </linearGradient>
+
+      <!-- Metric Cell Background -->
+      <linearGradient id="cellBg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="rgba(255, 255, 255, 0.04)" />
+        <stop offset="100%" stop-color="rgba(255, 255, 255, 0.01)" />
+      </linearGradient>
+
+      <!-- Advantage Winner Box Highlight -->
+      <linearGradient id="advBg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="rgba(245, 158, 11, 0.15)" />
+        <stop offset="100%" stop-color="rgba(217, 119, 6, 0.08)" />
+      </linearGradient>
+
+      <!-- Win Bar Left Gradient (Cyan) -->
+      <linearGradient id="barLeft" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#06b6d4" />
+        <stop offset="100%" stop-color="#38bdf8" />
+      </linearGradient>
+
+      <!-- Win Bar Right Gradient (Pink/Magenta) -->
+      <linearGradient id="barRight" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#f43f5e" />
+        <stop offset="100%" stop-color="#e11d48" />
+      </linearGradient>
+    </defs>
+
+    <!-- Canvas Background -->
+    <rect width="1100" height="2690" fill="url(#bgGrad)" />
+
+    <!-- Ambient Glowing Orbs -->
+    <circle cx="150" cy="80" r="140" fill="#0284c7" opacity="0.12" filter="blur(60px)" />
+    <circle cx="950" cy="100" r="160" fill="#6366f1" opacity="0.1" filter="blur(70px)" />
+
+    <!-- Header Left: Title & Subtitle -->
+    <text x="40" y="58" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="34" font-weight="900" letter-spacing="1">
+      MLB 精選賽事 <tspan fill="#38bdf8">AI 預測</tspan>
+    </text>
+    <text x="40" y="92" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="13" font-weight="bold" letter-spacing="0.5">
+      數據分析 ‧ 即時預測 ‧ 掌握勝率 ‧ 找出最佳機會
+    </text>
+
+    <!-- Header Right: Date Pill Box -->
+    <g transform="translate(920, 36)">
+      <rect width="140" height="42" rx="10" fill="rgba(99, 102, 241, 0.15)" stroke="rgba(129, 140, 248, 0.3)" stroke-width="1.5" />
+      <text x="70" y="26" fill="#c084fc" font-family="Outfit, Noto Sans TC, sans-serif" font-size="17" font-weight="900" text-anchor="middle">8/10 (一)</text>
+      <text x="70" y="58" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="bold" text-anchor="middle">台灣時間</text>
+    </g>
+
+    <!-- Header Bottom Divider -->
+    <line x1="40" y1="120" x2="1060" y2="120" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+  
+      <!-- Game Card 1 -->
+      <g transform="translate(40, 150)">
+        <!-- Card Frame -->
+        <rect width="1020" height="220" rx="16" fill="url(#cardBg)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" />
+
+        <!-- Top Section: Time Pill, Away Team, Win Rate Bar, Home Team -->
+        <!-- Time & League Pill Badge -->
+        <rect x="24" y="24" width="92" height="26" rx="6" fill="rgba(2, 132, 199, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
+        <text x="40" y="41" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="800">01:35</text>
+        <rect x="76" y="29" width="34" height="16" rx="3" fill="#0284c7" />
+        <text x="93" y="40" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="9" font-weight="900" text-anchor="middle">MLB</text>
+
+        
+
+        <!-- Away Team (Left) -->
+        <g transform="translate(140, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="20" cy="18" r="18" fill="#007A33" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="20" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">BOS</text>
+          <text x="46" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900">波士頓紅襪</text>
+        </g>
+
+        <!-- Win Rate Numbers & Probability Bar (Center) -->
+        <g transform="translate(350, 16)">
+          <!-- Away Prob % (Cyan) -->
+          <text x="40" y="24" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="end">56%</text>
+          <text x="160" y="22" fill="#475569" font-family="Outfit, Noto Sans TC, sans-serif" font-size="12" font-weight="900" text-anchor="middle">VS</text>
+          <!-- Home Prob % (Magenta/Pink) -->
+          <text x="280" y="24" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="start">44%</text>
+
+          <!-- Probability Dual Bar -->
+          <g transform="translate(0, 34)">
+            <rect x="0" y="0" width="320" height="8" rx="4" fill="rgba(255, 255, 255, 0.05)" />
+            <rect x="0" y="0" width="180" height="8" rx="4" fill="url(#barLeft)" />
+            <rect x="180" y="0" width="140" height="8" rx="4" fill="url(#barRight)" />
+          </g>
+        </g>
+
+        <!-- Home Team (Right) -->
+        <g transform="translate(710, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="150" cy="18" r="18" fill="#CE1141" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="150" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">TOR</text>
+          <text x="124" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900" text-anchor="end">多倫多藍鳥</text>
+        </g>
+
+        <!-- Divider Line -->
+        <line x1="24" y1="82" x2="996" y2="82" stroke="rgba(255, 255, 255, 0.06)" stroke-width="1" />
+
+        <!-- Bottom Section: 9-Column Detailed Stat Cards Grid -->
+        <g transform="translate(24, 96)">
+          
+    <g transform="translate(0, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">讓分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">波士頓紅襪 -1.5</text>
+    </g>
+  
+          
+    <g transform="translate(110, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">過盤率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">46%</text>
+    </g>
+  
+          
+    <g transform="translate(220, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大小分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">8.5 分</text>
+    </g>
+  
+          
+    <g transform="translate(330, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大分機率</text>
+      <text x="51" y="62" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">56%</text>
+    </g>
+  
+          
+    <g transform="translate(440, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">預測總分</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">9.0</text>
+    </g>
+  
+          
+    <g transform="translate(550, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">攻擊指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">116</text>
+    </g>
+  
+          
+    <g transform="translate(660, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">投手指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">104</text>
+    </g>
+  
+          
+    <g transform="translate(770, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">整體勝率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">56.2%</text>
+    </g>
+  
+          
+          <!-- Highlighted Advantage Box -->
+          <g transform="translate(880, 0)">
+            <rect width="92" height="98" rx="8" fill="url(#advBg)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="1.5" />
+            <text x="46" y="24" fill="#f59e0b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">數據優勢 👑</text>
+            <text x="46" y="62" fill="#fbbf24" font-family="Outfit, Noto Sans TC, sans-serif" font-size="16" font-weight="900" text-anchor="middle">波士頓紅襪</text>
+          </g>
+        </g>
+      </g>
+    
+      <!-- Game Card 2 -->
+      <g transform="translate(40, 394)">
+        <!-- Card Frame -->
+        <rect width="1020" height="220" rx="16" fill="url(#cardBg)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" />
+
+        <!-- Top Section: Time Pill, Away Team, Win Rate Bar, Home Team -->
+        <!-- Time & League Pill Badge -->
+        <rect x="24" y="24" width="92" height="26" rx="6" fill="rgba(2, 132, 199, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
+        <text x="40" y="41" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="800">01:35</text>
+        <rect x="76" y="29" width="34" height="16" rx="3" fill="#0284c7" />
+        <text x="93" y="40" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="9" font-weight="900" text-anchor="middle">MLB</text>
+
+        
+
+        <!-- Away Team (Left) -->
+        <g transform="translate(140, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="20" cy="18" r="18" fill="#FF5910" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="20" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">NYM</text>
+          <text x="46" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900">紐約大都會</text>
+        </g>
+
+        <!-- Win Rate Numbers & Probability Bar (Center) -->
+        <g transform="translate(350, 16)">
+          <!-- Away Prob % (Cyan) -->
+          <text x="40" y="24" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="end">45%</text>
+          <text x="160" y="22" fill="#475569" font-family="Outfit, Noto Sans TC, sans-serif" font-size="12" font-weight="900" text-anchor="middle">VS</text>
+          <!-- Home Prob % (Magenta/Pink) -->
+          <text x="280" y="24" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="start">55%</text>
+
+          <!-- Probability Dual Bar -->
+          <g transform="translate(0, 34)">
+            <rect x="0" y="0" width="320" height="8" rx="4" fill="rgba(255, 255, 255, 0.05)" />
+            <rect x="0" y="0" width="144" height="8" rx="4" fill="url(#barLeft)" />
+            <rect x="144" y="0" width="176" height="8" rx="4" fill="url(#barRight)" />
+          </g>
+        </g>
+
+        <!-- Home Team (Right) -->
+        <g transform="translate(710, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="150" cy="18" r="18" fill="#E03A3E" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="150" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">ATL</text>
+          <text x="124" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900" text-anchor="end">亞特蘭大勇士</text>
+        </g>
+
+        <!-- Divider Line -->
+        <line x1="24" y1="82" x2="996" y2="82" stroke="rgba(255, 255, 255, 0.06)" stroke-width="1" />
+
+        <!-- Bottom Section: 9-Column Detailed Stat Cards Grid -->
+        <g transform="translate(24, 96)">
+          
+    <g transform="translate(0, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">讓分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">亞特蘭大勇士 -1.5</text>
+    </g>
+  
+          
+    <g transform="translate(110, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">過盤率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">45%</text>
+    </g>
+  
+          
+    <g transform="translate(220, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大小分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">11.5 分</text>
+    </g>
+  
+          
+    <g transform="translate(330, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大分機率</text>
+      <text x="51" y="62" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">46%</text>
+    </g>
+  
+          
+    <g transform="translate(440, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">預測總分</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">10.0</text>
+    </g>
+  
+          
+    <g transform="translate(550, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">攻擊指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">118</text>
+    </g>
+  
+          
+    <g transform="translate(660, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">投手指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">103</text>
+    </g>
+  
+          
+    <g transform="translate(770, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">整體勝率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">55%</text>
+    </g>
+  
+          
+          <!-- Highlighted Advantage Box -->
+          <g transform="translate(880, 0)">
+            <rect width="92" height="98" rx="8" fill="url(#advBg)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="1.5" />
+            <text x="46" y="24" fill="#f59e0b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">數據優勢 👑</text>
+            <text x="46" y="62" fill="#fbbf24" font-family="Outfit, Noto Sans TC, sans-serif" font-size="16" font-weight="900" text-anchor="middle">亞特蘭大勇士</text>
+          </g>
+        </g>
+      </g>
+    
+      <!-- Game Card 3 -->
+      <g transform="translate(40, 638)">
+        <!-- Card Frame -->
+        <rect width="1020" height="220" rx="16" fill="url(#cardBg)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" />
+
+        <!-- Top Section: Time Pill, Away Team, Win Rate Bar, Home Team -->
+        <!-- Time & League Pill Badge -->
+        <rect x="24" y="24" width="92" height="26" rx="6" fill="rgba(2, 132, 199, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
+        <text x="40" y="41" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="800">01:35</text>
+        <rect x="76" y="29" width="34" height="16" rx="3" fill="#0284c7" />
+        <text x="93" y="40" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="9" font-weight="900" text-anchor="middle">MLB</text>
+
+        
+
+        <!-- Away Team (Left) -->
+        <g transform="translate(140, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="20" cy="18" r="18" fill="#DF4601" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="20" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">BAL</text>
+          <text x="46" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900">巴爾的摩金鶯</text>
+        </g>
+
+        <!-- Win Rate Numbers & Probability Bar (Center) -->
+        <g transform="translate(350, 16)">
+          <!-- Away Prob % (Cyan) -->
+          <text x="40" y="24" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="end">44%</text>
+          <text x="160" y="22" fill="#475569" font-family="Outfit, Noto Sans TC, sans-serif" font-size="12" font-weight="900" text-anchor="middle">VS</text>
+          <!-- Home Prob % (Magenta/Pink) -->
+          <text x="280" y="24" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="start">56%</text>
+
+          <!-- Probability Dual Bar -->
+          <g transform="translate(0, 34)">
+            <rect x="0" y="0" width="320" height="8" rx="4" fill="rgba(255, 255, 255, 0.05)" />
+            <rect x="0" y="0" width="142" height="8" rx="4" fill="url(#barLeft)" />
+            <rect x="142" y="0" width="178" height="8" rx="4" fill="url(#barRight)" />
+          </g>
+        </g>
+
+        <!-- Home Team (Right) -->
+        <g transform="translate(710, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="150" cy="18" r="18" fill="#0C2340" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="150" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">MIN</text>
+          <text x="124" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900" text-anchor="end">明尼蘇達雙城</text>
+        </g>
+
+        <!-- Divider Line -->
+        <line x1="24" y1="82" x2="996" y2="82" stroke="rgba(255, 255, 255, 0.06)" stroke-width="1" />
+
+        <!-- Bottom Section: 9-Column Detailed Stat Cards Grid -->
+        <g transform="translate(24, 96)">
+          
+    <g transform="translate(0, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">讓分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">明尼蘇達雙城 -1.5</text>
+    </g>
+  
+          
+    <g transform="translate(110, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">過盤率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">46%</text>
+    </g>
+  
+          
+    <g transform="translate(220, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大小分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">11.5 分</text>
+    </g>
+  
+          
+    <g transform="translate(330, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大分機率</text>
+      <text x="51" y="62" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">46%</text>
+    </g>
+  
+          
+    <g transform="translate(440, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">預測總分</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">11.0</text>
+    </g>
+  
+          
+    <g transform="translate(550, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">攻擊指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">120</text>
+    </g>
+  
+          
+    <g transform="translate(660, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">投手指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">102</text>
+    </g>
+  
+          
+    <g transform="translate(770, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">整體勝率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">55.7%</text>
+    </g>
+  
+          
+          <!-- Highlighted Advantage Box -->
+          <g transform="translate(880, 0)">
+            <rect width="92" height="98" rx="8" fill="url(#advBg)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="1.5" />
+            <text x="46" y="24" fill="#f59e0b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">數據優勢 👑</text>
+            <text x="46" y="62" fill="#fbbf24" font-family="Outfit, Noto Sans TC, sans-serif" font-size="16" font-weight="900" text-anchor="middle">明尼蘇達雙城</text>
+          </g>
+        </g>
+      </g>
+    
+      <!-- Game Card 4 -->
+      <g transform="translate(40, 882)">
+        <!-- Card Frame -->
+        <rect width="1020" height="220" rx="16" fill="url(#cardBg)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" />
+
+        <!-- Top Section: Time Pill, Away Team, Win Rate Bar, Home Team -->
+        <!-- Time & League Pill Badge -->
+        <rect x="24" y="24" width="92" height="26" rx="6" fill="rgba(2, 132, 199, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
+        <text x="40" y="41" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="800">01:35</text>
+        <rect x="76" y="29" width="34" height="16" rx="3" fill="#0284c7" />
+        <text x="93" y="40" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="9" font-weight="900" text-anchor="middle">MLB</text>
+
+        
+
+        <!-- Away Team (Left) -->
+        <g transform="translate(140, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="20" cy="18" r="18" fill="#006BB6" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="20" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">PHI</text>
+          <text x="46" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900">費城費城人</text>
+        </g>
+
+        <!-- Win Rate Numbers & Probability Bar (Center) -->
+        <g transform="translate(350, 16)">
+          <!-- Away Prob % (Cyan) -->
+          <text x="40" y="24" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="end">48%</text>
+          <text x="160" y="22" fill="#475569" font-family="Outfit, Noto Sans TC, sans-serif" font-size="12" font-weight="900" text-anchor="middle">VS</text>
+          <!-- Home Prob % (Magenta/Pink) -->
+          <text x="280" y="24" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="start">52%</text>
+
+          <!-- Probability Dual Bar -->
+          <g transform="translate(0, 34)">
+            <rect x="0" y="0" width="320" height="8" rx="4" fill="rgba(255, 255, 255, 0.05)" />
+            <rect x="0" y="0" width="154" height="8" rx="4" fill="url(#barLeft)" />
+            <rect x="154" y="0" width="166" height="8" rx="4" fill="url(#barRight)" />
+          </g>
+        </g>
+
+        <!-- Home Team (Right) -->
+        <g transform="translate(710, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="150" cy="18" r="18" fill="#C41E3A" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="150" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">STL</text>
+          <text x="124" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900" text-anchor="end">聖路易紅雀</text>
+        </g>
+
+        <!-- Divider Line -->
+        <line x1="24" y1="82" x2="996" y2="82" stroke="rgba(255, 255, 255, 0.06)" stroke-width="1" />
+
+        <!-- Bottom Section: 9-Column Detailed Stat Cards Grid -->
+        <g transform="translate(24, 96)">
+          
+    <g transform="translate(0, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">讓分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">聖路易紅雀 -1.5</text>
+    </g>
+  
+          
+    <g transform="translate(110, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">過盤率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">43%</text>
+    </g>
+  
+          
+    <g transform="translate(220, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大小分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">9.5 分</text>
+    </g>
+  
+          
+    <g transform="translate(330, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大分機率</text>
+      <text x="51" y="62" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">46%</text>
+    </g>
+  
+          
+    <g transform="translate(440, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">預測總分</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">9.0</text>
+    </g>
+  
+          
+    <g transform="translate(550, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">攻擊指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">116</text>
+    </g>
+  
+          
+    <g transform="translate(660, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">投手指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">104</text>
+    </g>
+  
+          
+    <g transform="translate(770, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">整體勝率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">52%</text>
+    </g>
+  
+          
+          <!-- Highlighted Advantage Box -->
+          <g transform="translate(880, 0)">
+            <rect width="92" height="98" rx="8" fill="url(#advBg)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="1.5" />
+            <text x="46" y="24" fill="#f59e0b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">數據優勢 👑</text>
+            <text x="46" y="62" fill="#fbbf24" font-family="Outfit, Noto Sans TC, sans-serif" font-size="16" font-weight="900" text-anchor="middle">聖路易紅雀</text>
+          </g>
+        </g>
+      </g>
+    
+      <!-- Game Card 5 -->
+      <g transform="translate(40, 1126)">
+        <!-- Card Frame -->
+        <rect width="1020" height="220" rx="16" fill="url(#cardBg)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" />
+
+        <!-- Top Section: Time Pill, Away Team, Win Rate Bar, Home Team -->
+        <!-- Time & League Pill Badge -->
+        <rect x="24" y="24" width="92" height="26" rx="6" fill="rgba(2, 132, 199, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
+        <text x="40" y="41" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="800">01:35</text>
+        <rect x="76" y="29" width="34" height="16" rx="3" fill="#0284c7" />
+        <text x="93" y="40" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="9" font-weight="900" text-anchor="middle">MLB</text>
+
+        
+
+        <!-- Away Team (Left) -->
+        <g transform="translate(140, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="20" cy="18" r="18" fill="#003278" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="20" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">TEX</text>
+          <text x="46" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900">德州遊騎兵</text>
+        </g>
+
+        <!-- Win Rate Numbers & Probability Bar (Center) -->
+        <g transform="translate(350, 16)">
+          <!-- Away Prob % (Cyan) -->
+          <text x="40" y="24" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="end">56%</text>
+          <text x="160" y="22" fill="#475569" font-family="Outfit, Noto Sans TC, sans-serif" font-size="12" font-weight="900" text-anchor="middle">VS</text>
+          <!-- Home Prob % (Magenta/Pink) -->
+          <text x="280" y="24" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="start">45%</text>
+
+          <!-- Probability Dual Bar -->
+          <g transform="translate(0, 34)">
+            <rect x="0" y="0" width="320" height="8" rx="4" fill="rgba(255, 255, 255, 0.05)" />
+            <rect x="0" y="0" width="178" height="8" rx="4" fill="url(#barLeft)" />
+            <rect x="178" y="0" width="142" height="8" rx="4" fill="url(#barRight)" />
+          </g>
+        </g>
+
+        <!-- Home Team (Right) -->
+        <g transform="translate(710, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="150" cy="18" r="18" fill="#BA0021" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="150" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">LAA</text>
+          <text x="124" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900" text-anchor="end">洛杉磯天使</text>
+        </g>
+
+        <!-- Divider Line -->
+        <line x1="24" y1="82" x2="996" y2="82" stroke="rgba(255, 255, 255, 0.06)" stroke-width="1" />
+
+        <!-- Bottom Section: 9-Column Detailed Stat Cards Grid -->
+        <g transform="translate(24, 96)">
+          
+    <g transform="translate(0, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">讓分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">德州遊騎兵 -1.5</text>
+    </g>
+  
+          
+    <g transform="translate(110, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">過盤率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">46%</text>
+    </g>
+  
+          
+    <g transform="translate(220, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大小分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">11.5 分</text>
+    </g>
+  
+          
+    <g transform="translate(330, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大分機率</text>
+      <text x="51" y="62" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">46%</text>
+    </g>
+  
+          
+    <g transform="translate(440, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">預測總分</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">10.0</text>
+    </g>
+  
+          
+    <g transform="translate(550, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">攻擊指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">118</text>
+    </g>
+  
+          
+    <g transform="translate(660, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">投手指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">103</text>
+    </g>
+  
+          
+    <g transform="translate(770, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">整體勝率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">55.5%</text>
+    </g>
+  
+          
+          <!-- Highlighted Advantage Box -->
+          <g transform="translate(880, 0)">
+            <rect width="92" height="98" rx="8" fill="url(#advBg)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="1.5" />
+            <text x="46" y="24" fill="#f59e0b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">數據優勢 👑</text>
+            <text x="46" y="62" fill="#fbbf24" font-family="Outfit, Noto Sans TC, sans-serif" font-size="16" font-weight="900" text-anchor="middle">德州遊騎兵</text>
+          </g>
+        </g>
+      </g>
+    
+      <!-- Game Card 6 -->
+      <g transform="translate(40, 1370)">
+        <!-- Card Frame -->
+        <rect width="1020" height="220" rx="16" fill="url(#cardBg)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" />
+
+        <!-- Top Section: Time Pill, Away Team, Win Rate Bar, Home Team -->
+        <!-- Time & League Pill Badge -->
+        <rect x="24" y="24" width="92" height="26" rx="6" fill="rgba(2, 132, 199, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
+        <text x="40" y="41" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="800">01:35</text>
+        <rect x="76" y="29" width="34" height="16" rx="3" fill="#0284c7" />
+        <text x="93" y="40" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="9" font-weight="900" text-anchor="middle">MLB</text>
+
+        
+
+        <!-- Away Team (Left) -->
+        <g transform="translate(140, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="20" cy="18" r="18" fill="#33006F" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="20" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">COL</text>
+          <text x="46" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900">科羅拉多洛磯</text>
+        </g>
+
+        <!-- Win Rate Numbers & Probability Bar (Center) -->
+        <g transform="translate(350, 16)">
+          <!-- Away Prob % (Cyan) -->
+          <text x="40" y="24" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="end">46%</text>
+          <text x="160" y="22" fill="#475569" font-family="Outfit, Noto Sans TC, sans-serif" font-size="12" font-weight="900" text-anchor="middle">VS</text>
+          <!-- Home Prob % (Magenta/Pink) -->
+          <text x="280" y="24" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="start">54%</text>
+
+          <!-- Probability Dual Bar -->
+          <g transform="translate(0, 34)">
+            <rect x="0" y="0" width="320" height="8" rx="4" fill="rgba(255, 255, 255, 0.05)" />
+            <rect x="0" y="0" width="146" height="8" rx="4" fill="url(#barLeft)" />
+            <rect x="146" y="0" width="174" height="8" rx="4" fill="url(#barRight)" />
+          </g>
+        </g>
+
+        <!-- Home Team (Right) -->
+        <g transform="translate(710, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="150" cy="18" r="18" fill="#3b82f6" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="150" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">AZ</text>
+          <text x="124" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900" text-anchor="end">亞利桑那響尾蛇</text>
+        </g>
+
+        <!-- Divider Line -->
+        <line x1="24" y1="82" x2="996" y2="82" stroke="rgba(255, 255, 255, 0.06)" stroke-width="1" />
+
+        <!-- Bottom Section: 9-Column Detailed Stat Cards Grid -->
+        <g transform="translate(24, 96)">
+          
+    <g transform="translate(0, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">讓分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">亞利桑那響尾蛇 -1.5</text>
+    </g>
+  
+          
+    <g transform="translate(110, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">過盤率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">45%</text>
+    </g>
+  
+          
+    <g transform="translate(220, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大小分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">8.5 分</text>
+    </g>
+  
+          
+    <g transform="translate(330, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大分機率</text>
+      <text x="51" y="62" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">56%</text>
+    </g>
+  
+          
+    <g transform="translate(440, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">預測總分</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">9.0</text>
+    </g>
+  
+          
+    <g transform="translate(550, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">攻擊指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">116</text>
+    </g>
+  
+          
+    <g transform="translate(660, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">投手指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">104</text>
+    </g>
+  
+          
+    <g transform="translate(770, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">整體勝率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">54.3%</text>
+    </g>
+  
+          
+          <!-- Highlighted Advantage Box -->
+          <g transform="translate(880, 0)">
+            <rect width="92" height="98" rx="8" fill="url(#advBg)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="1.5" />
+            <text x="46" y="24" fill="#f59e0b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">數據優勢 👑</text>
+            <text x="46" y="62" fill="#fbbf24" font-family="Outfit, Noto Sans TC, sans-serif" font-size="16" font-weight="900" text-anchor="middle">亞利桑那響尾蛇</text>
+          </g>
+        </g>
+      </g>
+    
+      <!-- Game Card 7 -->
+      <g transform="translate(40, 1614)">
+        <!-- Card Frame -->
+        <rect width="1020" height="220" rx="16" fill="url(#cardBg)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" />
+
+        <!-- Top Section: Time Pill, Away Team, Win Rate Bar, Home Team -->
+        <!-- Time & League Pill Badge -->
+        <rect x="24" y="24" width="92" height="26" rx="6" fill="rgba(2, 132, 199, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
+        <text x="40" y="41" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="800">01:35</text>
+        <rect x="76" y="29" width="34" height="16" rx="3" fill="#0284c7" />
+        <text x="93" y="40" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="9" font-weight="900" text-anchor="middle">MLB</text>
+
+        
+
+        <!-- Away Team (Left) -->
+        <g transform="translate(140, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="20" cy="18" r="18" fill="#092C5C" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="20" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">TB</text>
+          <text x="46" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900">坦帕灣光芒</text>
+        </g>
+
+        <!-- Win Rate Numbers & Probability Bar (Center) -->
+        <g transform="translate(350, 16)">
+          <!-- Away Prob % (Cyan) -->
+          <text x="40" y="24" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="end">57%</text>
+          <text x="160" y="22" fill="#475569" font-family="Outfit, Noto Sans TC, sans-serif" font-size="12" font-weight="900" text-anchor="middle">VS</text>
+          <!-- Home Prob % (Magenta/Pink) -->
+          <text x="280" y="24" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="start">44%</text>
+
+          <!-- Probability Dual Bar -->
+          <g transform="translate(0, 34)">
+            <rect x="0" y="0" width="320" height="8" rx="4" fill="rgba(255, 255, 255, 0.05)" />
+            <rect x="0" y="0" width="181" height="8" rx="4" fill="url(#barLeft)" />
+            <rect x="181" y="0" width="139" height="8" rx="4" fill="url(#barRight)" />
+          </g>
+        </g>
+
+        <!-- Home Team (Right) -->
+        <g transform="translate(710, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="150" cy="18" r="18" fill="#3b82f6" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="150" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">ATH</text>
+          <text x="124" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900" text-anchor="end">ATH</text>
+        </g>
+
+        <!-- Divider Line -->
+        <line x1="24" y1="82" x2="996" y2="82" stroke="rgba(255, 255, 255, 0.06)" stroke-width="1" />
+
+        <!-- Bottom Section: 9-Column Detailed Stat Cards Grid -->
+        <g transform="translate(24, 96)">
+          
+    <g transform="translate(0, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">讓分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">坦帕灣光芒 -1.5</text>
+    </g>
+  
+          
+    <g transform="translate(110, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">過盤率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">46%</text>
+    </g>
+  
+          
+    <g transform="translate(220, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大小分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">9.5 分</text>
+    </g>
+  
+          
+    <g transform="translate(330, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大分機率</text>
+      <text x="51" y="62" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">46%</text>
+    </g>
+  
+          
+    <g transform="translate(440, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">預測總分</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">9.0</text>
+    </g>
+  
+          
+    <g transform="translate(550, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">攻擊指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">116</text>
+    </g>
+  
+          
+    <g transform="translate(660, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">投手指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">104</text>
+    </g>
+  
+          
+    <g transform="translate(770, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">整體勝率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">56.5%</text>
+    </g>
+  
+          
+          <!-- Highlighted Advantage Box -->
+          <g transform="translate(880, 0)">
+            <rect width="92" height="98" rx="8" fill="url(#advBg)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="1.5" />
+            <text x="46" y="24" fill="#f59e0b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">數據優勢 👑</text>
+            <text x="46" y="62" fill="#fbbf24" font-family="Outfit, Noto Sans TC, sans-serif" font-size="16" font-weight="900" text-anchor="middle">坦帕灣光芒</text>
+          </g>
+        </g>
+      </g>
+    
+      <!-- Game Card 8 -->
+      <g transform="translate(40, 1858)">
+        <!-- Card Frame -->
+        <rect width="1020" height="220" rx="16" fill="url(#cardBg)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" />
+
+        <!-- Top Section: Time Pill, Away Team, Win Rate Bar, Home Team -->
+        <!-- Time & League Pill Badge -->
+        <rect x="24" y="24" width="92" height="26" rx="6" fill="rgba(2, 132, 199, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
+        <text x="40" y="41" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="800">01:35</text>
+        <rect x="76" y="29" width="34" height="16" rx="3" fill="#0284c7" />
+        <text x="93" y="40" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="9" font-weight="900" text-anchor="middle">MLB</text>
+
+        
+
+        <!-- Away Team (Left) -->
+        <g transform="translate(140, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="20" cy="18" r="18" fill="#00471B" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="20" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">MIL</text>
+          <text x="46" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900">密爾瓦基釀酒人</text>
+        </g>
+
+        <!-- Win Rate Numbers & Probability Bar (Center) -->
+        <g transform="translate(350, 16)">
+          <!-- Away Prob % (Cyan) -->
+          <text x="40" y="24" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="end">54%</text>
+          <text x="160" y="22" fill="#475569" font-family="Outfit, Noto Sans TC, sans-serif" font-size="12" font-weight="900" text-anchor="middle">VS</text>
+          <!-- Home Prob % (Magenta/Pink) -->
+          <text x="280" y="24" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="start">46%</text>
+
+          <!-- Probability Dual Bar -->
+          <g transform="translate(0, 34)">
+            <rect x="0" y="0" width="320" height="8" rx="4" fill="rgba(255, 255, 255, 0.05)" />
+            <rect x="0" y="0" width="173" height="8" rx="4" fill="url(#barLeft)" />
+            <rect x="173" y="0" width="147" height="8" rx="4" fill="url(#barRight)" />
+          </g>
+        </g>
+
+        <!-- Home Team (Right) -->
+        <g transform="translate(710, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="150" cy="18" r="18" fill="#2F241D" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="150" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">SD</text>
+          <text x="124" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900" text-anchor="end">聖地牙哥教士</text>
+        </g>
+
+        <!-- Divider Line -->
+        <line x1="24" y1="82" x2="996" y2="82" stroke="rgba(255, 255, 255, 0.06)" stroke-width="1" />
+
+        <!-- Bottom Section: 9-Column Detailed Stat Cards Grid -->
+        <g transform="translate(24, 96)">
+          
+    <g transform="translate(0, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">讓分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">密爾瓦基釀酒人 -1.5</text>
+    </g>
+  
+          
+    <g transform="translate(110, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">過盤率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">44%</text>
+    </g>
+  
+          
+    <g transform="translate(220, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大小分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">11.5 分</text>
+    </g>
+  
+          
+    <g transform="translate(330, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大分機率</text>
+      <text x="51" y="62" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">46%</text>
+    </g>
+  
+          
+    <g transform="translate(440, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">預測總分</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">10.0</text>
+    </g>
+  
+          
+    <g transform="translate(550, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">攻擊指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">118</text>
+    </g>
+  
+          
+    <g transform="translate(660, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">投手指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">103</text>
+    </g>
+  
+          
+    <g transform="translate(770, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">整體勝率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">54.2%</text>
+    </g>
+  
+          
+          <!-- Highlighted Advantage Box -->
+          <g transform="translate(880, 0)">
+            <rect width="92" height="98" rx="8" fill="url(#advBg)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="1.5" />
+            <text x="46" y="24" fill="#f59e0b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">數據優勢 👑</text>
+            <text x="46" y="62" fill="#fbbf24" font-family="Outfit, Noto Sans TC, sans-serif" font-size="16" font-weight="900" text-anchor="middle">密爾瓦基釀酒人</text>
+          </g>
+        </g>
+      </g>
+    
+      <!-- Game Card 9 -->
+      <g transform="translate(40, 2102)">
+        <!-- Card Frame -->
+        <rect width="1020" height="220" rx="16" fill="url(#cardBg)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" />
+
+        <!-- Top Section: Time Pill, Away Team, Win Rate Bar, Home Team -->
+        <!-- Time & League Pill Badge -->
+        <rect x="24" y="24" width="92" height="26" rx="6" fill="rgba(2, 132, 199, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
+        <text x="40" y="41" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="800">01:35</text>
+        <rect x="76" y="29" width="34" height="16" rx="3" fill="#0284c7" />
+        <text x="93" y="40" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="9" font-weight="900" text-anchor="middle">MLB</text>
+
+        
+
+        <!-- Away Team (Left) -->
+        <g transform="translate(140, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="20" cy="18" r="18" fill="#CE1141" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="20" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">HOU</text>
+          <text x="46" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900">休士頓太空人</text>
+        </g>
+
+        <!-- Win Rate Numbers & Probability Bar (Center) -->
+        <g transform="translate(350, 16)">
+          <!-- Away Prob % (Cyan) -->
+          <text x="40" y="24" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="end">51%</text>
+          <text x="160" y="22" fill="#475569" font-family="Outfit, Noto Sans TC, sans-serif" font-size="12" font-weight="900" text-anchor="middle">VS</text>
+          <!-- Home Prob % (Magenta/Pink) -->
+          <text x="280" y="24" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="start">49%</text>
+
+          <!-- Probability Dual Bar -->
+          <g transform="translate(0, 34)">
+            <rect x="0" y="0" width="320" height="8" rx="4" fill="rgba(255, 255, 255, 0.05)" />
+            <rect x="0" y="0" width="163" height="8" rx="4" fill="url(#barLeft)" />
+            <rect x="163" y="0" width="157" height="8" rx="4" fill="url(#barRight)" />
+          </g>
+        </g>
+
+        <!-- Home Team (Right) -->
+        <g transform="translate(710, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="150" cy="18" r="18" fill="#FD5A1E" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="150" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">SF</text>
+          <text x="124" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900" text-anchor="end">舊金山巨人</text>
+        </g>
+
+        <!-- Divider Line -->
+        <line x1="24" y1="82" x2="996" y2="82" stroke="rgba(255, 255, 255, 0.06)" stroke-width="1" />
+
+        <!-- Bottom Section: 9-Column Detailed Stat Cards Grid -->
+        <g transform="translate(24, 96)">
+          
+    <g transform="translate(0, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">讓分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">休士頓太空人 -1.5</text>
+    </g>
+  
+          
+    <g transform="translate(110, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">過盤率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">42%</text>
+    </g>
+  
+          
+    <g transform="translate(220, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大小分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">11.5 分</text>
+    </g>
+  
+          
+    <g transform="translate(330, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大分機率</text>
+      <text x="51" y="62" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">46%</text>
+    </g>
+  
+          
+    <g transform="translate(440, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">預測總分</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">10.0</text>
+    </g>
+  
+          
+    <g transform="translate(550, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">攻擊指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">118</text>
+    </g>
+  
+          
+    <g transform="translate(660, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">投手指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">103</text>
+    </g>
+  
+          
+    <g transform="translate(770, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">整體勝率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">50.8%</text>
+    </g>
+  
+          
+          <!-- Highlighted Advantage Box -->
+          <g transform="translate(880, 0)">
+            <rect width="92" height="98" rx="8" fill="url(#advBg)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="1.5" />
+            <text x="46" y="24" fill="#f59e0b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">數據優勢 👑</text>
+            <text x="46" y="62" fill="#fbbf24" font-family="Outfit, Noto Sans TC, sans-serif" font-size="16" font-weight="900" text-anchor="middle">休士頓太空人</text>
+          </g>
+        </g>
+      </g>
+    
+      <!-- Game Card 10 -->
+      <g transform="translate(40, 2346)">
+        <!-- Card Frame -->
+        <rect width="1020" height="220" rx="16" fill="url(#cardBg)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" />
+
+        <!-- Top Section: Time Pill, Away Team, Win Rate Bar, Home Team -->
+        <!-- Time & League Pill Badge -->
+        <rect x="24" y="24" width="92" height="26" rx="6" fill="rgba(2, 132, 199, 0.15)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
+        <text x="40" y="41" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="800">01:35</text>
+        <rect x="76" y="29" width="34" height="16" rx="3" fill="#0284c7" />
+        <text x="93" y="40" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="9" font-weight="900" text-anchor="middle">MLB</text>
+
+        
+
+        <!-- Away Team (Left) -->
+        <g transform="translate(140, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="20" cy="18" r="18" fill="#004687" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="20" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">KC</text>
+          <text x="46" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900">堪薩斯皇家</text>
+        </g>
+
+        <!-- Win Rate Numbers & Probability Bar (Center) -->
+        <g transform="translate(350, 16)">
+          <!-- Away Prob % (Cyan) -->
+          <text x="40" y="24" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="end">38%</text>
+          <text x="160" y="22" fill="#475569" font-family="Outfit, Noto Sans TC, sans-serif" font-size="12" font-weight="900" text-anchor="middle">VS</text>
+          <!-- Home Prob % (Magenta/Pink) -->
+          <text x="280" y="24" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="28" font-weight="900" text-anchor="start">62%</text>
+
+          <!-- Probability Dual Bar -->
+          <g transform="translate(0, 34)">
+            <rect x="0" y="0" width="320" height="8" rx="4" fill="rgba(255, 255, 255, 0.05)" />
+            <rect x="0" y="0" width="123" height="8" rx="4" fill="url(#barLeft)" />
+            <rect x="123" y="0" width="197" height="8" rx="4" fill="url(#barRight)" />
+          </g>
+        </g>
+
+        <!-- Home Team (Right) -->
+        <g transform="translate(710, 20)">
+          <!-- Team Logo Badge -->
+          <circle cx="150" cy="18" r="18" fill="#005A9C" stroke="rgba(255, 255, 255, 0.2)" stroke-width="1.5" />
+          <text x="150" y="23" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="900" text-anchor="middle">LAD</text>
+          <text x="124" y="24" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="18" font-weight="900" text-anchor="end">洛杉磯道奇</text>
+        </g>
+
+        <!-- Divider Line -->
+        <line x1="24" y1="82" x2="996" y2="82" stroke="rgba(255, 255, 255, 0.06)" stroke-width="1" />
+
+        <!-- Bottom Section: 9-Column Detailed Stat Cards Grid -->
+        <g transform="translate(24, 96)">
+          
+    <g transform="translate(0, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">讓分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">洛杉磯道奇 -1.5</text>
+    </g>
+  
+          
+    <g transform="translate(110, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">過盤率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">51%</text>
+    </g>
+  
+          
+    <g transform="translate(220, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大小分盤</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">11.5 分</text>
+    </g>
+  
+          
+    <g transform="translate(330, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">大分機率</text>
+      <text x="51" y="62" fill="#fb7185" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">46%</text>
+    </g>
+  
+          
+    <g transform="translate(440, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">預測總分</text>
+      <text x="51" y="62" fill="#ffffff" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">11.0</text>
+    </g>
+  
+          
+    <g transform="translate(550, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">攻擊指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">120</text>
+    </g>
+  
+          
+    <g transform="translate(660, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">投手指數</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">102</text>
+    </g>
+  
+          
+    <g transform="translate(770, 0)">
+      <rect width="102" height="98" rx="8" fill="url(#cellBg)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="1" />
+      <text x="51" y="28" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">整體勝率</text>
+      <text x="51" y="62" fill="#38bdf8" font-family="Outfit, Noto Sans TC, sans-serif" font-size="15" font-weight="900" text-anchor="middle">61.7%</text>
+    </g>
+  
+          
+          <!-- Highlighted Advantage Box -->
+          <g transform="translate(880, 0)">
+            <rect width="92" height="98" rx="8" fill="url(#advBg)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="1.5" />
+            <text x="46" y="24" fill="#f59e0b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="10" font-weight="bold" text-anchor="middle">數據優勢 👑</text>
+            <text x="46" y="62" fill="#fbbf24" font-family="Outfit, Noto Sans TC, sans-serif" font-size="16" font-weight="900" text-anchor="middle">洛杉磯道奇</text>
+          </g>
+        </g>
+      </g>
+    
+    <!-- Footer Section -->
+    <g transform="translate(40, 2620)">
+      <text x="0" y="20" fill="#64748b" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="bold">
+        ※ 數據為 AI 模型即時分析結果，僅供參考，實際賽況請依照比分與現場狀態為準。
+      </text>
+      <text x="1020" y="20" fill="#475569" font-family="Outfit, Noto Sans TC, sans-serif" font-size="11" font-weight="bold" text-anchor="end">
+        數據來源：AI 模型分析 ‧ 即時球隊狀態 ‧ 本季數據
+      </text>
+    </g>
+  </svg>
