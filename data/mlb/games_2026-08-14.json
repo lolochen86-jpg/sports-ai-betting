@@ -28,7 +28,17 @@
     "away_runs_per_game": 4.278688524590164,
     "home_bullpen_era_3d": 1.59,
     "away_bullpen_era_3d": 0.9,
-    "park_factor": 93
+    "park_factor": 93,
+    "home_odds": 1.73,
+    "away_odds": 2.152,
+    "spread": -1.5,
+    "spread_home_odds": 2.611,
+    "spread_away_odds": 1.498,
+    "total_line": 7.5,
+    "over_odds": 2.005,
+    "under_odds": 1.807,
+    "odds_source": "pinnacle_direct",
+    "odds_timestamp": "2026-08-14T22:48:23.057858+08:00"
   },
   {
     "game_pk": 823913,
@@ -59,7 +69,17 @@
     "away_runs_per_game": 4.892561983471074,
     "home_bullpen_era_3d": 2.7,
     "away_bullpen_era_3d": 6.43,
-    "park_factor": 92
+    "park_factor": 92,
+    "home_odds": 1.54,
+    "away_odds": 2.533,
+    "spread": -1.5,
+    "spread_home_odds": 2.191,
+    "spread_away_odds": 1.687,
+    "total_line": 7.5,
+    "over_odds": 1.859,
+    "under_odds": 1.946,
+    "odds_source": "pinnacle_direct",
+    "odds_timestamp": "2026-08-14T22:48:21.809875+08:00"
   },
   {
     "game_pk": 823185,
@@ -90,6 +110,16 @@
     "away_runs_per_game": 4.768595041322314,
     "home_bullpen_era_3d": 1.42,
     "away_bullpen_era_3d": 2.57,
-    "park_factor": 94
+    "park_factor": 94,
+    "home_odds": 1.748,
+    "away_odds": 2.122,
+    "spread": -1.5,
+    "spread_home_odds": 2.621,
+    "spread_away_odds": 1.498,
+    "total_line": 7.5,
+    "over_odds": 1.901,
+    "under_odds": 1.901,
+    "odds_source": "pinnacle_direct",
+    "odds_timestamp": "2026-08-14T22:48:24.496650+08:00"
   }
 ]
