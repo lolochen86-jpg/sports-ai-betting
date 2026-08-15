@@ -28,7 +28,17 @@
     "away_runs_per_game": 4.371900826446281,
     "home_bullpen_era_3d": 3.68,
     "away_bullpen_era_3d": 4.2,
-    "park_factor": 104
+    "park_factor": 104,
+    "home_odds": 1.547,
+    "away_odds": 2.514,
+    "spread": -1.5,
+    "spread_home_odds": 2.103,
+    "spread_away_odds": 1.748,
+    "total_line": 9.0,
+    "over_odds": 1.937,
+    "under_odds": 1.867,
+    "odds_source": "pinnacle_direct",
+    "odds_timestamp": "2026-08-15T22:16:13.722046+08:00"
   },
   {
     "game_pk": 823184,
@@ -59,7 +69,17 @@
     "away_runs_per_game": 4.768595041322314,
     "home_bullpen_era_3d": 3.0,
     "away_bullpen_era_3d": 4.5,
-    "park_factor": 94
+    "park_factor": 94,
+    "home_odds": 1.586,
+    "away_odds": 2.426,
+    "spread": -1.5,
+    "spread_home_odds": 2.25,
+    "spread_away_odds": 1.657,
+    "total_line": 7.5,
+    "over_odds": 1.859,
+    "under_odds": 1.946,
+    "odds_source": "pinnacle_direct",
+    "odds_timestamp": "2026-08-15T22:16:15.375814+08:00"
   },
   {
     "game_pk": 824480,
@@ -90,7 +110,17 @@
     "away_runs_per_game": 4.385245901639344,
     "home_bullpen_era_3d": 7.36,
     "away_bullpen_era_3d": 12.15,
-    "park_factor": 110
+    "park_factor": 110,
+    "home_odds": 1.91,
+    "away_odds": 1.928,
+    "spread": -1.5,
+    "spread_home_odds": 2.787,
+    "spread_away_odds": 1.446,
+    "total_line": 9.5,
+    "over_odds": 1.995,
+    "under_odds": 1.814,
+    "odds_source": "pinnacle_direct",
+    "odds_timestamp": "2026-08-15T22:16:15.920243+08:00"
   },
   {
     "game_pk": 824157,
@@ -121,7 +151,17 @@
     "away_runs_per_game": 3.8442622950819674,
     "home_bullpen_era_3d": 4.2,
     "away_bullpen_era_3d": 9.0,
-    "park_factor": 103
+    "park_factor": 103,
+    "home_odds": 1.8,
+    "away_odds": 2.054,
+    "spread": -1.5,
+    "spread_home_odds": 2.631,
+    "spread_away_odds": 1.493,
+    "total_line": 8.5,
+    "over_odds": 1.844,
+    "under_odds": 1.956,
+    "odds_source": "pinnacle_direct",
+    "odds_timestamp": "2026-08-15T22:16:11.113385+08:00"
   },
   {
     "game_pk": 823671,
@@ -152,7 +192,17 @@
     "away_runs_per_game": 4.40650406504065,
     "home_bullpen_era_3d": 3.0,
     "away_bullpen_era_3d": 2.57,
-    "park_factor": 95
+    "park_factor": 95,
+    "home_odds": 2.25,
+    "away_odds": 1.672,
+    "spread": 1.5,
+    "spread_home_odds": 1.73,
+    "spread_away_odds": 2.132,
+    "total_line": 8.0,
+    "over_odds": 1.836,
+    "under_odds": 1.966,
+    "odds_source": "pinnacle_direct",
+    "odds_timestamp": "2026-08-15T22:16:14.181397+08:00"
   },
   {
     "game_pk": 823347,
@@ -183,7 +233,17 @@
     "away_runs_per_game": 4.446280991735537,
     "home_bullpen_era_3d": 6.35,
     "away_bullpen_era_3d": 9.0,
-    "park_factor": 91
+    "park_factor": 91,
+    "home_odds": 2.073,
+    "away_odds": 1.78,
+    "spread": 1.5,
+    "spread_home_odds": 1.609,
+    "spread_away_odds": 2.347,
+    "total_line": 7.5,
+    "over_odds": 1.829,
+    "under_odds": 1.976,
+    "odds_source": "pinnacle_direct",
+    "odds_timestamp": "2026-08-15T22:16:16.984433+08:00"
   },
   {
     "game_pk": 823914,
@@ -214,7 +274,17 @@
     "away_runs_per_game": 4.89344262295082,
     "home_bullpen_era_3d": 4.76,
     "away_bullpen_era_3d": 3.68,
-    "park_factor": 92
+    "park_factor": 92,
+    "home_odds": 2.054,
+    "away_odds": 1.8,
+    "spread": 1.5,
+    "spread_home_odds": 1.601,
+    "spread_away_odds": 2.367,
+    "total_line": 7.5,
+    "over_odds": 2.015,
+    "under_odds": 1.8,
+    "odds_source": "pinnacle_direct",
+    "odds_timestamp": "2026-08-15T22:16:16.452049+08:00"
   },
   {
     "game_pk": 823990,
@@ -245,6 +315,16 @@
     "away_runs_per_game": 4.122950819672131,
     "home_bullpen_era_3d": 4.2,
     "away_bullpen_era_3d": 1.59,
-    "park_factor": 101
+    "park_factor": 101,
+    "home_odds": 1.63,
+    "away_odds": 2.328,
+    "spread": -1.5,
+    "spread_home_odds": 2.357,
+    "spread_away_odds": 1.601,
+    "total_line": 8.0,
+    "over_odds": 1.884,
+    "under_odds": 1.918,
+    "odds_source": "pinnacle_direct",
+    "odds_timestamp": "2026-08-15T22:16:14.803681+08:00"
   }
 ]
