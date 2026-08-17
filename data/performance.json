@@ -1,13 +1,13 @@
 {
-  "total_bets": 55,
-  "wins": 5,
-  "losses": 28,
-  "total_wagered": 1960.0,
-  "total_pnl": 269.0,
+  "total_bets": 58,
+  "wins": 6,
+  "losses": 30,
+  "total_wagered": 2020.0,
+  "total_pnl": 402.0,
   "single_bets": 6,
   "single_wins": 2,
-  "parlay_bets": 49,
-  "parlay_wins": 3,
+  "parlay_bets": 52,
+  "parlay_wins": 4,
   "by_sport": {
     "NBA": {
       "bets": 0,
@@ -336,6 +336,12 @@
       "bets": 2,
       "wins": 0,
       "pnl": -30.0
+    },
+    {
+      "date": "2026-08-16",
+      "bets": 3,
+      "wins": 1,
+      "pnl": 133.0
     }
   ]
 }
