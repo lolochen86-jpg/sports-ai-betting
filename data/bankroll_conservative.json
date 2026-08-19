@@ -1,6 +1,6 @@
 {
   "initial": 3000.0,
-  "current": 2672.0,
+  "current": 2592.0,
   "peak": 4327.0,
   "target": 12000.0,
   "ruin_threshold": 10.0,
@@ -615,6 +615,16 @@
       "bets": 0,
       "wins": 0,
       "losses": 0,
+      "voids": 0
+    },
+    {
+      "date": "2026-08-18",
+      "open": 2672.0,
+      "close": 2592.0,
+      "pnl": -80.0,
+      "bets": 2,
+      "wins": 0,
+      "losses": 2,
       "voids": 0
     }
   ],
