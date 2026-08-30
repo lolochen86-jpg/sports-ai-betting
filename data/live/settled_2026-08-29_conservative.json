@@ -5,14 +5,20 @@
     "sport": "PARLAY",
     "parlay_odds": 4.791,
     "bet_amount": 60,
-    "result": "VOID",
-    "pnl": 0.0,
+    "result": "WIN",
+    "pnl": 227.0,
     "leg_results": [
       {
         "game_id": "823665",
         "expected": "CWS",
-        "winner": null,
-        "result": "VOID"
+        "winner": "CWS",
+        "result": "WIN"
+      },
+      {
+        "game_id": "824392",
+        "expected": "KC",
+        "winner": "KC",
+        "result": "WIN"
       }
     ],
     "legs": [
@@ -159,14 +165,26 @@
     "sport": "PARLAY",
     "parlay_odds": 54.835,
     "bet_amount": 10.0,
-    "result": "VOID",
-    "pnl": 0.0,
+    "result": "LOSS",
+    "pnl": -10.0,
     "leg_results": [
       {
         "game_id": "823665",
         "expected": "CWS",
-        "winner": null,
-        "result": "VOID"
+        "winner": "CWS",
+        "result": "WIN"
+      },
+      {
+        "game_id": "824392",
+        "expected": "KC",
+        "winner": "KC",
+        "result": "WIN"
+      },
+      {
+        "game_id": "824874",
+        "expected": "COL",
+        "winner": "ATL",
+        "result": "LOSS"
       }
     ],
     "legs": [

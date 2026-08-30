@@ -1,6 +1,6 @@
 {
   "initial": 3000.0,
-  "current": 3301.0,
+  "current": 3488.0,
   "peak": 3803.0,
   "target": 12000.0,
   "ruin_threshold": 10.0,
@@ -710,12 +710,12 @@
     {
       "date": "2026-08-29",
       "open": 3301.0,
-      "close": 3301.0,
-      "pnl": 0.0,
+      "close": 3488.0,
+      "pnl": 187.0,
       "bets": 3,
-      "wins": 0,
-      "losses": 0,
-      "voids": 3
+      "wins": 1,
+      "losses": 2,
+      "voids": 0
     }
   ],
   "strategy": "underdog"
