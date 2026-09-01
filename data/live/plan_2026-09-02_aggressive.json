@@ -1,0 +1,20 @@
+{
+  "date": "2026-09-02",
+  "bankroll": 2432.0,
+  "total_bet": 0,
+  "required_5_leg_note": "skipped; only 1 unique candidate games (<2)",
+  "required_5_leg_candidates": [
+    {
+      "sport": "MLB",
+      "game_id": "823983",
+      "matchup": "NYY@LAA",
+      "bet_label": "天使 勝",
+      "odds": 2.572,
+      "edge": -0.046028562730352385,
+      "true_prob": 0.32634820642533335
+    }
+  ],
+  "single_picks": [],
+  "parlays": [],
+  "dry_run": false
+}

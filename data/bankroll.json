@@ -736,6 +736,16 @@
       "wins": 0,
       "losses": 0,
       "voids": 0
+    },
+    {
+      "date": "2026-09-01",
+      "open": 3418.0,
+      "close": 3418.0,
+      "pnl": 0.0,
+      "bets": 2,
+      "wins": 0,
+      "losses": 0,
+      "voids": 2
     }
   ],
   "strategy": "underdog"
