@@ -1,0 +1,33 @@
+[
+  {
+    "game_pk": 823418,
+    "game_date": "2026-09-04",
+    "game_time_utc": "2026-09-04T22:40:00Z",
+    "home_team": "PHI",
+    "away_team": "ATL",
+    "home_team_id": 143,
+    "away_team_id": 144,
+    "venue": "Citizens Bank Park",
+    "home_starter_name": "Cristopher Sánchez",
+    "away_starter_name": "Chris Sale",
+    "home_starter_era": 2.52,
+    "away_starter_era": 2.06,
+    "home_starter_fip": 2.5866920152091257,
+    "away_starter_fip": 2.1972222222222224,
+    "home_starter_whip": 1.19,
+    "away_starter_whip": 1.0,
+    "home_starter_k9": 10.37,
+    "away_starter_k9": 11.06,
+    "home_starter_gs": 28,
+    "away_starter_gs": 24,
+    "home_team_wrc_plus": 99.4,
+    "away_team_wrc_plus": 100.3,
+    "home_team_ops": 0.716,
+    "away_team_ops": 0.722,
+    "home_runs_per_game": 4.539568345323741,
+    "away_runs_per_game": 4.6,
+    "home_bullpen_era_3d": 4.2,
+    "away_bullpen_era_3d": 6.75,
+    "park_factor": 106
+  }
+]
