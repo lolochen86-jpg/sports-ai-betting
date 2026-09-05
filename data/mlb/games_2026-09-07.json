@@ -1,0 +1,33 @@
+[
+  {
+    "game_pk": 823415,
+    "game_date": "2026-09-07",
+    "game_time_utc": "2026-09-07T17:05:00Z",
+    "home_team": "PHI",
+    "away_team": "ATL",
+    "home_team_id": 143,
+    "away_team_id": 144,
+    "venue": "Citizens Bank Park",
+    "home_starter_name": "Jesús Luzardo",
+    "away_starter_name": "Bryce Elder",
+    "home_starter_era": 3.02,
+    "away_starter_era": 4.11,
+    "home_starter_fip": 2.8642436149312376,
+    "away_starter_fip": 4.616778523489933,
+    "home_starter_whip": 1.12,
+    "away_starter_whip": 1.27,
+    "home_starter_k9": 11.09,
+    "away_starter_k9": 7.31,
+    "home_starter_gs": 28,
+    "away_starter_gs": 26,
+    "home_team_wrc_plus": 99.0,
+    "away_team_wrc_plus": 100.7,
+    "home_team_ops": 0.713,
+    "away_team_ops": 0.725,
+    "home_runs_per_game": 4.48936170212766,
+    "away_runs_per_game": 4.666666666666667,
+    "home_bullpen_era_3d": 6.0,
+    "away_bullpen_era_3d": 4.2,
+    "park_factor": 106
+  }
+]
