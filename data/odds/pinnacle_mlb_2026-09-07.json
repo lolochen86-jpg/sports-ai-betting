@@ -1,0 +1,27 @@
+[
+  {
+    "game_id": "35484b18fe129394ebc819752a8b92c1",
+    "sport": "MLB",
+    "game_date": "2026-09-07",
+    "home_team_abbr": "LAD",
+    "away_team_abbr": "WSH",
+    "home_team_name": "Los Angeles Dodgers",
+    "away_team_name": "Washington Nationals",
+    "source": "pinnacle",
+    "timestamp": "2026-09-07T00:36:40.639745+08:00",
+    "home_odds_raw": 1.53,
+    "away_odds_raw": 2.7,
+    "spread": -1.5,
+    "spread_home_odds_raw": 2.15,
+    "spread_away_odds_raw": 1.79,
+    "total_line": 8.0,
+    "over_odds_raw": 1.88,
+    "under_odds_raw": 2.01,
+    "home_odds": 1.496,
+    "away_odds": 2.641,
+    "spread_home_odds": 2.103,
+    "spread_away_odds": 1.751,
+    "over_odds": 1.839,
+    "under_odds": 1.966
+  }
+]
