@@ -1,0 +1,33 @@
+[
+  {
+    "game_pk": 822765,
+    "game_date": "2026-09-14",
+    "game_time_utc": "2026-09-14T23:07:00Z",
+    "home_team": "TOR",
+    "away_team": "DET",
+    "home_team_id": 141,
+    "away_team_id": 116,
+    "venue": "Rogers Centre",
+    "home_starter_name": "José Soriano",
+    "away_starter_name": "Troy Melton",
+    "home_starter_era": 3.48,
+    "away_starter_era": 2.42,
+    "home_starter_fip": 3.9220858895705524,
+    "away_starter_fip": 4.053703703703704,
+    "home_starter_whip": 1.28,
+    "away_starter_whip": 1.05,
+    "home_starter_k9": 8.5,
+    "away_starter_k9": 7.25,
+    "home_starter_gs": 29,
+    "away_starter_gs": 18,
+    "home_team_wrc_plus": 96.1,
+    "away_team_wrc_plus": 98.6,
+    "home_team_ops": 0.692,
+    "away_team_ops": 0.71,
+    "home_runs_per_game": 4.006756756756757,
+    "away_runs_per_game": 4.401360544217687,
+    "home_bullpen_era_3d": 2.25,
+    "away_bullpen_era_3d": 3.0,
+    "park_factor": 99
+  }
+]
