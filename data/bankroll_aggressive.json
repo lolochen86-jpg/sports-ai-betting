@@ -926,6 +926,16 @@
       "wins": 0,
       "losses": 2,
       "voids": 0
+    },
+    {
+      "date": "2026-09-20",
+      "open": 2329.0,
+      "close": 2329.0,
+      "pnl": 0.0,
+      "bets": 1,
+      "wins": 0,
+      "losses": 0,
+      "voids": 1
     }
   ],
   "strategy": "aggressive"
