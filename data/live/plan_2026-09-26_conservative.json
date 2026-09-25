@@ -1,0 +1,20 @@
+{
+  "date": "2026-09-26",
+  "bankroll": 2715.0,
+  "total_bet": 0,
+  "required_5_leg_note": "skipped; only 1 unique candidate games (<2)",
+  "required_5_leg_candidates": [
+    {
+      "sport": "MLB",
+      "game_id": "823083",
+      "matchup": "LAA@SEA",
+      "bet_label": "水手 勝",
+      "odds": 1.829,
+      "edge": 0.06463914287714623,
+      "true_prob": 0.588832691264243
+    }
+  ],
+  "single_picks": [],
+  "parlays": [],
+  "dry_run": false
+}
