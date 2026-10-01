@@ -1,0 +1,27 @@
+[
+  {
+    "game_id": "5524c44b05e28aa899909c9e001184ec",
+    "sport": "MLB",
+    "game_date": "2026-10-02",
+    "home_team_abbr": "ATL",
+    "away_team_abbr": "PHI",
+    "home_team_name": "Atlanta Braves",
+    "away_team_name": "Philadelphia Phillies",
+    "source": "pinnacle",
+    "timestamp": "2026-10-02T03:11:15.152189+08:00",
+    "home_odds_raw": 1.97,
+    "away_odds_raw": 1.95,
+    "spread": 1.5,
+    "spread_home_odds_raw": 1.56,
+    "spread_away_odds_raw": 2.61,
+    "total_line": 7.5,
+    "over_odds_raw": 1.97,
+    "under_odds_raw": 1.92,
+    "home_odds": 1.927,
+    "away_odds": 1.907,
+    "spread_home_odds": 1.526,
+    "spread_away_odds": 2.553,
+    "over_odds": 1.927,
+    "under_odds": 1.878
+  }
+]
