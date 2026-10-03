@@ -1,0 +1,27 @@
+[
+  {
+    "game_id": "347a2e725dd11a54a1d964eae3d04dd2",
+    "sport": "MLB",
+    "game_date": "2026-10-04",
+    "home_team_abbr": "MIL",
+    "away_team_abbr": "SD",
+    "home_team_name": "Milwaukee Brewers",
+    "away_team_name": "San Diego Padres",
+    "source": "pinnacle",
+    "timestamp": "2026-10-04T01:45:13.696345+08:00",
+    "home_odds_raw": 1.5,
+    "away_odds_raw": 2.83,
+    "spread": -1.5,
+    "spread_home_odds_raw": 2.08,
+    "spread_away_odds_raw": 1.84,
+    "total_line": 7.0,
+    "over_odds_raw": 2.01,
+    "under_odds_raw": 1.88,
+    "home_odds": 1.467,
+    "away_odds": 2.768,
+    "spread_home_odds": 2.034,
+    "spread_away_odds": 1.8,
+    "over_odds": 1.966,
+    "under_odds": 1.839
+  }
+]
