@@ -1,0 +1,27 @@
+[
+  {
+    "game_id": "62bf363a77455f7a8b48838e7792f60b",
+    "sport": "MLB",
+    "game_date": "2026-10-11",
+    "home_team_abbr": "CLE",
+    "away_team_abbr": "CWS",
+    "home_team_name": "Cleveland Guardians",
+    "away_team_name": "Chicago White Sox",
+    "source": "pinnacle",
+    "timestamp": "2026-10-11T02:10:35.261792+08:00",
+    "home_odds_raw": 1.73,
+    "away_odds_raw": 2.26,
+    "spread_away_odds_raw": 1.56,
+    "spread": -1.5,
+    "spread_home_odds_raw": 2.61,
+    "total_line": 7.0,
+    "over_odds_raw": 1.85,
+    "under_odds_raw": 2.05,
+    "home_odds": 1.692,
+    "away_odds": 2.21,
+    "spread_home_odds": 2.553,
+    "spread_away_odds": 1.526,
+    "over_odds": 1.809,
+    "under_odds": 2.005
+  }
+]
